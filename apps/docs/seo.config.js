@@ -1,16 +1,16 @@
 const seoConfig = {
-  metadataBase: new URL("https://peppermint.sh"),
+  metadataBase: new URL("https://github.com/GitCroque/thymely"),
   title: {
-    template: "Peppermint",
+    template: "Thymely",
     default:
-      "Peppermint - Revolutionizing Customer Support for Rapid Resolutions. Your Premier Zendesk Alternative.",
+      "Thymely - Open Source Helpdesk & Ticket Management.",
   },
   description:
-    "Experience Peppermint's revolutionary approach to customer support, ensuring swift resolutions. Discover your ultimate alternative to Zendesk.",
+    "Thymely is an open source helpdesk and ticket management solution. Self-hosted and fully featured.",
   themeColor: "#F6E458",
   openGraph: {
     images: "/og-image.png",
-    url: "https://peppermint.sh",
+    url: "https://github.com/GitCroque/thymely",
   },
   manifest: "/site.webmanifest",
   icons: [

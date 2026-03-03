@@ -1,8 +1,8 @@
-## Peppermint behind a reverse proxy
+## Thymely behind a reverse proxy
 
 Sometimes, individuals & organisations like to put applications behind a reverse proxy, the main reason for this is to allow applications to be accessed on specific domains.
 
-An example of this would be a helpdesk company running peppermint having it accessible to employee's through their domain name.
+An example of this would be a helpdesk company running Thymely having it accessible to employee's through their domain name.
 
 ```
 https://support.example.com
@@ -13,7 +13,7 @@ Behind the scenes you'll most likely use nginx, trafik or haproxy to achieve thi
 In the end, you should have a setup like so:
 
 ```
-https://peppermint.example.com -> https://peppermintapi.example.com -> nginx -> peppermint docker
+https://thymely.example.com -> https://thymelyapi.example.com -> nginx -> thymely docker
 ```
 
 I know two different subdomains may seem a bit overkill, but this is the only way to achieve this goal.
@@ -64,7 +64,7 @@ As you can see, there are three profiles available for Nginx:
 - Nginx HTTP: This profile opens only port 80 (normal, unencrypted web traffic)
 - Nginx HTTPS: This profile opens only port 443 (TLS/SSL encrypted traffic)
 
-It is recommended that you enable the most restrictive profile that will still allow the traffic you’ve configured. Since we haven’t configured SSL for our server yet in this guide, we will only need to allow traffic for HTTP on port 80.
+It is recommended that you enable the most restrictive profile that will still allow the traffic you've configured. Since we haven't configured SSL for our server yet in this guide, we will only need to allow traffic for HTTP on port 80.
 
 Lets enable that now
 
@@ -107,12 +107,12 @@ http://your_server_ip
 
 And if everything is good you should see the welcome to nginx sign.
 
-## Setting up peppermint
+## Setting up Thymely
 
 Now nginx is out the way and configured, we can now simply download the docker compose file from github:
 
 ```
-wget https://raw.githubusercontent.com/Peppermint-Lab/Peppermint/master/docker-compose.yml
+wget https://raw.githubusercontent.com/GitCroque/thymely/main/docker-compose.yml
 ```
 
 After this we should be able to run:
@@ -127,31 +127,31 @@ and we'll be presented with an output like so:
 version: "3.1"
 
 services:
-  peppermint_postgres:
-    container_name: peppermint_postgres
+  thymely_postgres:
+    container_name: thymely_postgres
     image: postgres:latest
     restart: always
     volumes:
       - pgdata:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: peppermint
+      POSTGRES_USER: thymely
       POSTGRES_PASSWORD: 1234
-      POSTGRES_DB: peppermint
+      POSTGRES_DB: thymely
 
-  peppermint:
-    container_name: peppermint
-    image: pepperlabs/peppermint:latest
+  thymely:
+    container_name: thymely
+    image: gitcroque/thymely:latest
     ports:
       - 3000:3000
       - 5003:5003
     restart: always
     depends_on:
-      - peppermint_postgres
+      - thymely_postgres
     environment:
-      DB_USERNAME: "peppermint"
+      DB_USERNAME: "thymely"
       DB_PASSWORD: "1234"
-      DB_HOST: "peppermint_postgres"
-      SECRET: 'peppermint4life'
+      DB_HOST: "thymely_postgres"
+      SECRET: 'thymely4life'
 
 volumes:
  pgdata:
@@ -167,7 +167,7 @@ After you enter the correct base url hit `ctrl + x` and then `y` to save. When t
 docker-compose up -d
 ```
 
-This will pull the peppermint image & postgres and start the process of both containers. Once up, we have one finally more nginx config to take care of.
+This will pull the Thymely image & postgres and start the process of both containers. Once up, we have one finally more nginx config to take care of.
 
 ### Nginx config
 
@@ -189,7 +189,7 @@ This will bring an editor up, in which you will paste
 server {
     listen 80;
     listen [::]:80;
-    server_name peppermint.example.com;
+    server_name thymely.example.com;
     add_header Strict-Transport-Security "max-age=15552000; includeSubDomains" always;
 
     location / {
@@ -209,7 +209,7 @@ server {
 Replace the server name with your url of choice, including subdomain and procced to save the file as
 
 ```
-peppermint-client.conf
+thymely-client.conf
 ```
 
 ### API Proxy Config
@@ -218,7 +218,7 @@ peppermint-client.conf
 server {
     listen 80;
     listen [::]:80;
-    server_name peppermintapi.example.com;
+    server_name thymelyapi.example.com;
     add_header Strict-Transport-Security "max-age=15552000; includeSubDomains" always;
 
     location / {
@@ -238,7 +238,7 @@ server {
 Replace the server name with your url of choice, including subdomain and procced to save the file as, make sure this matches what you put in the docker-compose.yml file
 
 ```
-peppermint-api.conf
+thymely-api.conf
 ```
 
 ### Restarting nginx
@@ -251,7 +251,7 @@ This can be achieved by running:
 systemctl restart nginx
 ```
 
-You should now be able to see peppermint running on your choosen subdomain.
+You should now be able to see Thymely running on your choosen subdomain.
 
 I hope you found this guide usual :)
 

@@ -23,7 +23,7 @@ Before you begin, ensure you have the following:
    Create a new file for the language you want to add. For example, to add French, create a file named `fr.json`.
 
    ```bash
-   touch /fr/peppermint.json
+   touch /fr/thymely.json
    ```
 
 2. **Add Translations**

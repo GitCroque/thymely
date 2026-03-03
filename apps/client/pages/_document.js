@@ -19,7 +19,7 @@ export default function Document() {
         <meta name="theme-color" content="#ffffff" />
         <link rel="manifest" href="/manifest.json" />
 
-        <title>Peppermint</title>
+        <title>Thymely</title>
 
         <link href="/favicon/favicon.ico" rel="icon" />
         <link

@@ -38,4 +38,4 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            pepperlabs/peppermint:latest
+            gitcroque/thymely:latest

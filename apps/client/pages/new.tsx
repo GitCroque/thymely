@@ -25,7 +25,7 @@ const type = [
 ];
 
 export default function CreateTicket() {
-  const { t } = useTranslation("peppermint");
+  const { t } = useTranslation("thymely");
   const router = useRouter();
   const token = getCookie("session");
   const { user } = useUser();

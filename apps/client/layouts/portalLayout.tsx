@@ -25,7 +25,7 @@ export default function PortalLayout({ children }: any) {
   const { loading, user, fetchUserProfile } = useUser();
   const locale = user ? user.language : "en";
 
-  const { t, lang } = useTranslation("peppermint");
+  const { t, lang } = useTranslation("thymely");
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -170,9 +170,9 @@ export default function PortalLayout({ children }: any) {
                   <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
                     <div className="flex align-middle flex-row h-14 items-center border-b-[1px]">
                       {/* <img className="h-8 w-auto" src="/logo.svg" alt="Workflow" /> */}
-                      <Link href="https://peppermint.sh">
+                      <Link href="https://github.com/GitCroque/thymely">
                         <span className="text-3xl ml-2  hover:text-green-600 font-bold ">
-                          Peppermint
+                          Thymely
                         </span>
                       </Link>
                     </div>
@@ -236,9 +236,9 @@ export default function PortalLayout({ children }: any) {
           <div className="flex grow flex-col gap-y-5 overflow-y-auto  bg-[#ffffff] dark:bg-[#393E46] pb-4">
             <div className="flex align-middle flex-row h-14 items-center border-b-[1px] px-6">
               {/* <img className="h-8 w-auto" src="/logo.svg" alt="Workflow" /> */}
-              <Link href="https://peppermint.sh">
+              <Link href="https://github.com/GitCroque/thymely">
                 <span className="text-3xl ml-2  hover:text-green-600 font-bold ">
-                  Peppermint
+                  Thymely
                 </span>
               </Link>
             </div>

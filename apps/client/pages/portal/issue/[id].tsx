@@ -21,7 +21,7 @@ import { classNames } from "@/shadcn/lib/utils";
 
 export default function Ticket() {
   const router = useRouter();
-  const { t } = useTranslation("peppermint");
+  const { t } = useTranslation("thymely");
 
   const token = getCookie("session");
 

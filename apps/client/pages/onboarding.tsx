@@ -31,10 +31,10 @@ export default function Home() {
           <div className="flex justify-between items-center">
             <div className="flex flex-col">
               <h1 className="text-2xl text-foreground font-bold">
-                Peppermint{" "}
+                Thymely{" "}
               </h1>
               <p className="text-foreground">
-                Welcome to Peppermint! A fully open sourced ticket management
+                Welcome to Thymely! A fully open sourced ticket management
                 system.
               </p>
             </div>
@@ -53,7 +53,7 @@ export default function Home() {
                 </div>
                 <Link
                   target="_blank"
-                  href="https://github.com/Peppermint-Lab/peppermint"
+                  href="https://github.com/GitCroque/thymely"
                   className="rounded-md mt-4 sm:mt-0 bg-gray-600 px-2.5 whitespace-nowrap hover:text-white py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-gray-500 "
                 >
                   Check it out
@@ -64,14 +64,14 @@ export default function Home() {
                 <div className="flex flex-col align-center lg:w-[36em]">
                   <span className="font-bold text-lg">Docs</span>
                   <span className="max-w-lg text-xs md:text-md">
-                    Documentation for Peppermint can be found here. If you find
+                    Documentation for Thymely can be found here. If you find
                     something that isnt documented, feel free to open a PR or an
                     Issue. We'll get straight on it.
                   </span>
                 </div>
                 <Link
                   target="_blank"
-                  href="https://github.com/Peppermint-Lab/peppermint"
+                  href="https://github.com/GitCroque/thymely"
                   className="rounded-md flex-end bg-green-600 mt-4 whitespace-nowrap sm:mt-0 px-2.5 py-1.5 text-sm font-semibold hover:text-white text-white shadow-sm hover:bg-green-500 "
                 >
                   Check it out

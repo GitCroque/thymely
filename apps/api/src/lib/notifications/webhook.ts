@@ -29,10 +29,10 @@ export async function sendWebhookNotification(webhook: any, message: any) {
             text: "Issue ID: " + message.id,
           },
           author: {
-            name: "peppermint.sh",
+            name: "thymely",
             icon_url:
               "https://avatars.githubusercontent.com/u/76014454?s=200&v=4",
-            url: "https://peppermint.sh/",
+            url: "https://github.com/GitCroque/thymely",
           },
           fields: [
             {

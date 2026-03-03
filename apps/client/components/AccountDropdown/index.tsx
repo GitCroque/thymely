@@ -124,7 +124,7 @@ export function AccountDropdown() {
         <DropdownMenuItem
           className="hover:cursor-pointer"
           onClick={() =>
-            router.push("https://github.com/Peppermint-Lab/peppermint")
+            router.push("https://github.com/GitCroque/thymely")
           }
         >
           <Github className="mr-2 h-4 w-4" />

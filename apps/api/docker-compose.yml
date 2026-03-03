@@ -4,9 +4,9 @@ services:
     image: "postgres:11"
     restart: unless-stopped
     environment:
-      - POSTGRES_USER=pepppermint-dev
+      - POSTGRES_USER=thymely-dev
       - POSTGRES_PASSWORD=12345
-      - POSTGRES_DB=peppermint
+      - POSTGRES_DB=thymely
     ports:
       - '5432:5432'
     volumes:

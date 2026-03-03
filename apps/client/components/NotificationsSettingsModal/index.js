@@ -8,7 +8,7 @@ function classNames(...classes) {
 }
 
 export default function NotificationsSettingsModal() {
-  const { t, lang } = useTranslation("peppermint");
+  const { t, lang } = useTranslation("thymely");
 
   const [open, setOpen] = useState(false);
 
@@ -145,7 +145,7 @@ export default function NotificationsSettingsModal() {
                       name="reply"
                       id="reply"
                       className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      placeholder="noreply@peppermint.sh"
+                      placeholder="noreply@thymely.sh"
                       onChange={(e) => setReply(e.target.value)}
                     />
                   </div>

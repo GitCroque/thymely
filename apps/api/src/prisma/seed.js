@@ -37,8 +37,8 @@ async function main() {
 
     const conf = await prisma.config.create({
       data: {
-        gh_version: "0.4.3",
-        client_version: "0.4.3",
+        gh_version: "0.5.5",
+        client_version: "0.5.5",
         encryption_key: encryptionKey,
       },
     });
@@ -83,9 +83,9 @@ async function main() {
                       <tbody>
                         <tr>
                           <td>
-                            <a target="_blank" style="color:#b7b7b7;text-decoration:underline" href="https://docs.peppermint.sh" rel="noopener noreferrer">Documentation</a>   |   <a target="_blank" style="color:#b7b7b7;text-decoration:underline" href="https://discord.gg/8XFkbgKmgv" rel="noopener noreferrer">Discord</a> </a>
-                            <p style="font-size:12px;line-height:15px;margin:16px 0;color:#b7b7b7;text-align:left">This was an automated message sent by peppermint.sh -> An open source helpdesk solution</p>
-                            <p style="font-size:12px;line-height:15px;margin:16px 0;color:#b7b7b7;text-align:left;margin-bottom:50px">©2022 Peppermint Ticket Management, a Peppermint Labs product.<br />All rights reserved.</p>
+                            <a target="_blank" style="color:#b7b7b7;text-decoration:underline" href="https://github.com/GitCroque/thymely" rel="noopener noreferrer">Documentation</a>   |   <a target="_blank" style="color:#b7b7b7;text-decoration:underline" href="https://discord.gg/8XFkbgKmgv" rel="noopener noreferrer">Discord</a> </a>
+                            <p style="font-size:12px;line-height:15px;margin:16px 0;color:#b7b7b7;text-align:left">This was an automated message sent by Thymely -> An open source helpdesk solution</p>
+                            <p style="font-size:12px;line-height:15px;margin:16px 0;color:#b7b7b7;text-align:left;margin-bottom:50px">Thymely Ticket Management.<br />All rights reserved.</p>
                           </td>
                         </tr>
                       </tbody>
@@ -123,9 +123,9 @@ async function main() {
                       <tbody>
                         <tr>
                           <td>
-                          <a target="_blank" style="color:#b7b7b7;text-decoration:underline" href="https://docs.peppermint.sh" rel="noopener noreferrer">Documentation</a>   |   <a target="_blank" style="color:#b7b7b7;text-decoration:underline" href="https://discord.gg/8XFkbgKmgv" rel="noopener noreferrer">Discord</a> </a>
-                          <p style="font-size:12px;line-height:15px;margin:16px 0;color:#b7b7b7;text-align:left">This was an automated message sent by peppermint.sh -> An open source helpdesk solution</p>
-                            <p style="font-size:12px;line-height:15px;margin:16px 0;color:#b7b7b7;text-align:left;margin-bottom:50px">©2022 Peppermint Ticket Management, a Peppermint Labs product.<br />All rights reserved.</p>
+                          <a target="_blank" style="color:#b7b7b7;text-decoration:underline" href="https://github.com/GitCroque/thymely" rel="noopener noreferrer">Documentation</a>   |   <a target="_blank" style="color:#b7b7b7;text-decoration:underline" href="https://discord.gg/8XFkbgKmgv" rel="noopener noreferrer">Discord</a> </a>
+                          <p style="font-size:12px;line-height:15px;margin:16px 0;color:#b7b7b7;text-align:left">This was an automated message sent by Thymely -> An open source helpdesk solution</p>
+                            <p style="font-size:12px;line-height:15px;margin:16px 0;color:#b7b7b7;text-align:left;margin-bottom:50px">Thymely Ticket Management.<br />All rights reserved.</p>
                           </td>
                         </tr>
                       </tbody>
@@ -163,9 +163,9 @@ async function main() {
                       <tbody>
                         <tr>
                           <td>
-                          <a target="_blank" style="color:#b7b7b7;text-decoration:underline" href="https://docs.peppermint.sh" rel="noopener noreferrer">Documentation</a>   |   <a target="_blank" style="color:#b7b7b7;text-decoration:underline" href="https://discord.gg/8XFkbgKmgv" rel="noopener noreferrer">Discord</a> </a>
-                          <p style="font-size:12px;line-height:15px;margin:16px 0;color:#b7b7b7;text-align:left">This was an automated message sent by peppermint.sh -> An open source helpdesk solution</p>
-                            <p style="font-size:12px;line-height:15px;margin:16px 0;color:#b7b7b7;text-align:left;margin-bottom:50px">©2022 Peppermint Ticket Management, a Peppermint Labs product.<br />All rights reserved.</p>
+                          <a target="_blank" style="color:#b7b7b7;text-decoration:underline" href="https://github.com/GitCroque/thymely" rel="noopener noreferrer">Documentation</a>   |   <a target="_blank" style="color:#b7b7b7;text-decoration:underline" href="https://discord.gg/8XFkbgKmgv" rel="noopener noreferrer">Discord</a> </a>
+                          <p style="font-size:12px;line-height:15px;margin:16px 0;color:#b7b7b7;text-align:left">This was an automated message sent by Thymely -> An open source helpdesk solution</p>
+                            <p style="font-size:12px;line-height:15px;margin:16px 0;color:#b7b7b7;text-align:left;margin-bottom:50px">Thymely Ticket Management.<br />All rights reserved.</p>
                           </td>
                         </tr>
                       </tbody>
@@ -195,7 +195,7 @@ async function main() {
                     <table style="margin-top:8px" align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%">
                       <tbody>
                         <tr>
-                          <td><img alt="Slack" src="https://raw.githubusercontent.com/Peppermint-Lab/peppermint/next/static/black-side-logo.svg" width="200" height="60" style="display:block;outline:none;border:none;text-decoration:none" /></td>
+                          <td><img alt="Slack" src="https://raw.githubusercontent.com/GitCroque/thymely/main/static/black-side-logo.svg" width="200" height="60" style="display:block;outline:none;border:none;text-decoration:none" /></td>
                         </tr>
                       </tbody>
                     </table>
@@ -204,16 +204,16 @@ async function main() {
                     <p>Your Ticket, now has a status of {{status}}</p>
                     Kind regards, 
                     <br>
-                    Peppermint ticket management
+                    Thymely ticket management
                     </p>
                     
                     <table align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%">
                       <tbody>
                         <tr>
                           <td>
-                          <a target="_blank" style="color:#b7b7b7;text-decoration:underline" href="https://docs.peppermint.sh" rel="noopener noreferrer">Documentation</a>   |   <a target="_blank" style="color:#b7b7b7;text-decoration:underline" href="https://discord.gg/8XFkbgKmgv" rel="noopener noreferrer">Discord</a> </a>
-                          <p style="font-size:12px;line-height:15px;margin:16px 0;color:#b7b7b7;text-align:left">This was an automated message sent by peppermint.sh -> An open source helpdesk solution</p>
-                            <p style="font-size:12px;line-height:15px;margin:16px 0;color:#b7b7b7;text-align:left;margin-bottom:50px">©2022 Peppermint Ticket Management, a Peppermint Labs product.<br />All rights reserved.</p>
+                          <a target="_blank" style="color:#b7b7b7;text-decoration:underline" href="https://github.com/GitCroque/thymely" rel="noopener noreferrer">Documentation</a>   |   <a target="_blank" style="color:#b7b7b7;text-decoration:underline" href="https://discord.gg/8XFkbgKmgv" rel="noopener noreferrer">Discord</a> </a>
+                          <p style="font-size:12px;line-height:15px;margin:16px 0;color:#b7b7b7;text-align:left">This was an automated message sent by Thymely -> An open source helpdesk solution</p>
+                            <p style="font-size:12px;line-height:15px;margin:16px 0;color:#b7b7b7;text-align:left;margin-bottom:50px">Thymely Ticket Management.<br />All rights reserved.</p>
                           </td>
                         </tr>
                       </tbody>

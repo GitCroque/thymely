@@ -17,7 +17,7 @@ async function getUserTickets(token: any) {
 }
 
 export default function Tickets() {
-  const { t } = useTranslation("peppermint");
+  const { t } = useTranslation("thymely");
 
   const router = useRouter();
 

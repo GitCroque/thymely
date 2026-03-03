@@ -11,7 +11,7 @@ import { useUser } from "../store/session";
 
 export default function Home() {
   const router = useRouter();
-  const { t } = useTranslation("peppermint");
+  const { t } = useTranslation("thymely");
 
   const { user } = useUser();
   const token = getCookie("session");
@@ -119,7 +119,7 @@ export default function Home() {
       <div className="w-full xl:w-[70%] max-w-5xl">
         <div className="block sm:hidden mb-4">
           {user.isAdmin && (
-            <Link href="https://github.com/Peppermint-Lab/peppermint/releases">
+            <Link href="https://github.com/GitCroque/thymely/releases">
               <span className="inline-flex items-center rounded-md bg-green-700/10 px-3 py-2 text-xs font-medium text-green-600 ring-1 ring-inset ring-green-500/20">
                 Version {process.env.NEXT_PUBLIC_CLIENT_VERSION}
               </span>

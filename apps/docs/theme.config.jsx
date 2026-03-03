@@ -2,8 +2,8 @@ import { useRouter } from 'next/router'
 import seoConfig from './seo.config.js'
 
 const config = {
-  logo: "Peppermint",
-  project: { link: 'https://github.com/Peppermint-Lab/peppermint' },
+  logo: "Thymely",
+  project: { link: 'https://github.com/GitCroque/thymely' },
   useNextSeoProps() {
     const { route } = useRouter()
     const { url, images } = seoConfig.openGraph
@@ -13,7 +13,7 @@ const config = {
       openGraph: { url, images: [{ url: `${url}${images}` }] }
     }
   },
-  docsRepositoryBase: 'https://github.com/Peppermint-Lab/docs',
+  docsRepositoryBase: 'https://github.com/GitCroque/thymely',
   sidebar: {
     defaultMenuCollapseLevel: 2,
     toggleButton: false,
@@ -21,9 +21,6 @@ const config = {
   chat: {
     link: 'https://discord.gg/X9yFbcV2rF',
   },
-  // i18n: [
-  //   { locale: 'en', text: 'English' },
-  // ],
   footer: {
     text: '',
     component: () => <></>
@@ -31,8 +28,8 @@ const config = {
    banner: {
     key: 'release',
     text: (
-      <a href="https://github.com/Peppermint-Lab/peppermint/releases" target="_blank">
-        🎉 Peppermint 0.4.5 is here! Check it out now! 🚀
+      <a href="https://github.com/GitCroque/thymely/releases" target="_blank">
+        Thymely - Check out the latest release!
       </a>
     )
   },
@@ -51,7 +48,7 @@ const config = {
         />
         <meta
           name="og:title"
-          content={title ? title + ' – Panda' : seoConfig.title.default}
+          content={title ? title + ' – Thymely' : seoConfig.title.default}
         />
         <meta
           name="og:description"
@@ -62,7 +59,7 @@ const config = {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:site" content={seoConfig.twitter.site} />
         <meta name="twitter:creator" content={seoConfig.twitter.creator} />
-        <meta name="apple-mobile-web-app-title" content="Panda" />
+        <meta name="apple-mobile-web-app-title" content="Thymely" />
       </>
     )
   }

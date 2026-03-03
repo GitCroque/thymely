@@ -12,8 +12,8 @@ import {
 } from "lucide-react";
 
 const navigation = [
-  { name: "Github", href: "https://github.com/Peppermint-Lab/peppermint" },
-  { name: "Docs", href: "https://docs.peppermint.sh/" },
+  { name: "Github", href: "https://github.com/GitCroque/thymely" },
+  { name: "Docs", href: "https://github.com/GitCroque/thymely" },
   { name: "Discord", href: "https://discord.gg/cyj86Ncygn" },
 ];
 
@@ -23,7 +23,7 @@ const navigation = [
 //   //   { name: "Linode", href: "" },
 //   // ],
 //   support: [
-//     { name: "Documentation", href: "https://docs.peppermint.sh/" },
+//     { name: "Documentation", href: "https://github.com/GitCroque/thymely" },
 //     { name: "Discord", href: "https://discord.gg/fs4j39FWfm" },
 //   ],
 //   company: [
@@ -45,7 +45,7 @@ const navigation = [
 //     },
 //     {
 //       name: "GitHub",
-//       href: "https://github.com/Peppermint-Lab/peppermint/",
+//       href: "https://github.com/GitCroque/thymely",
 //       icon: (props: any) => (
 //         <svg fill="currentColor" viewBox="0 0 24 24" {...props}>
 //           <path
@@ -116,7 +116,7 @@ const features = [
   {
     name: "Notifications",
     description:
-      "Connect Peppermint to third-party services using webhooks and various providers, including email integration.",
+      "Connect Thymely to third-party services using webhooks and various providers, including email integration.",
     href: "#",
     icon: Bell,
   },
@@ -140,25 +140,25 @@ const features2 = [
   {
     name: "Location",
     description:
-      "Peppermint is designed to be hosted in any environment, offering all of its core features without requiring an internet connection.",
+      "Thymely is designed to be hosted in any environment, offering all of its core features without requiring an internet connection.",
     icon: Globe,
   },
   {
     name: "Data Ownership",
     description:
-      "Peppermint ensures customer app data remains private by never transferring it to external servers. All data is securely stored locally on your server.",
+      "Thymely ensures customer app data remains private by never transferring it to external servers. All data is securely stored locally on your server.",
     icon: Lock,
   },
   {
     name: "Lightweight",
     description:
-      "Peppermint is designed to be lightweight and fast, making it suitable for running on low-end hardware with minimal resource usage. This allows for cost-effective hosting on a low-end VPS or even a Raspberry Pi.",
+      "Thymely is designed to be lightweight and fast, making it suitable for running on low-end hardware with minimal resource usage. This allows for cost-effective hosting on a low-end VPS or even a Raspberry Pi.",
     icon: Lightbulb,
   },
   {
     name: "Customer First",
     description:
-      "Peppermint is an open source customer-centric product, enabling us to provide the best features by actively listening to and addressing our customer's needs in order to improve.",
+      "Thymely is an open source customer-centric product, enabling us to provide the best features by actively listening to and addressing our customer's needs in order to improve.",
     icon: User,
   },
 ];
@@ -195,7 +195,7 @@ export default function Home() {
           <div className="hidden sm:mb-4 sm:flex sm:flex-col">
             <div className="">
               <a
-                href="https://github.com/Peppermint-Lab/peppermint/releases"
+                href="https://github.com/GitCroque/thymely/releases"
                 className="inline-flex space-x-6"
                 target="_blank"
               >
@@ -215,7 +215,7 @@ export default function Home() {
 
           <div className="">
             <span className="text-2xl font-bold tracking-tight text-gray-900 ">
-              Peppermint - Open Source Issue management
+              Thymely - Open Source Issue management
             </span>
             <div className="mt-4 flex flex-col ">
               <div className="">
@@ -229,7 +229,7 @@ export default function Home() {
               </div>
               <div className="my-6 space-x-4 flex flex-row">
                 <a
-                  href="https://docs.peppermint.sh/docker"
+                  href="https://github.com/GitCroque/thymely"
                   className="rounded-md w-full px-3.5 py-2.5 text-sm font-semibold bg-green-600  text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
                   target="_blank"
                 >
@@ -328,7 +328,7 @@ export default function Home() {
           <div className="mt-2 flex flex-col gap-x-8 gap-y-20 lg:flex-row">
             <div className="lg:w-full lg:max-w-2xl lg:flex-auto">
               <p className="text-base text-gray-800">
-                Peppermint aims to bridge the gap between rich features and
+                Thymely aims to bridge the gap between rich features and
                 affordability. We strive to provide a wide range of tools,
                 functionalities, and user experiences without imposing excessive
                 costs on our users.
@@ -352,9 +352,9 @@ export default function Home() {
             Deploy faster with one click
           </h2>
           <p className="mt-3 text-base">
-            Peppermint is built to be hosted in a docker container, which can be
+            Thymely is built to be hosted in a docker container, which can be
             easily scaled through k8's. In addition to this you can host
-            peppermint through pm2 or even locally with NodeJS
+            Thymely through pm2 or even locally with NodeJS
           </p>
           <dl className="mt-6 max-w-xl space-y-8 text-base leading-7 lg:max-w-none">
             <div className="relative pl-9">
@@ -367,7 +367,7 @@ export default function Home() {
               </dt>
               <dd className="">
                 Linode is a great cloud provider that offers the installilation
-                of peppermint through the click of a button.
+                of Thymely through the click of a button.
               </dd>
             </div>
           </dl>
@@ -397,7 +397,7 @@ export default function Home() {
               Video Reviews
             </h2>
             <p className="text-base leading-8 text-gray-800">
-              Check out these great videos showcasing peppermint and its
+              Check out these great videos showcasing Thymely and its
               features.
             </p>
           </div>
@@ -451,7 +451,7 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-6 pb-8 pt-16 sm:pt-24 lg:px-8 lg:pt-32">
           <div className="mt-16 border-t border-gray-900/10 pt-8 sm:mt-20 lg:mt-24">
             <p className="text-xs leading-5 text-gray-500">
-              &copy; 2024 Peppermint Labs Ltd. All rights reserved.
+              &copy; 2024 Thymely. All rights reserved.
             </p>
           </div>
         </div>
