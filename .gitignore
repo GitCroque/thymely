@@ -16,8 +16,15 @@ coverage
 out/
 build
 
-# misc
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# misc
 *.pem
 
 # debug
