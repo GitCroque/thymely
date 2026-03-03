@@ -18,11 +18,10 @@ RUN npm i -g typescript@latest -g --force
 COPY apps/api ./apps/api
 COPY apps/client ./apps/client
 
-RUN cd apps/api && npm install --production
-RUN cd apps/api && npm i --save-dev @types/node && npm run build
+RUN cd apps/api && npm install
+RUN cd apps/api && npm run build
 
-RUN cd apps/client && yarn install --production --ignore-scripts --prefer-offline --network-timeout 1000000
-RUN cd apps/client && yarn add --dev typescript @types/node --network-timeout 1000000
+RUN cd apps/client && yarn install --ignore-scripts --network-timeout 1000000
 RUN cd apps/client && yarn build
 
 FROM node:lts AS runner
