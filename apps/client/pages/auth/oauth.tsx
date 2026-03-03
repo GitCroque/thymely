@@ -19,8 +19,8 @@ export default function Login() {
     }
   }
 
-  function setandRedirect(token) {
-    setCookie("session", token, { maxAge: 60 * 6 * 24 });
+  function setandRedirect(token: string) {
+    setCookie("session", token, { maxAge: 60 * 6 * 24 } as any);
     router.push("/onboarding");
   }
 
