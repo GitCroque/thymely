@@ -51,9 +51,10 @@ services:
       - thymely_postgres
     environment:
       DB_USERNAME: "thymely"
-      DB_PASSWORD: "1234"
+      DB_PASSWORD: "change_me"
       DB_HOST: "thymely_postgres"
-      SECRET: 'thymely4life'
+      SECRET: "<base64-32-bytes-secret>"
+      THYMELY_BOOTSTRAP_PASSWORD: "<strong-admin-password>"
 
 volumes:
  pgdata:
@@ -62,12 +63,8 @@ volumes:
 
 Once this is completed then you can go to your server-ip:3000 which was added to the compose file and login.
 
-The default login credentials are
-
-```
-admin@admin.com
-1234
-```
+On first start, an admin account is created with email `admin@admin.com`.
+Use `THYMELY_BOOTSTRAP_PASSWORD` to define its password explicitly.
 
 ## Documentation
 

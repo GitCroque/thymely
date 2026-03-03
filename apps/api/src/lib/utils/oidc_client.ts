@@ -2,17 +2,15 @@
 
 import { Issuer } from "openid-client";
 
-let oidcClient: any = null;
-
 export async function getOidcClient(config: any) {
-  if (!oidcClient) {
-    const oidcIssuer = await Issuer.discover(config.issuer);
-    oidcClient = new oidcIssuer.Client({
-      client_id: config.clientId,
-      redirect_uris: [config.redirectUri],
-      response_types: ["code"],
-      token_endpoint_auth_method: "none",
-    });
-  }
-  return oidcClient;
+  const oidcIssuer = await Issuer.discover(config.issuer);
+  const hasClientSecret = Boolean(config.clientSecret);
+
+  return new oidcIssuer.Client({
+    client_id: config.clientId,
+    client_secret: hasClientSecret ? config.clientSecret : undefined,
+    redirect_uris: [config.redirectUri],
+    response_types: ["code"],
+    token_endpoint_auth_method: hasClientSecret ? "client_secret_post" : "none",
+  });
 }

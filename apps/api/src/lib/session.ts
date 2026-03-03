@@ -1,63 +1,79 @@
 import { FastifyRequest } from "fastify";
+import { User } from "@prisma/client";
 import jwt from "jsonwebtoken";
+import { getSessionToken } from "./request-token";
 import { prisma } from "../prisma";
 
+const REQUEST_SESSION_CACHE_KEY = "__thymelySessionUser";
+
 // Checks session token and returns user object
-export async function checkSession(request: FastifyRequest) {
+export async function checkSession(
+  request: FastifyRequest
+): Promise<User | null> {
+  const cachedRequest = request as FastifyRequest & {
+    [REQUEST_SESSION_CACHE_KEY]?: User | null;
+  };
+
+  if (
+    Object.prototype.hasOwnProperty.call(cachedRequest, REQUEST_SESSION_CACHE_KEY)
+  ) {
+    return cachedRequest[REQUEST_SESSION_CACHE_KEY] ?? null;
+  }
+
   try {
-    const bearer = request.headers.authorization?.split(" ")[1];
-    if (!bearer) {
+    const token = getSessionToken(request);
+    if (!token) {
+      cachedRequest[REQUEST_SESSION_CACHE_KEY] = null;
       return null;
     }
 
-    // Verify JWT token is valid
-    var b64string = process.env.SECRET;
-    var secret = Buffer.from(b64string!, "base64");
+    const b64string = process.env.SECRET;
+    const secret = Buffer.from(b64string!, "base64");
 
     try {
-      jwt.verify(bearer, secret);
-    } catch (e) {
-      // Token is invalid or expired
-      await prisma.session.delete({
-        where: { sessionToken: bearer },
+      jwt.verify(token, secret);
+    } catch {
+      await prisma.session.deleteMany({
+        where: { sessionToken: token },
       });
+      cachedRequest[REQUEST_SESSION_CACHE_KEY] = null;
       return null;
     }
 
-    // Check if session exists and is not expired
     const session = await prisma.session.findUnique({
-      where: { sessionToken: bearer },
+      where: { sessionToken: token },
       include: { user: true },
     });
 
     if (!session || session.expires < new Date()) {
-      // Session expired or doesn't exist
       if (session) {
         await prisma.session.delete({
           where: { id: session.id },
         });
       }
+      cachedRequest[REQUEST_SESSION_CACHE_KEY] = null;
       return null;
     }
 
-    // Verify the request is coming from the same client
-    const currentUserAgent = request.headers["user-agent"];
+    const currentUserAgent = request.headers["user-agent"] || "";
     const currentIp = request.ip;
 
     if (
-      session.userAgent !== currentUserAgent &&
-      session.ipAddress !== currentIp
+      (session.userAgent && session.userAgent !== currentUserAgent) ||
+      (session.ipAddress && session.ipAddress !== currentIp)
     ) {
-      // Potential session hijacking attempt - invalidate the session
       await prisma.session.delete({
         where: { id: session.id },
       });
 
+      cachedRequest[REQUEST_SESSION_CACHE_KEY] = null;
       return null;
     }
 
+    cachedRequest[REQUEST_SESSION_CACHE_KEY] = session.user;
     return session.user;
-  } catch (error) {
+  } catch {
+    cachedRequest[REQUEST_SESSION_CACHE_KEY] = null;
     return null;
   }
 }

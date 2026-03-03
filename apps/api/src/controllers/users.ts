@@ -39,7 +39,9 @@ export function userRoutes(fastify: FastifyInstance) {
   // New user
   fastify.post(
     "/api/v1/user/new",
-
+    {
+      preHandler: requirePermission(["user::manage"]),
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const session = await checkSession(request);
 
@@ -80,6 +82,9 @@ export function userRoutes(fastify: FastifyInstance) {
   // (ADMIN) Reset password
   fastify.put(
     "/api/v1/user/reset-password",
+    {
+      preHandler: requirePermission(["user::manage"]),
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { password, id }: any = request.body;
 

@@ -1,3 +1,4 @@
+import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import "dotenv/config";
@@ -8,33 +9,42 @@ import fs from "fs";
 import { exec } from "child_process";
 import { track } from "./lib/hog";
 import { getEmails } from "./lib/imap";
-import { checkToken } from "./lib/jwt";
+import { backfillEncryptedSecrets } from "./lib/security/backfill";
+import { checkSession } from "./lib/session";
 import { prisma } from "./prisma";
 import { registerRoutes } from "./routes";
 
-// Ensure the directory exists
-const logFilePath = "./logs.log"; // Update this path to a writable location
-
-// Create a writable stream
+const logFilePath = "./logs.log";
 const logStream = fs.createWriteStream(logFilePath, { flags: "a" });
 
-// Initialize Fastify with logger
+const trustProxy = process.env.TRUST_PROXY === "true";
+
 const server: FastifyInstance = Fastify({
   logger: {
-    stream: logStream, // Use the writable stream
+    stream: logStream,
   },
   disableRequestLogging: true,
-  trustProxy: true,
+  trustProxy,
 });
-const corsOrigin = process.env.CORS_ORIGIN;
-const origins = corsOrigin
-  ? corsOrigin.split(",").map((o) => o.trim())
-  : "*";
+
+const rawCorsOrigins = (process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const isProduction = process.env.NODE_ENV === "production";
+if (isProduction && rawCorsOrigins.length === 0) {
+  throw new Error(
+    "CORS_ORIGIN must be configured in production (comma-separated allowlist)."
+  );
+}
+
+server.register(cookie);
 
 server.register(cors, {
-  origin: origins,
-  credentials: corsOrigin ? true : false,
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  origin: rawCorsOrigins.length > 0 ? rawCorsOrigins : false,
+  credentials: rawCorsOrigins.length > 0,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization", "Accept"],
 });
 
@@ -45,13 +55,53 @@ server.register(rateLimit, {
 
 server.register(multer.contentParser);
 
+server.addHook("onSend", async (request, reply, payload) => {
+  reply.header("X-Content-Type-Options", "nosniff");
+  reply.header("X-Frame-Options", "DENY");
+  reply.header("Referrer-Policy", "no-referrer");
+  reply.header("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+
+  return payload;
+});
+
+const publicRoutes = new Set([
+  "GET /",
+  "POST /api/v1/auth/login",
+  "POST /api/v1/auth/user/register/external",
+  "POST /api/v1/auth/password-reset",
+  "POST /api/v1/auth/password-reset/code",
+  "POST /api/v1/auth/password-reset/password",
+  "GET /api/v1/auth/check",
+  "GET /api/v1/auth/oidc/callback",
+  "GET /api/v1/auth/oauth/callback",
+  "POST /api/v1/ticket/public/create",
+  "GET /api/v1/config/authentication/check",
+]);
+
+server.addHook("preHandler", async (request, reply) => {
+  const route = request.url.split("?")[0];
+  const routeKey = `${request.method.toUpperCase()} ${route}`;
+
+  if (publicRoutes.has(routeKey)) {
+    return;
+  }
+
+  const user = await checkSession(request);
+  if (!user) {
+    return reply.status(401).send({
+      message: "Unauthorized",
+      success: false,
+    });
+  }
+});
+
 registerRoutes(server);
 
 server.get(
   "/",
   {
     schema: {
-      tags: ["health"], // This groups the endpoint under a category
+      tags: ["health"],
       description: "Health check endpoint",
       response: {
         200: {
@@ -63,69 +113,52 @@ server.get(
       },
     },
   },
-  async function (request, response) {
+  async function (_request, response) {
     response.send({ healthy: true });
   }
 );
 
-// JWT authentication hook
-server.addHook("preHandler", async function (request: any, reply: any) {
-  try {
-    if (request.url === "/api/v1/auth/login" && request.method === "POST") {
-      return true;
-    }
-    if (
-      request.url === "/api/v1/ticket/public/create" &&
-      request.method === "POST"
-    ) {
-      return true;
-    }
-    const bearer = request.headers.authorization!.split(" ")[1];
-    checkToken(bearer);
-  } catch (err) {
-    reply.status(401).send({
-      message: "Unauthorized",
-      success: false,
-    });
-  }
-});
-
 const start = async () => {
   try {
-    // Run prisma generate and migrate commands before starting the server
     await new Promise<void>((resolve, reject) => {
       exec("npx prisma migrate deploy", (err, stdout, stderr) => {
         if (err) {
           console.error(err);
           reject(err);
+          return;
         }
+
         console.log(stdout);
         console.error(stderr);
 
-        exec("npx prisma generate", (err, stdout, stderr) => {
-          if (err) {
-            console.error(err);
-            reject(err);
+        exec("npx prisma generate", (generateErr, generateStdout, generateStderr) => {
+          if (generateErr) {
+            console.error(generateErr);
+            reject(generateErr);
+            return;
           }
-          console.log(stdout);
-          console.error(stderr);
-        });
 
-        exec("npx prisma db seed", (err, stdout, stderr) => {
-          if (err) {
-            console.error(err);
-            reject(err);
-          }
-          console.log(stdout);
-          console.error(stderr);
-          resolve();
+          console.log(generateStdout);
+          console.error(generateStderr);
+
+          exec("npx prisma db seed", (seedErr, seedStdout, seedStderr) => {
+            if (seedErr) {
+              console.error(seedErr);
+              reject(seedErr);
+              return;
+            }
+
+            console.log(seedStdout);
+            console.error(seedStderr);
+            resolve();
+          });
         });
       });
     });
 
-    // connect to database
     await prisma.$connect();
     server.log.info("Connected to Prisma");
+    await backfillEncryptedSecrets();
 
     const port = 5003;
 
@@ -149,7 +182,21 @@ const start = async () => {
       }
     );
 
-    setInterval(() => getEmails(), 10000); // Call getEmails every minute
+    let emailSyncInProgress = false;
+    setInterval(async () => {
+      if (emailSyncInProgress) {
+        return;
+      }
+
+      emailSyncInProgress = true;
+      try {
+        await getEmails();
+      } catch (error) {
+        server.log.error(error, "IMAP sync failed");
+      } finally {
+        emailSyncInProgress = false;
+      }
+    }, 10000);
   } catch (err) {
     server.log.error(err);
     await prisma.$disconnect();

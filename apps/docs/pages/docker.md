@@ -47,9 +47,5 @@ docker-compose up -d
 
 Then you can access the application at http://your-server-ip:3000
 
-The default login credentials for the admin account are:
-
-```
-admin@admin.com
-1234
-```
+On first start, an admin account is created with email `admin@admin.com`.
+Define `THYMELY_BOOTSTRAP_PASSWORD` in your environment to control the initial password.

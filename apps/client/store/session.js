@@ -1,5 +1,4 @@
 // UserContext.js
-import { getCookie } from "cookies-next";
 import { useRouter } from "next/router";
 import posthog from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
@@ -15,13 +14,12 @@ export const SessionProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchUserProfile = async () => {
-    const token = getCookie("session");
     try {
       await fetch(`/api/v1/auth/profile`, {
         method: "GET",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       })
         .then((res) => res.json())

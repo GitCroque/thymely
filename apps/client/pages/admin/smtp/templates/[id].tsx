@@ -85,9 +85,14 @@ export default function EmailTemplates() {
           )}
         </div>
         <div className="w-1/2">
-          <span>
-            <div dangerouslySetInnerHTML={{ __html: template }} />
-          </span>
+          {template !== undefined && (
+            <iframe
+              title="Email template preview"
+              sandbox=""
+              className="w-full min-h-[600px] border"
+              srcDoc={template}
+            />
+          )}
         </div>
       </div>
     </div>

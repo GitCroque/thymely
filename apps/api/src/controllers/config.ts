@@ -6,11 +6,11 @@
 // Feature Flags
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { OAuth2Client } from "google-auth-library";
-const nodemailer = require("nodemailer");
 
 import { track } from "../lib/hog";
 import { createTransportProvider } from "../lib/nodemailer/transport";
 import { requirePermission } from "../lib/roles";
+import { decryptSecret, encryptSecret } from "../lib/security/secrets";
 import { checkSession } from "../lib/session";
 import { prisma } from "../prisma";
 
@@ -36,14 +36,14 @@ export function configRoutes(fastify: FastifyInstance) {
       const { sso_active, sso_provider } = config;
 
       if (sso_active) {
-        reply.send({
+        return reply.send({
           success: true,
           sso: sso_active,
           provider: sso_provider,
         });
       }
 
-      reply.send({
+      return reply.send({
         success: true,
         sso: sso_active,
       });
@@ -57,6 +57,7 @@ export function configRoutes(fastify: FastifyInstance) {
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { clientId, clientSecret, redirectUri, issuer, jwtSecret }: any =
         request.body;
+      const encryptedClientSecret = await encryptSecret(clientSecret);
 
       const conf = await prisma.config.findFirst();
 
@@ -74,6 +75,7 @@ export function configRoutes(fastify: FastifyInstance) {
         await prisma.openIdConfig.create({
           data: {
             clientId: clientId,
+            clientSecret: encryptedClientSecret || null,
             redirectUri: redirectUri,
             issuer: issuer,
           },
@@ -83,6 +85,7 @@ export function configRoutes(fastify: FastifyInstance) {
           where: { id: existingProvider.id },
           data: {
             clientId: clientId,
+            clientSecret: encryptedClientSecret || null,
             redirectUri: redirectUri,
             issuer: issuer,
           },
@@ -112,6 +115,7 @@ export function configRoutes(fastify: FastifyInstance) {
         issuer,
         jwtSecret,
       }: any = request.body;
+      const encryptedClientSecret = (await encryptSecret(clientSecret)) || "";
 
       const conf = await prisma.config.findFirst();
 
@@ -132,7 +136,7 @@ export function configRoutes(fastify: FastifyInstance) {
           data: {
             name: name,
             clientId: clientId,
-            clientSecret: clientSecret,
+            clientSecret: encryptedClientSecret,
             redirectUri: redirectUri,
             scope: "", // Add appropriate scope if needed
             authorizationUrl: "", // Add appropriate URL if needed
@@ -145,7 +149,7 @@ export function configRoutes(fastify: FastifyInstance) {
           where: { id: existingProvider.id },
           data: {
             clientId: clientId,
-            clientSecret: clientSecret,
+            clientSecret: encryptedClientSecret,
             redirectUri: redirectUri,
           },
         });
@@ -193,7 +197,6 @@ export function configRoutes(fastify: FastifyInstance) {
     "/api/v1/config/email",
     { preHandler: requirePermission(["settings::manage"]) },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const bearer = request.headers.authorization!.split(" ")[1];
       // GET EMAIL SETTINGS
       const config = await prisma.email.findFirst({
         select: {
@@ -208,31 +211,29 @@ export function configRoutes(fastify: FastifyInstance) {
       if (config && config?.active) {
         const provider = await createTransportProvider();
 
-        await new Promise((resolve, reject) => {
+        const verification = await new Promise((resolve) => {
           provider.verify(function (error: any, success: any) {
             if (error) {
               console.log("ERROR", error);
-              reply.send({
-                success: true,
-                active: true,
-                email: config,
-                verification: error,
-              });
-            } else {
-              console.log("SUCCESS", success);
-              console.log("Server is ready to take our messages");
-              reply.send({
-                success: true,
-                active: true,
-                email: config,
-                verification: success,
-              });
+              resolve(error);
+              return;
             }
+
+            console.log("SUCCESS", success);
+            console.log("Server is ready to take our messages");
+            resolve(success);
           });
+        });
+
+        return reply.send({
+          success: true,
+          active: true,
+          email: config,
+          verification,
         });
       }
 
-      reply.send({
+      return reply.send({
         success: true,
         active: false,
       });
@@ -256,6 +257,8 @@ export function configRoutes(fastify: FastifyInstance) {
         clientSecret,
         redirectUri,
       }: any = request.body;
+      const encryptedPassword = await encryptSecret(password);
+      const encryptedClientSecret = await encryptSecret(clientSecret);
 
       const email = await prisma.email.findFirst();
 
@@ -266,10 +269,10 @@ export function configRoutes(fastify: FastifyInstance) {
             port: port,
             reply: replyto,
             user: username,
-            pass: password,
+            pass: encryptedPassword,
             active: true,
             clientId: clientId,
-            clientSecret: clientSecret,
+            clientSecret: encryptedClientSecret,
             serviceType: serviceType,
             redirectUri: redirectUri,
           },
@@ -282,10 +285,10 @@ export function configRoutes(fastify: FastifyInstance) {
             port: port,
             reply: replyto,
             user: username,
-            pass: password,
+            pass: encryptedPassword,
             active: active,
             clientId: clientId,
-            clientSecret: clientSecret,
+            clientSecret: encryptedClientSecret,
             serviceType: serviceType,
             redirectUri: redirectUri,
           },
@@ -295,10 +298,12 @@ export function configRoutes(fastify: FastifyInstance) {
       if (serviceType === "gmail") {
         const email = await prisma.email.findFirst();
 
+        const decryptedSecret = await decryptSecret(email?.clientSecret);
+
         const google = new OAuth2Client(
           //@ts-expect-error
           email?.clientId,
-          email?.clientSecret,
+          decryptedSecret,
           email?.redirectUri
         );
 
@@ -330,11 +335,12 @@ export function configRoutes(fastify: FastifyInstance) {
       const { code }: any = request.query;
 
       const email = await prisma.email.findFirst();
+      const decryptedClientSecret = await decryptSecret(email?.clientSecret);
 
       const google = new OAuth2Client(
         //@ts-expect-error
         email?.clientId,
-        email?.clientSecret,
+        decryptedClientSecret,
         email?.redirectUri
       );
 
@@ -343,26 +349,10 @@ export function configRoutes(fastify: FastifyInstance) {
       await prisma.email.update({
         where: { id: email?.id },
         data: {
-          refreshToken: r.tokens.refresh_token,
-          accessToken: r.tokens.access_token,
+          refreshToken: await encryptSecret(r.tokens.refresh_token),
+          accessToken: await encryptSecret(r.tokens.access_token),
           expiresIn: r.tokens.expiry_date,
           serviceType: "gmail",
-        },
-      });
-
-      const provider = nodemailer.createTransport({
-        service: "gmail",
-        host: "smtp.gmail.com",
-        port: 465,
-        secure: true,
-        auth: {
-          type: "OAuth2",
-          user: email?.user,
-          clientId: email?.clientId,
-          clientSecret: email?.clientSecret,
-          refreshToken: r.tokens.refresh_token,
-          accessToken: r.tokens.access_token,
-          expiresIn: r.tokens.expiry_date,
         },
       });
 

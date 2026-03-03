@@ -2,6 +2,7 @@ import EmailReplyParser from "email-reply-parser";
 import Imap from "imap";
 import { simpleParser } from "mailparser";
 import { prisma } from "../../prisma";
+import { decryptSecret } from "../security/secrets";
 import { EmailConfig, EmailQueue } from "../types/email";
 import { AuthService } from "./auth.service";
 
@@ -23,6 +24,9 @@ function getReplyText(email: any): string {
 
 export class ImapService {
   private static async getImapConfig(queue: EmailQueue): Promise<EmailConfig> {
+    const rejectUnauthorized = process.env.ALLOW_INSECURE_IMAP_TLS !== "true";
+    const decryptedPassword = await decryptSecret(queue.password);
+
     switch (queue.serviceType) {
       case "gmail": {
         const validatedAccessToken = await AuthService.getValidAccessToken(
@@ -38,17 +42,17 @@ export class ImapService {
             queue.username,
             validatedAccessToken
           ),
-          tlsOptions: { rejectUnauthorized: false, servername: queue.hostname },
+          tlsOptions: { rejectUnauthorized, servername: queue.hostname },
         };
       }
       case "other":
         return {
           user: queue.username,
-          password: queue.password,
+          password: decryptedPassword || undefined,
           host: queue.hostname,
           port: queue.tls ? 993 : 143,
           tls: queue.tls || false,
-          tlsOptions: { rejectUnauthorized: false, servername: queue.hostname },
+          tlsOptions: { rejectUnauthorized, servername: queue.hostname },
         };
       default:
         throw new Error("Unsupported service type");

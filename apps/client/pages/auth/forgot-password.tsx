@@ -12,7 +12,7 @@ export default function Login({}) {
     await fetch(`/api/v1/auth/password-reset`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, link: window.location.origin }),
+      body: JSON.stringify({ email }),
     })
       .then((res) => res.json())
       .then((res) => {

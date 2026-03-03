@@ -9,8 +9,10 @@ import { AuthorizationCode } from "simple-oauth2";
 import { getOAuthProvider, getOidcConfig } from "../lib/auth";
 import { track } from "../lib/hog";
 import { forgotPassword } from "../lib/nodemailer/auth/forgot-password";
+import { getSessionToken } from "../lib/request-token";
 import { requirePermission } from "../lib/roles";
 import { checkSession } from "../lib/session";
+import { clearSessionCookie, setSessionCookie } from "../lib/session-cookie";
 import { getOAuthClient } from "../lib/utils/oauth_client";
 import { getOidcClient } from "../lib/utils/oidc_client";
 import { prisma } from "../prisma";
@@ -21,6 +23,10 @@ const options = {
 };
 
 const cache = new LRUCache(options);
+
+function hashResetToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
 
 async function getUserEmails(token: string) {
   const res = await axios.get("https://api.github.com/user/emails", {
@@ -39,12 +45,11 @@ async function getUserEmails(token: string) {
 function generateRandomPassword(length: number): string {
   const charset =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
-  let password = "";
-  for (let i = 0; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * charset.length);
-    password += charset[randomIndex];
-  }
-  return password;
+  const randomBytes = crypto.randomBytes(length);
+
+  return Array.from(randomBytes)
+    .map((byte) => charset[byte % charset.length])
+    .join("");
 }
 
 async function tracking(event: string, properties: any) {
@@ -55,6 +60,23 @@ async function tracking(event: string, properties: any) {
     properties: properties,
     distinctId: "uuid",
   });
+}
+
+function buildSessionToken(userId: string): string {
+  const secret = Buffer.from(process.env.SECRET!, "base64");
+  return jwt.sign(
+    {
+      data: {
+        id: userId,
+        sessionId: crypto.randomBytes(32).toString("hex"),
+      },
+    },
+    secret,
+    {
+      expiresIn: "8h",
+      algorithm: "HS256",
+    }
+  );
 }
 
 export function authRoutes(fastify: FastifyInstance) {
@@ -190,35 +212,39 @@ export function authRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // Forgot password & generate code
+  // Forgot password and generate one-time token
   fastify.post(
     "/api/v1/auth/password-reset",
     { config: { rateLimit: { max: 5, timeWindow: "15 minutes" } } },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const { email, link } = request.body as { email: string; link: string };
+      const { email } = request.body as { email: string };
+      const forwardedProto = request.headers["x-forwarded-proto"];
+      const proto = Array.isArray(forwardedProto)
+        ? forwardedProto[0]
+        : forwardedProto || "http";
+      const origin =
+        process.env.PUBLIC_APP_URL || `${proto}://${request.headers.host}`;
 
-      let user = await prisma.user.findUnique({
+      const user = await prisma.user.findUnique({
         where: { email },
       });
 
-      if (!user) {
-        return reply.code(401).send({
-          message: "Invalid email",
-          success: false,
+      if (user) {
+        const resetToken = crypto.randomBytes(32).toString("hex");
+        await prisma.passwordResetToken.deleteMany({
+          where: { userId: user.id },
         });
+
+        await prisma.passwordResetToken.create({
+          data: {
+            userId: user.id,
+            code: hashResetToken(resetToken),
+            expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+          },
+        });
+
+        await forgotPassword(email, origin, resetToken);
       }
-
-      const code = crypto.randomInt(100000, 999999);
-
-      const uuid = await prisma.passwordResetToken.create({
-        data: {
-          userId: user!.id,
-          code: String(code),
-          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
-        },
-      });
-
-      forgotPassword(email, String(code), link, uuid.id);
 
       reply.send({
         success: true,
@@ -226,20 +252,28 @@ export function authRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // Check code & uuid us valid
+  // Validate password reset token
   fastify.post(
     "/api/v1/auth/password-reset/code",
     { config: { rateLimit: { max: 10, timeWindow: "15 minutes" } } },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const { code, uuid } = request.body as { code: string; uuid: string };
+      const { token } = request.body as { token: string };
+      if (!token) {
+        return reply.code(400).send({
+          message: "Missing token",
+          success: false,
+        });
+      }
+
+      const tokenHash = hashResetToken(token);
 
       const reset = await prisma.passwordResetToken.findFirst({
-        where: { code: code, id: uuid, expiresAt: { gt: new Date() } },
+        where: { code: tokenHash, expiresAt: { gt: new Date() } },
       });
 
       if (!reset) {
         return reply.code(401).send({
-          message: "Invalid or expired code",
+          message: "Invalid or expired token",
           success: false,
         });
       }
@@ -250,22 +284,37 @@ export function authRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // Reset users password via code
+  // Reset user password using one-time token
   fastify.post(
     "/api/v1/auth/password-reset/password",
+    { config: { rateLimit: { max: 5, timeWindow: "15 minutes" } } },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const { password, code } = request.body as {
+      const { password, token } = request.body as {
         password: string;
-        code: string;
+        token: string;
       };
+      if (!token) {
+        return reply.code(400).send({
+          message: "Missing token",
+          success: false,
+        });
+      }
 
+      if (!password || password.length < 8) {
+        return reply.code(400).send({
+          message: "Password must be at least 8 characters",
+          success: false,
+        });
+      }
+
+      const tokenHash = hashResetToken(token);
       const resetToken = await prisma.passwordResetToken.findFirst({
-        where: { code: code, expiresAt: { gt: new Date() } },
+        where: { code: tokenHash, expiresAt: { gt: new Date() } },
       });
 
       if (!resetToken) {
         return reply.code(401).send({
-          message: "Invalid or expired code",
+          message: "Invalid or expired token",
           success: false,
         });
       }
@@ -277,8 +326,12 @@ export function authRoutes(fastify: FastifyInstance) {
         },
       });
 
-      await prisma.passwordResetToken.delete({
-        where: { id: resetToken.id },
+      await prisma.session.deleteMany({
+        where: { userId: resetToken.userId },
+      });
+
+      await prisma.passwordResetToken.deleteMany({
+        where: { userId: resetToken.userId },
       });
 
       reply.send({
@@ -329,22 +382,7 @@ export function authRoutes(fastify: FastifyInstance) {
         throw new Error("Password is not valid");
       }
 
-      // Generate a secure session token
-      var secret = Buffer.from(process.env.SECRET!, "base64");
-      const token = jwt.sign(
-        {
-          data: {
-            id: user!.id,
-            // Add a unique identifier for this session
-            sessionId: crypto.randomBytes(32).toString("hex"),
-          },
-        },
-        secret,
-        {
-          expiresIn: "8h",
-          algorithm: "HS256",
-        }
-      );
+      const token = buildSessionToken(user!.id);
 
       // Store session with additional security info
       await prisma.session.create({
@@ -373,8 +411,9 @@ export function authRoutes(fastify: FastifyInstance) {
         external_user: user!.external_user,
       };
 
+      setSessionCookie(request, reply, token);
+
       reply.send({
-        token,
         user: data,
       });
     }
@@ -464,10 +503,14 @@ export function authRoutes(fastify: FastifyInstance) {
             name: oauthProvider.name,
           });
 
+          const oauthState = generators.state();
+          cache.set(oauthState, { provider: "oauth" });
+
           // Generate authorization URL
           const uri = client.authorizeURL({
             redirect_uri: oauthProvider.redirectUri,
             scope: oauthProvider.scope,
+            state: oauthState,
           });
 
           reply.send({
@@ -490,14 +533,12 @@ export function authRoutes(fastify: FastifyInstance) {
       try {
         const oidc = await getOidcConfig();
 
-        const config = await getOidcClient(oidc);
-        if (!config) {
+        const oidcClient = await getOidcClient(oidc);
+        if (!oidcClient) {
           return reply
             .code(500)
             .send({ error: "OIDC configuration not properly set" });
         }
-
-        const oidcClient = await getOidcClient(config);
 
         // Parse the callback parameters
         const params = oidcClient.callbackParams(request.raw);
@@ -512,6 +553,9 @@ export function authRoutes(fastify: FastifyInstance) {
 
         // Retrieve the state parameter from the callback
         const state = params.state;
+        if (!state) {
+          return reply.status(400).send("Invalid or expired session");
+        }
 
         const sessionData: any = cache.get(state);
 
@@ -527,9 +571,7 @@ export function authRoutes(fastify: FastifyInstance) {
         }
 
         let tokens = await oidcClient.callback(
-          (
-            await oidc
-          ).redirectUri,
+          oidc.redirectUri,
           params,
           {
             code_verifier: codeVerifier,
@@ -541,7 +583,19 @@ export function authRoutes(fastify: FastifyInstance) {
         cache.delete(state);
 
         // Retrieve user information
+        if (!tokens.access_token) {
+          return reply.status(400).send({
+            success: false,
+            error: "OIDC access token missing",
+          });
+        }
         const userInfo = await oidcClient.userinfo(tokens.access_token);
+        if (!userInfo.email) {
+          return reply.status(400).send({
+            success: false,
+            error: "OIDC email claim missing",
+          });
+        }
 
         let user = await prisma.user.findUnique({
           where: { email: userInfo.email },
@@ -564,30 +618,23 @@ export function authRoutes(fastify: FastifyInstance) {
           });
         }
 
-        const b64string = process.env.SECRET;
-        const secret = Buffer.from(b64string!, "base64");
-
-        // Issue JWT token
-        let signed_token = jwt.sign(
-          {
-            data: { id: user.id },
-          },
-          secret,
-          { expiresIn: "8h" }
-        );
+        const signedToken = buildSessionToken(user.id);
 
         // Create a session
         await prisma.session.create({
           data: {
             userId: user.id,
-            sessionToken: signed_token,
+            sessionToken: signedToken,
             expires: new Date(Date.now() + 8 * 60 * 60 * 1000),
+            userAgent: request.headers["user-agent"] || "",
+            ipAddress: request.ip,
           },
         });
 
+        setSessionCookie(request, reply, signedToken);
+
         // Send Response
         reply.send({
-          token: signed_token,
           onboarding: user.firstLogin,
           success: true,
         });
@@ -606,7 +653,7 @@ export function authRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/api/v1/auth/oauth/callback",
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const { code }: any = request.query;
+      const { code, state }: any = request.query;
       const oauthProvider = await getOAuthProvider();
 
       if (!oauthProvider) {
@@ -615,10 +662,26 @@ export function authRoutes(fastify: FastifyInstance) {
         });
       }
 
+      if (!state) {
+        return reply.code(400).send({
+          success: false,
+          error: "Missing OAuth state",
+        });
+      }
+
+      const cachedState = cache.get(state as string);
+      if (!cachedState) {
+        return reply.code(400).send({
+          success: false,
+          error: "Invalid or expired OAuth state",
+        });
+      }
+      cache.delete(state as string);
+
       const client = new AuthorizationCode({
         client: {
           id: oauthProvider.clientId,
-          secret: oauthProvider.clientSecret,
+          secret: oauthProvider.clientSecret || "",
         },
         auth: {
           tokenHost: oauthProvider.authorizationUrl,
@@ -662,32 +725,25 @@ export function authRoutes(fastify: FastifyInstance) {
           });
         }
 
-        const b64string = process.env.SECRET;
-        const secret = Buffer.from(b64string!, "base64");
-
-        // Issue JWT token
-        let signed_token = jwt.sign(
-          {
-            data: { id: user.id },
-          },
-          secret,
-          { expiresIn: "8h" }
-        );
+        const signedToken = buildSessionToken(user.id);
 
         // Create a session
         await prisma.session.create({
           data: {
             userId: user.id,
-            sessionToken: signed_token,
+            sessionToken: signedToken,
             expires: new Date(Date.now() + 8 * 60 * 60 * 1000),
+            userAgent: request.headers["user-agent"] || "",
+            ipAddress: request.ip,
           },
         });
 
         await tracking("user_logged_in_oauth", {});
 
+        setSessionCookie(request, reply, signedToken);
+
         // Send Response
         reply.send({
-          token: signed_token,
           onboarding: user.firstLogin,
           success: true,
         });
@@ -753,16 +809,16 @@ export function authRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/api/v1/auth/profile",
     async (request: FastifyRequest, reply: FastifyReply) => {
-      let session = await prisma.session.findUnique({
-        where: {
-          sessionToken: request.headers.authorization!.split(" ")[1],
-        },
-      });
+      const currentUser = await checkSession(request);
+      if (!currentUser) {
+        return reply.code(401).send({
+          message: "Unauthorized",
+          success: false,
+        });
+      }
 
-      await checkSession(request);
-
-      let user = await prisma.user.findUnique({
-        where: { id: session!.userId },
+      const user = await prisma.user.findUnique({
+        where: { id: currentUser.id },
       });
 
       if (!user) {
@@ -813,15 +869,34 @@ export function authRoutes(fastify: FastifyInstance) {
       };
 
       const session = await checkSession(request);
+      if (!session) {
+        return reply.code(401).send({
+          message: "Unauthorized",
+          success: false,
+        });
+      }
+
+      if (!password || password.length < 8) {
+        return reply.code(400).send({
+          message: "Password must be at least 8 characters",
+          success: false,
+        });
+      }
 
       const hashedPass = await bcrypt.hash(password, 10);
 
       await prisma.user.update({
-        where: { id: session?.id },
+        where: { id: session.id },
         data: {
           password: hashedPass,
         },
       });
+
+      await prisma.session.deleteMany({
+        where: { userId: session.id },
+      });
+
+      clearSessionCookie(request, reply);
 
       reply.send({
         success: true,
@@ -841,20 +916,17 @@ export function authRoutes(fastify: FastifyInstance) {
         user: string;
       };
 
-      const bearer = request.headers.authorization!.split(" ")[1];
-      let session = await prisma.session.findUnique({
-        where: {
-          sessionToken: bearer,
-        },
-      });
-
-      const check = await prisma.user.findUnique({
-        where: { id: session?.userId },
-      });
-
-      if (check?.isAdmin === false) {
+      const currentUser = await checkSession(request);
+      if (!currentUser || !currentUser.isAdmin) {
         return reply.code(401).send({
           message: "Unauthorized",
+        });
+      }
+
+      if (!password || password.length < 8) {
+        return reply.code(400).send({
+          message: "Password must be at least 8 characters",
+          success: false,
         });
       }
 
@@ -865,6 +937,10 @@ export function authRoutes(fastify: FastifyInstance) {
         data: {
           password: hashedPass,
         },
+      });
+
+      await prisma.session.deleteMany({
+        where: { userId: user },
       });
 
       reply.send({
@@ -960,6 +1036,8 @@ export function authRoutes(fastify: FastifyInstance) {
       await prisma.session.deleteMany({
         where: { userId: id },
       });
+
+      clearSessionCookie(request, reply);
 
       reply.send({ success: true });
     }
@@ -1090,6 +1168,11 @@ export function authRoutes(fastify: FastifyInstance) {
       await prisma.session.delete({
         where: { id: sessionId },
       });
+
+      const currentToken = getSessionToken(request);
+      if (currentToken && session.sessionToken === currentToken) {
+        clearSessionCookie(request, reply);
+      }
 
       reply.send({ success: true });
     }

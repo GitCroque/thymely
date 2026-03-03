@@ -1,4 +1,5 @@
 const { PrismaClient } = require("@prisma/client");
+const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 
 const prisma = new PrismaClient();
@@ -8,6 +9,10 @@ async function main() {
   const templates = await prisma.emailTemplate.findMany({});
 
   if (setup === null) {
+    const bootstrapPassword =
+      process.env.THYMELY_BOOTSTRAP_PASSWORD ||
+      crypto.randomBytes(18).toString("base64url");
+
     await prisma.user.upsert({
       where: { email: "admin@admin.com" },
       update: {},
@@ -15,8 +20,7 @@ async function main() {
         email: `admin@admin.com`,
         name: "admin",
         isAdmin: true,
-        password:
-          "$2b$10$BFmibvOW7FtY0soAAwujoO9y2tIyB7WEJ2HNq9O7zh9aeejMvRsKu",
+        password: await bcrypt.hash(bootstrapPassword, 10),
         language: "en",
       },
     });
@@ -51,6 +55,15 @@ async function main() {
         first_time_setup: false,
       },
     });
+
+    console.log("[SECURITY] Initial admin account created.");
+    console.log("[SECURITY] Email: admin@admin.com");
+    console.log(
+      "[SECURITY] Password:",
+      process.env.THYMELY_BOOTSTRAP_PASSWORD
+        ? "(provided by THYMELY_BOOTSTRAP_PASSWORD)"
+        : bootstrapPassword
+    );
   } else {
     console.log("No need to seed, already seeded");
   }

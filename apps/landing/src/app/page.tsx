@@ -1,5 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
 "use-client";
+import Image from "next/image";
 import {
   Bell,
   ChevronRight,
@@ -106,6 +107,11 @@ const posts = [
     embed: `<iframe width="560" height="315" src="https://www.youtube.com/embed/Kq0BMVhbFkA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`,
   },
 ];
+
+function getSafeYouTubeSrc(embed: string): string {
+  const match = embed.match(/src="(https:\/\/www\.youtube\.com\/embed\/[^"]+)"/i);
+  return match ? match[1] : "";
+}
 
 const stats = [
   { label: "Docker Pulls", value: "190k" },
@@ -256,11 +262,14 @@ export default function Home() {
           </div>
         </div>
 
-        <div>
-          <img
-            className="h-full w-full rounded-md shadow-lg my-4"
+        <div className="relative my-4 aspect-[16/10] w-full">
+          <Image
+            className="rounded-md shadow-lg object-cover"
             src="/dashboard.jpeg"
             alt="landing page screenshot of dashboard"
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            priority
           />
         </div>
       </div>
@@ -420,17 +429,24 @@ export default function Home() {
                     </a>
                   </h3>
                   <div className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600 max-w-full">
-                    <div
-                      className="max-w-full relative w-[350px] sm:w-full"
-                      dangerouslySetInnerHTML={{ __html: post.embed }}
-                    ></div>
+                    <iframe
+                      className="max-w-full relative w-[350px] sm:w-full aspect-video"
+                      src={getSafeYouTubeSrc(post.embed)}
+                      title={post.title}
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
                   </div>
                 </div>
                 <div className="relative mt-4 flex items-center gap-x-4">
-                  <img
+                  <Image
                     src={post.author.imageUrl}
                     alt=""
                     className="h-10 w-10 rounded-full bg-gray-50"
+                    width={40}
+                    height={40}
                   />
                   <div className="text-sm leading-6">
                     <p className="font-semibold text-gray-900">

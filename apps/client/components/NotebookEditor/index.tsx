@@ -17,14 +17,10 @@ import { useDebounce } from "use-debounce";
 import { useUser } from "../../store/session";
 
 function isHTML(str) {
-  var a = document.createElement("div");
-  a.innerHTML = str;
-
-  for (var c = a.childNodes, i = c.length; i--; ) {
-    if (c[i].nodeType == 1) return true;
-  }
-
-  return false;
+  const doc = new DOMParser().parseFromString(str, "text/html");
+  return Array.from(doc.body.childNodes).some(
+    (node) => node.nodeType === Node.ELEMENT_NODE
+  );
 }
 
 export default function NotebookEditor() {

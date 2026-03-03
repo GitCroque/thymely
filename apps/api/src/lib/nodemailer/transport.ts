@@ -1,4 +1,5 @@
 import { prisma } from "../../prisma";
+import { decryptSecret } from "../security/secrets";
 
 const nodemailer = require("nodemailer");
 const { ConfidentialClientApplication } = require("@azure/identity");
@@ -10,6 +11,11 @@ export async function createTransportProvider() {
     throw new Error("No email provider configured.");
   }
 
+  const clientSecret = await decryptSecret(provider?.clientSecret);
+  const refreshToken = await decryptSecret(provider?.refreshToken);
+  const accessToken = await decryptSecret(provider?.accessToken);
+  const password = await decryptSecret(provider?.pass);
+
   if (provider?.serviceType === "gmail") {
     return nodemailer.createTransport({
       service: "gmail",
@@ -20,9 +26,9 @@ export async function createTransportProvider() {
         type: "OAuth2",
         user: provider?.user,
         clientId: provider?.clientId,
-        clientSecret: provider?.clientSecret,
-        refreshToken: provider?.refreshToken,
-        accessToken: provider?.accessToken,
+        clientSecret,
+        refreshToken,
+        accessToken,
         expiresIn: provider?.expiresIn,
       },
     });
@@ -32,7 +38,7 @@ export async function createTransportProvider() {
       auth: {
         clientId: provider?.clientId,
         authority: `https://login.microsoftonline.com/${provider?.tenantId}`,
-        clientSecret: provider?.clientSecret,
+        clientSecret,
       },
     });
 
@@ -46,7 +52,7 @@ export async function createTransportProvider() {
         type: "OAuth2",
         user: provider?.user,
         clientId: provider?.clientId,
-        clientSecret: provider?.clientSecret,
+        clientSecret,
         accessToken: result.accessToken,
       },
     });
@@ -58,7 +64,7 @@ export async function createTransportProvider() {
       secure: provider?.port === "465" ? true : false, // true for 465, false for other ports
       auth: {
         user: provider?.user,
-        pass: provider?.pass,
+        pass: password,
       },
     });
   } else {

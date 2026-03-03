@@ -47,10 +47,12 @@ FROM base AS runner
 WORKDIR /app
 
 # Don't run production as root
-# RUN addgroup --system --gid 1001 prod
-# RUN adduser --system --uid 1001 prod
-# USER prod
+RUN addgroup --system --gid 1001 prod
+RUN adduser --system --uid 1001 --ingroup prod prod
 COPY --from=installer /app .
+
+RUN chown -R prod:prod /app
+USER prod
 
 EXPOSE 8090
 CMD ["node", "apps/api/dist/"]

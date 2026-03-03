@@ -1,5 +1,4 @@
 import { toast } from "@/shadcn/hooks/use-toast";
-import { setCookie } from "cookies-next";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -17,13 +16,13 @@ export default function Login({}) {
     try {
       await fetch(`/api/v1/auth/login`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       })
         .then((res) => res.json())
         .then(async (res) => {
           if (res.user) {
-            setCookie("session", res.token);
             if (res.user.external_user) {
               router.push("/portal");
             } else {

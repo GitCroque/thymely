@@ -71,7 +71,13 @@ export function dataRoutes(fastify: FastifyInstance) {
       const logs = await import("fs/promises").then((fs) =>
         fs.readFile("logs.log", "utf-8")
       );
-      reply.send({ logs: logs });
+
+      // Avoid returning unbounded data and reduce accidental secret leakage.
+      const maxChars = 100_000;
+      const safeLogs =
+        logs.length > maxChars ? logs.slice(logs.length - maxChars) : logs;
+
+      reply.send({ logs: safeLogs });
     }
   );
 }

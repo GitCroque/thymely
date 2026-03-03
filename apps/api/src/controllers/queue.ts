@@ -3,6 +3,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { OAuth2Client } from "google-auth-library";
 import { track } from "../lib/hog";
 import { requirePermission } from "../lib/roles";
+import { decryptSecret, encryptSecret } from "../lib/security/secrets";
 import { prisma } from "../prisma";
 
 async function tracking(event: string, properties: any) {
@@ -34,17 +35,19 @@ export function emailQueueRoutes(fastify: FastifyInstance) {
         clientSecret,
         redirectUri,
       }: any = request.body;
+      const encryptedPassword = await encryptSecret(password);
+      const encryptedClientSecret = await encryptSecret(clientSecret);
 
       const mailbox = await prisma.emailQueue.create({
         data: {
           name: name,
           username,
-          password,
+          password: encryptedPassword,
           hostname,
           tls,
           serviceType,
           clientId,
-          clientSecret,
+          clientSecret: encryptedClientSecret,
           redirectUri,
         },
       });
@@ -102,11 +105,12 @@ export function emailQueueRoutes(fastify: FastifyInstance) {
           id: mailboxId,
         },
       });
+      const decryptedClientSecret = await decryptSecret(mailbox?.clientSecret);
 
       const google = new OAuth2Client(
         //@ts-expect-error
         mailbox?.clientId,
-        mailbox?.clientSecret,
+        decryptedClientSecret,
         mailbox?.redirectUri
       );
 
@@ -117,8 +121,8 @@ export function emailQueueRoutes(fastify: FastifyInstance) {
       await prisma.emailQueue.update({
         where: { id: mailbox?.id },
         data: {
-          refreshToken: r.tokens.refresh_token,
-          accessToken: r.tokens.access_token,
+          refreshToken: await encryptSecret(r.tokens.refresh_token),
+          accessToken: await encryptSecret(r.tokens.access_token),
           expiresIn: r.tokens.expiry_date,
           serviceType: "gmail",
         },

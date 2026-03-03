@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
 import axios from "axios";
-import { checkToken } from "../lib/jwt";
+import crypto from "crypto";
 
 //@ts-ignore
 import { track } from "../lib/hog";
@@ -18,6 +18,8 @@ import {
 } from "../lib/notifications/issue/status";
 import { sendWebhookNotification } from "../lib/notifications/webhook";
 import { requirePermission } from "../lib/roles";
+import { decryptSecret } from "../lib/security/secrets";
+import { assertSafeWebhookUrl } from "../lib/security/webhook-url";
 import { checkSession } from "../lib/session";
 import { prisma } from "../prisma";
 
@@ -28,6 +30,54 @@ const validateEmail = (email: string) => {
       /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
     );
 };
+
+function buildWebhookHeaders(secret: string | null | undefined, body: unknown) {
+  if (!secret) {
+    return { "Content-Type": "application/json" };
+  }
+
+  const timestamp = Date.now().toString();
+  const signature = crypto
+    .createHmac("sha256", secret)
+    .update(`${timestamp}.${JSON.stringify(body)}`)
+    .digest("hex");
+
+  return {
+    "Content-Type": "application/json",
+    "X-Thymely-Timestamp": timestamp,
+    "X-Thymely-Signature": `sha256=${signature}`,
+  };
+}
+
+async function dispatchTicketCreatedWebhooks(ticket: any) {
+  const webhooks = await prisma.webhooks.findMany({
+    where: {
+      type: "ticket_created",
+      active: true,
+    },
+  });
+
+  if (webhooks.length === 0) {
+    return;
+  }
+
+  const message = {
+    event: "ticket_created",
+    id: ticket.id,
+    title: ticket.title,
+    priority: ticket.priority,
+    email: ticket.email,
+    name: ticket.name,
+    type: ticket.type,
+    createdBy: ticket.createdBy,
+    assignedTo: ticket.assignedTo,
+    client: ticket.client,
+  };
+
+  await Promise.allSettled(
+    webhooks.map((webhook) => sendWebhookNotification(webhook, message))
+  );
+}
 
 export function ticketRoutes(fastify: FastifyInstance) {
   fastify.post(
@@ -83,7 +133,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
         },
       });
 
-      if (!email && !validateEmail(email)) {
+      if (email && validateEmail(email)) {
         await sendTicketCreate(ticket);
       }
 
@@ -99,30 +149,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
         await assignedNotification(engineer, ticket, user);
       }
 
-      const webhook = await prisma.webhooks.findMany({
-        where: {
-          type: "ticket_created",
-        },
-      });
-
-      for (let i = 0; i < webhook.length; i++) {
-        if (webhook[i].active === true) {
-          const message = {
-            event: "ticket_created",
-            id: ticket.id,
-            title: ticket.title,
-            priority: ticket.priority,
-            email: ticket.email,
-            name: ticket.name,
-            type: ticket.type,
-            createdBy: ticket.createdBy,
-            assignedTo: ticket.assignedTo,
-            client: ticket.client,
-          };
-
-          await sendWebhookNotification(webhook[i], message);
-        }
-      }
+      await dispatchTicketCreatedWebhooks(ticket);
 
       const hog = track();
 
@@ -141,6 +168,11 @@ export function ticketRoutes(fastify: FastifyInstance) {
 
   fastify.post(
     "/api/v1/ticket/public/create",
+    {
+      config: {
+        rateLimit: { max: 20, timeWindow: "15 minutes" },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const {
         name,
@@ -187,7 +219,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
         },
       });
 
-      if (!email && !validateEmail(email)) {
+      if (email && validateEmail(email)) {
         await sendTicketCreate(ticket);
       }
 
@@ -205,30 +237,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
         await assignedNotification(engineer, ticket, user);
       }
 
-      const webhook = await prisma.webhooks.findMany({
-        where: {
-          type: "ticket_created",
-        },
-      });
-
-      for (let i = 0; i < webhook.length; i++) {
-        if (webhook[i].active === true) {
-          const message = {
-            event: "ticket_created",
-            id: ticket.id,
-            title: ticket.title,
-            priority: ticket.priority,
-            email: ticket.email,
-            name: ticket.name,
-            type: ticket.type,
-            createdBy: ticket.createdBy,
-            assignedTo: ticket.assignedTo,
-            client: ticket.client,
-          };
-
-          await sendWebhookNotification(webhook[i], message);
-        }
-      }
+      await dispatchTicketCreatedWebhooks(ticket);
 
       const hog = track();
 
@@ -268,37 +277,44 @@ export function ticketRoutes(fastify: FastifyInstance) {
         },
       });
 
-      const timeTracking = await prisma.timeTracking.findMany({
-        where: {
-          ticketId: id,
-        },
-        include: {
-          user: {
-            select: {
-              name: true,
+      if (!ticket) {
+        return reply.status(404).send({
+          success: false,
+          message: "Ticket not found",
+        });
+      }
+
+      const [timeTracking, comments, files] = await Promise.all([
+        prisma.timeTracking.findMany({
+          where: {
+            ticketId: id,
+          },
+          include: {
+            user: {
+              select: {
+                name: true,
+              },
             },
           },
-        },
-      });
-
-      const comments = await prisma.comment.findMany({
-        where: {
-          ticketId: ticket!.id,
-        },
-        include: {
-          user: {
-            select: {
-              name: true,
+        }),
+        prisma.comment.findMany({
+          where: {
+            ticketId: ticket.id,
+          },
+          include: {
+            user: {
+              select: {
+                name: true,
+              },
             },
           },
-        },
-      });
-
-      const files = await prisma.ticketFile.findMany({
-        where: {
-          ticketId: id,
-        },
-      });
+        }),
+        prisma.ticketFile.findMany({
+          where: {
+            ticketId: id,
+          },
+        }),
+      ]);
 
       var t = {
         ...ticket,
@@ -375,10 +391,10 @@ export function ticketRoutes(fastify: FastifyInstance) {
   // Get all tickets (admin)
   fastify.get(
     "/api/v1/tickets/all",
+    {
+      preHandler: requirePermission(["issue::read"]),
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const bearer = request.headers.authorization!.split(" ")[1];
-      const token = checkToken(bearer);
-
       const tickets = await prisma.ticket.findMany({
         where: { hidden: false },
         orderBy: [
@@ -409,6 +425,9 @@ export function ticketRoutes(fastify: FastifyInstance) {
   // Get all open tickets for a user
   fastify.get(
     "/api/v1/tickets/user/open",
+    {
+      preHandler: requirePermission(["issue::read"]),
+    },
 
     async (request: FastifyRequest, reply: FastifyReply) => {
       const user = await checkSession(request);
@@ -438,6 +457,9 @@ export function ticketRoutes(fastify: FastifyInstance) {
   // Get all closed tickets
   fastify.get(
     "/api/v1/tickets/completed",
+    {
+      preHandler: requirePermission(["issue::read"]),
+    },
 
     async (request: FastifyRequest, reply: FastifyReply) => {
       const tickets = await prisma.ticket.findMany({
@@ -465,6 +487,9 @@ export function ticketRoutes(fastify: FastifyInstance) {
   // Get all unassigned tickets
   fastify.get(
     "/api/v1/tickets/unassigned",
+    {
+      preHandler: requirePermission(["issue::read"]),
+    },
 
     async (request: FastifyRequest, reply: FastifyReply) => {
       const tickets = await prisma.ticket.findMany({
@@ -734,45 +759,52 @@ export function ticketRoutes(fastify: FastifyInstance) {
 
       await sendTicketStatus(ticket);
 
-      const webhook = await prisma.webhooks.findMany({
+      const webhooks = await prisma.webhooks.findMany({
         where: {
           type: "ticket_status_changed",
+          active: true,
         },
       });
 
-      for (let i = 0; i < webhook.length; i++) {
-        const url = webhook[i].url;
+      const statusLabel = status ? "Completed" : "Outstanding";
 
-        if (webhook[i].active === true) {
-          const s = status ? "Completed" : "Outstanding";
-          if (url.includes("discord.com")) {
+      await Promise.allSettled(
+        webhooks.map(async (webhook) => {
+          try {
+            await assertSafeWebhookUrl(webhook.url);
+          } catch (error) {
+            console.error("Unsafe webhook URL blocked:", webhook.url, error);
+            return;
+          }
+
+          const decryptedSecret = await decryptSecret(webhook.secret);
+
+          if (webhook.url.includes("discord.com")) {
             const message = {
-              content: `Ticket ${ticket.id} created by ${ticket.email}, has had it's status changed to ${s}`,
+              content: `Ticket ${ticket.id} created by ${ticket.email}, has had it's status changed to ${statusLabel}`,
               avatar_url:
                 "https://avatars.githubusercontent.com/u/76014454?s=200&v=4",
               username: "Thymely",
             };
-            axios
-              .post(url, message)
-              .then((response) => {
-                console.log("Message sent successfully!");
-                console.log("Discord API response:", response.data);
-              })
-              .catch((error) => {
-                console.error("Error sending message:", error);
-              });
-          } else {
-            await axios.post(`${webhook[i].url}`, {
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                data: `Ticket ${ticket.id} created by ${ticket.email}, has had it's status changed to ${s}`,
-              }),
+
+            await axios.post(webhook.url, message, {
+              timeout: 5000,
+              maxRedirects: 0,
+              headers: buildWebhookHeaders(decryptedSecret, message),
             });
+            return;
           }
-        }
-      }
+
+          const payload = {
+            data: `Ticket ${ticket.id} created by ${ticket.email}, has had it's status changed to ${statusLabel}`,
+          };
+          await axios.post(webhook.url, payload, {
+            timeout: 5000,
+            maxRedirects: 0,
+            headers: buildWebhookHeaders(decryptedSecret, payload),
+          });
+        })
+      );
 
       reply.send({
         success: true,
@@ -924,6 +956,9 @@ export function ticketRoutes(fastify: FastifyInstance) {
   // Get all open tickets for an external user
   fastify.get(
     "/api/v1/tickets/user/open/external",
+    {
+      preHandler: requirePermission(["issue::read"]),
+    },
 
     async (request: FastifyRequest, reply: FastifyReply) => {
       const user = await checkSession(request);
@@ -953,6 +988,9 @@ export function ticketRoutes(fastify: FastifyInstance) {
   // Get all closed tickets for an external user
   fastify.get(
     "/api/v1/tickets/user/closed/external",
+    {
+      preHandler: requirePermission(["issue::read"]),
+    },
 
     async (request: FastifyRequest, reply: FastifyReply) => {
       const user = await checkSession(request);

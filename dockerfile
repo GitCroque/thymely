@@ -37,6 +37,8 @@ RUN cd apps/client && npx next build
 
 FROM node:lts AS runner
 
+WORKDIR /app
+
 COPY --from=builder /app/apps/api/ ./apps/api/
 COPY --from=builder /app/apps/client/.next/standalone ./apps/client
 COPY --from=builder /app/apps/client/.next/static ./apps/client/.next/static
@@ -46,5 +48,9 @@ COPY --from=builder /app/ecosystem.config.js ./ecosystem.config.js
 EXPOSE 3000 5003
 
 RUN npm install -g pm2
+RUN addgroup --system app && adduser --system --ingroup app app
+RUN chown -R app:app /app
+
+USER app
 
 CMD ["pm2-runtime", "ecosystem.config.js"]

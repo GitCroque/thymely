@@ -1,6 +1,8 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { track } from "../lib/hog";
 import { requirePermission } from "../lib/roles";
+import { encryptSecret } from "../lib/security/secrets";
+import { assertSafeWebhookUrl } from "../lib/security/webhook-url";
 import { checkSession } from "../lib/session";
 import { prisma } from "../prisma";
 
@@ -14,13 +16,23 @@ export function webhookRoutes(fastify: FastifyInstance) {
     async (request: FastifyRequest, reply: FastifyReply) => {
       const user = await checkSession(request);
       const { name, url, type, active, secret }: any = request.body;
+
+      try {
+        await assertSafeWebhookUrl(url);
+      } catch (error: any) {
+        return reply.status(400).send({
+          message: error?.message || "Invalid webhook URL",
+          success: false,
+        });
+      }
+
       await prisma.webhooks.create({
         data: {
           name,
           url,
           type,
           active,
-          secret,
+          secret: await encryptSecret(secret),
           createdBy: user!.id,
         },
       });
@@ -45,7 +57,17 @@ export function webhookRoutes(fastify: FastifyInstance) {
       preHandler: requirePermission(["webhook::read"]),
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const webhooks = await prisma.webhooks.findMany({});
+      const webhooks = await prisma.webhooks.findMany({
+        select: {
+          id: true,
+          createdAt: true,
+          updatedAt: true,
+          name: true,
+          url: true,
+          type: true,
+          active: true,
+        },
+      });
 
       reply.status(200).send({ webhooks: webhooks, success: true });
     }
