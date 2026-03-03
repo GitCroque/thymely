@@ -19,11 +19,10 @@ COPY apps/landing/package.json ./apps/landing/
 COPY packages/config/package.json ./packages/config/
 COPY packages/tsconfig/package.json ./packages/tsconfig/
 
-# Install dependencies with lockfile, skip postinstall scripts
+# Install dependencies with lockfile
+# --mode=skip-build prevents Yarn from running postinstall/build scripts
 # (prisma generate needs the schema which isn't copied yet)
-ENV YARN_ENABLE_SCRIPTS=false
-RUN yarn install
-ENV YARN_ENABLE_SCRIPTS=true
+RUN yarn install --mode=skip-build
 
 # Copy source code
 COPY apps/api ./apps/api
