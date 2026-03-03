@@ -1,28 +1,40 @@
 FROM node:lts AS builder
 
-# Set the working directory inside the container
 WORKDIR /app
 
 RUN apt-get update && \
     apt-get install -y build-essential python3
 
-# Copy the package.json and package-lock.json files for both apps
-COPY apps/api/package*.json ./apps/api/
-COPY apps/client/package*.json ./apps/client/
-COPY ./ecosystem.config.js ./ecosystem.config.js
+# Enable Corepack to use Yarn 4 (specified in package.json packageManager)
+RUN corepack enable
 
-RUN npm i -g prisma
-RUN npm i -g typescript@latest -g --force 
+# Copy monorepo root config and lockfile
+COPY package.json yarn.lock .yarnrc.yml ./
 
-# Copy the source code for both apps
+# Copy all workspace package.json files (required by yarn workspaces)
+COPY apps/api/package.json ./apps/api/
+COPY apps/client/package.json ./apps/client/
+COPY apps/docs/package.json ./apps/docs/
+COPY apps/landing/package.json ./apps/landing/
+COPY packages/config/package.json ./packages/config/
+COPY packages/tsconfig/package.json ./packages/tsconfig/
+
+# Install dependencies with lockfile, skip postinstall scripts
+# (prisma generate needs the schema which isn't copied yet)
+ENV YARN_ENABLE_SCRIPTS=false
+RUN yarn install
+ENV YARN_ENABLE_SCRIPTS=true
+
+# Copy source code
 COPY apps/api ./apps/api
 COPY apps/client ./apps/client
+COPY ecosystem.config.js ./
 
-RUN cd apps/api && npm install
-RUN cd apps/api && npm run build
+# Build API: generate Prisma client then compile TypeScript
+RUN cd apps/api && npx prisma generate && npx tsc
 
-RUN cd apps/client && yarn install --ignore-scripts --network-timeout 1000000
-RUN cd apps/client && yarn build
+# Build client
+RUN cd apps/client && npx next build
 
 FROM node:lts AS runner
 
@@ -32,12 +44,8 @@ COPY --from=builder /app/apps/client/.next/static ./apps/client/.next/static
 COPY --from=builder /app/apps/client/public ./apps/client/public
 COPY --from=builder /app/ecosystem.config.js ./ecosystem.config.js
 
-# Expose the ports for both apps
 EXPOSE 3000 5003
 
-# Install PM2 globally
 RUN npm install -g pm2
 
-# Start both apps using PM2
 CMD ["pm2-runtime", "ecosystem.config.js"]
-
