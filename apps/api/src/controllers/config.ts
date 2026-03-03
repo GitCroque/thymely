@@ -53,7 +53,7 @@ export function configRoutes(fastify: FastifyInstance) {
   // Update OIDC Provider
   fastify.post(
     "/api/v1/config/authentication/oidc/update",
-
+    { preHandler: requirePermission(["settings::manage"]) },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { clientId, clientSecret, redirectUri, issuer, jwtSecret }: any =
         request.body;
@@ -101,7 +101,7 @@ export function configRoutes(fastify: FastifyInstance) {
   // Update Oauth Provider
   fastify.post(
     "/api/v1/config/authentication/oauth/update",
-
+    { preHandler: requirePermission(["settings::manage"]) },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const {
         name,
@@ -163,7 +163,7 @@ export function configRoutes(fastify: FastifyInstance) {
   // Delete auth config
   fastify.delete(
     "/api/v1/config/authentication",
-
+    { preHandler: requirePermission(["settings::manage"]) },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const conf = await prisma.config.findFirst();
 
@@ -191,7 +191,7 @@ export function configRoutes(fastify: FastifyInstance) {
   // Check if Emails are enabled & GET email settings
   fastify.get(
     "/api/v1/config/email",
-
+    { preHandler: requirePermission(["settings::manage"]) },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const bearer = request.headers.authorization!.split(" ")[1];
       // GET EMAIL SETTINGS
@@ -242,7 +242,7 @@ export function configRoutes(fastify: FastifyInstance) {
   // Update Email Provider Settings
   fastify.put(
     "/api/v1/config/email",
-
+    { preHandler: requirePermission(["settings::manage"]) },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const {
         host,
@@ -325,7 +325,7 @@ export function configRoutes(fastify: FastifyInstance) {
   // Google oauth callback
   fastify.get(
     "/api/v1/config/email/oauth/gmail",
-
+    { preHandler: requirePermission(["settings::manage"]) },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { code }: any = request.query;
 
@@ -376,7 +376,7 @@ export function configRoutes(fastify: FastifyInstance) {
   // Disable/Enable Email
   fastify.delete(
     "/api/v1/config/email",
-
+    { preHandler: requirePermission(["settings::manage"]) },
     async (request: FastifyRequest, reply: FastifyReply) => {
       await prisma.email.deleteMany({});
 

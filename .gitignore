@@ -44,3 +44,7 @@ dist
 infra
 
 .cursorrules
+.cursor/
+
+# Claude Code
+CLAUDE.md

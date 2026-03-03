@@ -1,4 +1,5 @@
 import cors from "@fastify/cors";
+import rateLimit from "@fastify/rate-limit";
 import "dotenv/config";
 import Fastify, { FastifyInstance } from "fastify";
 import multer from "fastify-multer";
@@ -25,11 +26,21 @@ const server: FastifyInstance = Fastify({
   disableRequestLogging: true,
   trustProxy: true,
 });
-server.register(cors, {
-  origin: "*",
+const corsOrigin = process.env.CORS_ORIGIN;
+const origins = corsOrigin
+  ? corsOrigin.split(",").map((o) => o.trim())
+  : "*";
 
+server.register(cors, {
+  origin: origins,
+  credentials: corsOrigin ? true : false,
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization", "Accept"],
+});
+
+server.register(rateLimit, {
+  max: 100,
+  timeWindow: "1 minute",
 });
 
 server.register(multer.contentParser);

@@ -1,9 +1,15 @@
 import { PostHog } from "posthog-node";
 
-export function track() {
-  return new PostHog(
-    "phc_2gbpy3JPtDC6hHrQy35yMxMci1NY0fD1sttGTcPjwVf",
+const noopClient = {
+  capture: () => {},
+  shutdownAsync: () => Promise.resolve(),
+} as unknown as PostHog;
 
-    { host: "https://app.posthog.com" }
-  );
+export function track(): PostHog {
+  const apiKey = process.env.POSTHOG_API_KEY;
+  if (!apiKey) {
+    return noopClient;
+  }
+
+  return new PostHog(apiKey, { host: "https://app.posthog.com" });
 }

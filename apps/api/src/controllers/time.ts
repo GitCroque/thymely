@@ -1,21 +1,29 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { requirePermission } from "../lib/roles";
+import { checkSession } from "../lib/session";
 import { prisma } from "../prisma";
 
 export function timeTrackingRoutes(fastify: FastifyInstance) {
   // Create a new entry
   fastify.post(
     "/api/v1/time/new",
-
+    { preHandler: requirePermission(["time_entry::create"]) },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const { time, ticket, title, user }: any = request.body;
+      const { time, ticket, title }: any = request.body;
 
-      console.log(request.body);
+      const session = await checkSession(request);
+      if (!session) {
+        return reply.code(401).send({
+          message: "Unauthorized",
+          success: false,
+        });
+      }
 
       await prisma.timeTracking.create({
         data: {
           time: Number(time),
           title,
-          userId: user,
+          userId: session.id,
           ticketId: ticket,
         },
       });

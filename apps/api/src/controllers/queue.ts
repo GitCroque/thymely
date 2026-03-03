@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
 import { OAuth2Client } from "google-auth-library";
 import { track } from "../lib/hog";
+import { requirePermission } from "../lib/roles";
 import { prisma } from "../prisma";
 
 async function tracking(event: string, properties: any) {
@@ -20,7 +21,7 @@ export function emailQueueRoutes(fastify: FastifyInstance) {
   // Create a new email queue
   fastify.post(
     "/api/v1/email-queue/create",
-
+    { preHandler: requirePermission(["settings::manage"]) },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const {
         name,
@@ -92,7 +93,7 @@ export function emailQueueRoutes(fastify: FastifyInstance) {
   // Google oauth callback
   fastify.get(
     "/api/v1/email-queue/oauth/gmail",
-
+    { preHandler: requirePermission(["settings::manage"]) },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { code, mailboxId }: any = request.query;
 
@@ -133,7 +134,7 @@ export function emailQueueRoutes(fastify: FastifyInstance) {
   // Get all email queue's
   fastify.get(
     "/api/v1/email-queues/all",
-
+    { preHandler: requirePermission(["settings::manage"]) },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const queues = await prisma.emailQueue.findMany({
         select: {
@@ -160,7 +161,7 @@ export function emailQueueRoutes(fastify: FastifyInstance) {
   // Delete an email queue
   fastify.delete(
     "/api/v1/email-queue/delete",
-
+    { preHandler: requirePermission(["settings::manage"]) },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { id }: any = request.body;
 

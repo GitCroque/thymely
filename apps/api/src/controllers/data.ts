@@ -66,6 +66,7 @@ export function dataRoutes(fastify: FastifyInstance) {
   // Get all logs
   fastify.get(
     "/api/v1/data/logs",
+    { preHandler: requirePermission(["settings::manage"]) },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const logs = await import("fs/promises").then((fs) =>
         fs.readFile("logs.log", "utf-8")

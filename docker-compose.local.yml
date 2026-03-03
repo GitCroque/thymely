@@ -1,5 +1,3 @@
-version: "3.1"
-
 services:
   thymely_postgres:
     container_name: thymely_postgres
@@ -8,9 +6,11 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: thymely
-      POSTGRES_PASSWORD: 1234
-      POSTGRES_DB: thymely
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    env_file:
+      - .env
 
   thymely:
     container_name: thymely
@@ -22,10 +22,12 @@ services:
     depends_on:
       - thymely_postgres
     environment:
-      DB_USERNAME: "thymely"
-      DB_PASSWORD: "1234"
-      DB_HOST: "thymely_postgres"
-      SECRET: 'thymely4life'
-      
-volumes: 
- pgdata:
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_HOST: thymely_postgres
+      SECRET: ${SECRET}
+    env_file:
+      - .env
+
+volumes:
+  pgdata:

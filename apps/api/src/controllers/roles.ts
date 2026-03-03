@@ -203,7 +203,7 @@ export function roleRoutes(fastify: FastifyInstance) {
   fastify.post(
     "/api/v1/role/remove",
     {
-      //   preHandler: requirePermission(['role::remove']),
+      preHandler: requirePermission(["role::manage"]),
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { userId, roleId }: any = request.body;

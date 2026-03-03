@@ -129,6 +129,9 @@ export function authRoutes(fastify: FastifyInstance) {
   fastify.post(
     "/api/v1/auth/user/register/external",
     {
+      config: {
+        rateLimit: { max: 5, timeWindow: "15 minutes" },
+      },
       schema: {
         body: {
           type: "object",
@@ -190,6 +193,7 @@ export function authRoutes(fastify: FastifyInstance) {
   // Forgot password & generate code
   fastify.post(
     "/api/v1/auth/password-reset",
+    { config: { rateLimit: { max: 5, timeWindow: "15 minutes" } } },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { email, link } = request.body as { email: string; link: string };
 
@@ -204,18 +208,13 @@ export function authRoutes(fastify: FastifyInstance) {
         });
       }
 
-      function generateRandomCode(length = 6) {
-        const min = Math.pow(10, length - 1); // Minimum number for the given length
-        const max = Math.pow(10, length) - 1; // Maximum number for the given length
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-      }
-
-      const code = generateRandomCode();
+      const code = crypto.randomInt(100000, 999999);
 
       const uuid = await prisma.passwordResetToken.create({
         data: {
           userId: user!.id,
           code: String(code),
+          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
         },
       });
 
@@ -230,23 +229,24 @@ export function authRoutes(fastify: FastifyInstance) {
   // Check code & uuid us valid
   fastify.post(
     "/api/v1/auth/password-reset/code",
+    { config: { rateLimit: { max: 10, timeWindow: "15 minutes" } } },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { code, uuid } = request.body as { code: string; uuid: string };
 
-      const reset = await prisma.passwordResetToken.findUnique({
-        where: { code: code, id: uuid },
+      const reset = await prisma.passwordResetToken.findFirst({
+        where: { code: code, id: uuid, expiresAt: { gt: new Date() } },
       });
 
       if (!reset) {
-        reply.code(401).send({
-          message: "Invalid Code",
+        return reply.code(401).send({
+          message: "Invalid or expired code",
           success: false,
         });
-      } else {
-        reply.send({
-          success: true,
-        });
       }
+
+      reply.send({
+        success: true,
+      });
     }
   );
 
@@ -259,22 +259,26 @@ export function authRoutes(fastify: FastifyInstance) {
         code: string;
       };
 
-      const user = await prisma.passwordResetToken.findUnique({
-        where: { code: code },
+      const resetToken = await prisma.passwordResetToken.findFirst({
+        where: { code: code, expiresAt: { gt: new Date() } },
       });
 
-      if (!user) {
+      if (!resetToken) {
         return reply.code(401).send({
-          message: "Invalid Code",
+          message: "Invalid or expired code",
           success: false,
         });
       }
 
       await prisma.user.update({
-        where: { id: user!.userId },
+        where: { id: resetToken.userId },
         data: {
           password: await bcrypt.hash(password, 10),
         },
+      });
+
+      await prisma.passwordResetToken.delete({
+        where: { id: resetToken.id },
       });
 
       reply.send({
@@ -287,6 +291,9 @@ export function authRoutes(fastify: FastifyInstance) {
   fastify.post(
     "/api/v1/auth/login",
     {
+      config: {
+        rateLimit: { max: 10, timeWindow: "15 minutes" },
+      },
       schema: {
         body: {
           properties: {
@@ -557,8 +564,8 @@ export function authRoutes(fastify: FastifyInstance) {
           });
         }
 
-        var b64string = process.env.SECRET;
-        var secret = new Buffer(b64string!, "base64"); // Ta-da
+        const b64string = process.env.SECRET;
+        const secret = Buffer.from(b64string!, "base64");
 
         // Issue JWT token
         let signed_token = jwt.sign(
@@ -655,8 +662,8 @@ export function authRoutes(fastify: FastifyInstance) {
           });
         }
 
-        var b64string = process.env.SECRET;
-        var secret = new Buffer(b64string!, "base64"); // Ta-da
+        const b64string = process.env.SECRET;
+        const secret = Buffer.from(b64string!, "base64");
 
         // Issue JWT token
         let signed_token = jwt.sign(
@@ -934,6 +941,22 @@ export function authRoutes(fastify: FastifyInstance) {
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { id } = request.params as { id: string };
 
+      const session = await checkSession(request);
+      if (!session) {
+        return reply.code(401).send({
+          message: "Unauthorized",
+          success: false,
+        });
+      }
+
+      // Users can only logout themselves unless they are admin
+      if (session.id !== id && !session.isAdmin) {
+        return reply.code(403).send({
+          message: "Forbidden",
+          success: false,
+        });
+      }
+
       await prisma.session.deleteMany({
         where: { userId: id },
       });
@@ -987,6 +1010,22 @@ export function authRoutes(fastify: FastifyInstance) {
     "/api/v1/auth/user/:id/first-login",
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { id } = request.params as { id: string };
+
+      const session = await checkSession(request);
+      if (!session) {
+        return reply.code(401).send({
+          message: "Unauthorized",
+          success: false,
+        });
+      }
+
+      // Users can only update their own first-login flag
+      if (session.id !== id) {
+        return reply.code(403).send({
+          message: "Forbidden",
+          success: false,
+        });
+      }
 
       await prisma.user.update({
         where: { id },

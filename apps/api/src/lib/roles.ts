@@ -69,20 +69,28 @@ export function requirePermission(
   requiredPermissions: Permission | Permission[],
   requireAll: boolean = true
 ) {
-  return async (req: any, res: any, next: any) => {
+  return async (req: any, res: any) => {
     try {
+      // Always verify authentication first
       const user = await checkSession(req);
+
+      if (!user) {
+        return res.status(401).send({
+          message: "Unauthorized",
+          success: false,
+        });
+      }
+
       const config = await prisma.config.findFirst();
 
+      // When roles are active, check granular permissions
       if (config?.roles_active) {
-        const userWithRoles = user
-          ? await prisma.user.findUnique({
-              where: { id: user.id },
-              include: {
-                roles: true,
-              },
-            })
-          : null;
+        const userWithRoles = await prisma.user.findUnique({
+          where: { id: user.id },
+          include: {
+            roles: true,
+          },
+        });
 
         if (!userWithRoles) {
           return res.status(401).send({
@@ -92,20 +100,21 @@ export function requirePermission(
         }
 
         if (!hasPermission(userWithRoles, requiredPermissions, requireAll)) {
-          return res.status(401).send({
+          return res.status(403).send({
             message:
               "You do not have the required permission to access this resource.",
             success: false,
-            status: 403,
           });
         }
-
-        return;
-      } else {
-        return;
       }
+
+      // When roles are inactive: authenticated = authorized
+      return;
     } catch (error) {
-      next(error);
+      return res.status(500).send({
+        message: "Internal server error",
+        success: false,
+      });
     }
   };
 }

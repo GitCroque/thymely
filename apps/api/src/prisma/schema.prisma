@@ -57,9 +57,11 @@ model Session {
 }
 
 model PasswordResetToken {
-  id     String @id @default(cuid())
-  code   String @unique
-  userId String
+  id        String   @id @default(cuid())
+  code      String   @unique
+  userId    String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
 }
 
 model Role {
