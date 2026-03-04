@@ -100,13 +100,13 @@ export default function Home() {
   ];
 
   async function datafetch() {
-    Promise.all([
+    await Promise.all([
       fetchTickets(),
       getOpenTickets(),
       getCompletedTickets(),
       getUnassginedTickets(),
     ]);
-    await setLoading(false);
+    setLoading(false);
   }
 
   useEffect(() => {

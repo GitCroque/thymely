@@ -22,7 +22,15 @@ const Toaster = dynamic(
   { ssr: false }
 );
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function Auth({ children }: any) {
   const { user } = useUser();

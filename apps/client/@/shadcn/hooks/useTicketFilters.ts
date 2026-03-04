@@ -1,20 +1,18 @@
 import { Ticket } from '@/shadcn/types/tickets';
 import { useEffect, useState } from 'react';
+import { safeJsonParse } from '../../../lib/safeJsonParse';
 
 export function useTicketFilters(tickets: Ticket[] = []) {
   const [selectedPriorities, setSelectedPriorities] = useState<string[]>(() => {
-    const saved = localStorage.getItem("all_selectedPriorities");
-    return saved ? JSON.parse(saved) : [];
+    return safeJsonParse(localStorage.getItem("all_selectedPriorities"), []);
   });
 
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>(() => {
-    const saved = localStorage.getItem("all_selectedStatuses");
-    return saved ? JSON.parse(saved) : [];
+    return safeJsonParse(localStorage.getItem("all_selectedStatuses"), []);
   });
 
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>(() => {
-    const saved = localStorage.getItem("all_selectedAssignees");
-    return saved ? JSON.parse(saved) : [];
+    return safeJsonParse(localStorage.getItem("all_selectedAssignees"), []);
   });
 
   useEffect(() => {

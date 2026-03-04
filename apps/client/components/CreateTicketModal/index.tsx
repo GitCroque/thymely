@@ -8,6 +8,7 @@ import { Fragment, useEffect, useState } from "react";
 import { useUser } from "../../store/session";
 
 import { toast } from "@/shadcn/hooks/use-toast";
+import { safeJsonParse } from "../../lib/safeJsonParse";
 import { useSidebar } from "@/shadcn/ui/sidebar";
 import dynamic from "next/dynamic";
 
@@ -152,7 +153,7 @@ export default function CreateTicketModal({ keypress, setKeyPressDown }) {
     const loadFlags = () => {
       const savedFlags = localStorage.getItem("featureFlags");
       if (savedFlags) {
-        const flags = JSON.parse(savedFlags);
+        const flags = safeJsonParse(savedFlags, []);
         const hideShortcuts = flags.find(
           (f: any) => f.name === "Hide Keyboard Shortcuts"
         )?.enabled;
