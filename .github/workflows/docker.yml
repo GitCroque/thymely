@@ -11,6 +11,9 @@ permissions:
   contents: read
   packages: write
 
+env:
+  REGISTRY_IMAGE: ghcr.io/${{ github.repository }}
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -32,6 +35,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set repo name lowercase
+        id: repo
+        run: echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -65,5 +72,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache
-          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache,mode=max
+          cache-from: type=registry,ref=ghcr.io/${{ steps.repo.outputs.name }}:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ steps.repo.outputs.name }}:buildcache,mode=max
