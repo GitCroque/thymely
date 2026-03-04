@@ -1,10 +1,54 @@
 import EmailReplyParser from "email-reply-parser";
 import Imap from "imap";
 import { simpleParser } from "mailparser";
+import sanitizeHtml from "sanitize-html";
 import { prisma } from "../../prisma";
 import { decryptSecret } from "../security/secrets";
 import { EmailConfig, EmailQueue } from "../types/email";
 import { AuthService } from "./auth.service";
+
+const sanitizeOptions: sanitizeHtml.IOptions = {
+  allowedTags: [
+    "p",
+    "br",
+    "a",
+    "b",
+    "i",
+    "strong",
+    "em",
+    "ul",
+    "ol",
+    "li",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "blockquote",
+    "pre",
+    "code",
+    "img",
+    "div",
+    "span",
+    "table",
+    "thead",
+    "tbody",
+    "tr",
+    "td",
+    "th",
+  ],
+  allowedAttributes: {
+    a: ["href"],
+    img: ["src"],
+  },
+  allowedSchemes: ["http", "https", "mailto"],
+  disallowedTagsMode: "discard",
+};
+
+function sanitize(html: string): string {
+  return sanitizeHtml(html, sanitizeOptions);
+}
 
 function getReplyText(email: any): string {
   const parsed = new EmailReplyParser().read(email.text);
@@ -20,6 +64,84 @@ function getReplyText(email: any): string {
   });
 
   return replyText;
+}
+
+/**
+ * Checks if the sender email is authorized to add a comment on the given ticket.
+ * Authorized senders: ticket creator, assigned user, or anyone who previously commented.
+ */
+async function isSenderAuthorizedForTicket(
+  ticketId: string,
+  senderEmail: string
+): Promise<boolean> {
+  const ticket = await prisma.ticket.findFirst({
+    where: { id: ticketId },
+  });
+
+  if (!ticket) {
+    return false;
+  }
+
+  const lowerSender = senderEmail.toLowerCase();
+
+  // Check if sender matches the email stored directly on the ticket (for IMAP-created tickets)
+  if (ticket.email?.toLowerCase() === lowerSender) {
+    return true;
+  }
+
+  // Check if sender is the ticket creator (createdBy is Json with potential userId)
+  if (ticket.createdBy && typeof ticket.createdBy === "object") {
+    const createdByData = ticket.createdBy as Record<string, any>;
+    if (createdByData.id) {
+      const creatorUser = await prisma.user.findUnique({
+        where: { id: createdByData.id },
+      });
+      if (creatorUser?.email?.toLowerCase() === lowerSender) {
+        return true;
+      }
+    }
+  }
+
+  // Check if sender is the assigned user
+  if (ticket.userId) {
+    const assignedUser = await prisma.user.findUnique({
+      where: { id: ticket.userId },
+    });
+    if (assignedUser?.email?.toLowerCase() === lowerSender) {
+      return true;
+    }
+  }
+
+  // Check if sender has previously commented on this ticket (via replyEmail)
+  const previousComment = await prisma.comment.findFirst({
+    where: {
+      ticketId,
+      replyEmail: { equals: senderEmail, mode: "insensitive" },
+    },
+  });
+
+  if (previousComment) {
+    return true;
+  }
+
+  // Also check comments by users with matching email
+  const userWithEmail = await prisma.user.findFirst({
+    where: { email: { equals: senderEmail, mode: "insensitive" } },
+  });
+
+  if (userWithEmail) {
+    const commentByUser = await prisma.comment.findFirst({
+      where: {
+        ticketId,
+        userId: userWithEmail.id,
+      },
+    });
+    if (commentByUser) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 export class ImapService {
@@ -94,6 +216,46 @@ export class ImapService {
         throw new Error(`Ticket not found: ${ticketId}`);
       }
 
+      // Verify the sender is authorized to comment on this ticket
+      const senderEmail = from.value[0].address;
+      const authorized = await isSenderAuthorizedForTicket(
+        ticket.id,
+        senderEmail
+      );
+
+      if (!authorized) {
+        // Sender is not authorized: create a new ticket instead of injecting a comment
+        console.log(
+          `Unauthorized sender ${senderEmail} for ticket ${ticket.id}, creating new ticket instead`
+        );
+
+        const sanitizedHtml = sanitize(html || textAsHtml || "");
+
+        const imapEmail = await prisma.imap_Email.create({
+          data: {
+            from: senderEmail,
+            subject: subject || "No Subject",
+            body: text || "No Body",
+            html: sanitizedHtml,
+            text: textAsHtml ? sanitize(textAsHtml) : "",
+          },
+        });
+
+        await prisma.ticket.create({
+          data: {
+            email: senderEmail,
+            name: from.value[0].name,
+            title: imapEmail.subject || "-",
+            isComplete: false,
+            priority: "low",
+            fromImap: true,
+            detail: sanitizedHtml,
+          },
+        });
+
+        return;
+      }
+
       const replyText = getReplyText(parsed);
 
       await prisma.comment.create({
@@ -102,18 +264,21 @@ export class ImapService {
           userId: null,
           ticketId: ticket.id,
           reply: true,
-          replyEmail: from.value[0].address,
+          replyEmail: senderEmail,
           public: true,
         },
       });
     } else {
+      const sanitizedHtml = sanitize(html || "");
+      const sanitizedTextAsHtml = textAsHtml ? sanitize(textAsHtml) : "";
+
       const imapEmail = await prisma.imap_Email.create({
         data: {
           from: from.value[0].address,
           subject: subject || "No Subject",
           body: text || "No Body",
-          html: html || "",
-          text: textAsHtml,
+          html: sanitizedHtml,
+          text: sanitizedTextAsHtml,
         },
       });
 
@@ -125,7 +290,7 @@ export class ImapService {
           isComplete: false,
           priority: "low",
           fromImap: true,
-          detail: html || textAsHtml,
+          detail: sanitizedHtml || sanitizedTextAsHtml,
         },
       });
     }

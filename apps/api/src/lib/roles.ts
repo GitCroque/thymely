@@ -13,6 +13,22 @@ export class InsufficientPermissionsError extends Error {
   }
 }
 
+let configCache: { value: any; expiresAt: number } | null = null;
+const CONFIG_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function getCachedConfig() {
+  if (configCache && Date.now() < configCache.expiresAt) {
+    return configCache.value;
+  }
+  const config = await prisma.config.findFirst();
+  configCache = { value: config, expiresAt: Date.now() + CONFIG_CACHE_TTL };
+  return config;
+}
+
+export function invalidateConfigCache() {
+  configCache = null;
+}
+
 /**
  * Checks if a user has the required permissions through their roles
  * @param user - The user with their roles loaded
@@ -81,7 +97,7 @@ export function requirePermission(
         });
       }
 
-      const config = await prisma.config.findFirst();
+      const config = await getCachedConfig();
 
       // When roles are active, check granular permissions
       if (config?.roles_active) {
@@ -137,13 +153,13 @@ if (hasPermission(user, ['user:manage', 'role:manage'], false)) {
 }
 
 // Use as middleware
-router.post('/tickets', 
+router.post('/tickets',
   requirePermission('issue::create'),
   ticketController.create
 );
 
 // Use as middleware with multiple permissions
-router.put('/tickets/:id/assign', 
+router.put('/tickets/:id/assign',
   requirePermission(['issue:update', 'issue:assign']),
   ticketController.assign
 );
