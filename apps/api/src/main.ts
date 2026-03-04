@@ -1,18 +1,21 @@
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
+import { exec } from "child_process";
 import "dotenv/config";
 import Fastify, { FastifyInstance } from "fastify";
 import multer from "fastify-multer";
 import fs from "fs";
+import util from "util";
 
-import { exec } from "child_process";
 import { track } from "./lib/hog";
 import { getEmails } from "./lib/imap";
 import { backfillEncryptedSecrets } from "./lib/security/backfill";
 import { checkSession } from "./lib/session";
 import { prisma } from "./prisma";
 import { registerRoutes } from "./routes";
+
+const execAsync = util.promisify(exec);
 
 const logFilePath = "./logs.log";
 const logStream = fs.createWriteStream(logFilePath, { flags: "a" });
@@ -39,6 +42,12 @@ if (isProduction && rawCorsOrigins.length === 0) {
   );
 }
 
+if (isProduction && (!process.env.SECRET || process.env.SECRET.length < 32)) {
+  throw new Error(
+    "SECRET environment variable must be set and at least 32 characters in production"
+  );
+}
+
 server.register(cookie);
 
 server.register(cors, {
@@ -54,6 +63,15 @@ server.register(rateLimit, {
 });
 
 server.register(multer.contentParser);
+
+server.setErrorHandler((error, request, reply) => {
+  request.log.error(error);
+  const statusCode = error.statusCode ?? 500;
+  reply.status(statusCode).send({
+    success: false,
+    message: statusCode === 500 ? "Internal server error" : error.message,
+  });
+});
 
 server.addHook("onSend", async (request, reply, payload) => {
   reply.header("X-Content-Type-Options", "nosniff");
@@ -120,41 +138,23 @@ server.get(
 
 const start = async () => {
   try {
-    await new Promise<void>((resolve, reject) => {
-      exec("npx prisma migrate deploy", (err, stdout, stderr) => {
-        if (err) {
-          console.error(err);
-          reject(err);
-          return;
-        }
+    const { stdout: migrateOut, stderr: migrateErr } = await execAsync(
+      "npx prisma migrate deploy"
+    );
+    console.log(migrateOut);
+    if (migrateErr) console.error(migrateErr);
 
-        console.log(stdout);
-        console.error(stderr);
+    const { stdout: generateOut, stderr: generateErr } = await execAsync(
+      "npx prisma generate"
+    );
+    console.log(generateOut);
+    if (generateErr) console.error(generateErr);
 
-        exec("npx prisma generate", (generateErr, generateStdout, generateStderr) => {
-          if (generateErr) {
-            console.error(generateErr);
-            reject(generateErr);
-            return;
-          }
-
-          console.log(generateStdout);
-          console.error(generateStderr);
-
-          exec("npx prisma db seed", (seedErr, seedStdout, seedStderr) => {
-            if (seedErr) {
-              console.error(seedErr);
-              reject(seedErr);
-              return;
-            }
-
-            console.log(seedStdout);
-            console.error(seedStderr);
-            resolve();
-          });
-        });
-      });
-    });
+    const { stdout: seedOut, stderr: seedErr } = await execAsync(
+      "npx prisma db seed"
+    );
+    console.log(seedOut);
+    if (seedErr) console.error(seedErr);
 
     await prisma.$connect();
     server.log.info("Connected to Prisma");
@@ -182,21 +182,36 @@ const start = async () => {
       }
     );
 
+    const BASE_IMAP_INTERVAL = 60000;
+    const MAX_IMAP_INTERVAL = 300000;
+    let currentImapInterval = BASE_IMAP_INTERVAL;
     let emailSyncInProgress = false;
-    setInterval(async () => {
-      if (emailSyncInProgress) {
-        return;
-      }
 
-      emailSyncInProgress = true;
-      try {
-        await getEmails();
-      } catch (error) {
-        server.log.error(error, "IMAP sync failed");
-      } finally {
-        emailSyncInProgress = false;
-      }
-    }, 10000);
+    function scheduleImapSync() {
+      setTimeout(async () => {
+        if (emailSyncInProgress) {
+          scheduleImapSync();
+          return;
+        }
+
+        emailSyncInProgress = true;
+        try {
+          await getEmails();
+          currentImapInterval = BASE_IMAP_INTERVAL;
+        } catch (error) {
+          server.log.error(error, "IMAP sync failed");
+          currentImapInterval = Math.min(
+            currentImapInterval * 2,
+            MAX_IMAP_INTERVAL
+          );
+        } finally {
+          emailSyncInProgress = false;
+          scheduleImapSync();
+        }
+      }, currentImapInterval);
+    }
+
+    scheduleImapSync();
   } catch (err) {
     server.log.error(err);
     await prisma.$disconnect();
