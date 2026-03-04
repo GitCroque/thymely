@@ -1,4 +1,4 @@
-FROM node:lts AS builder
+FROM node:22-bookworm-slim AS builder
 
 WORKDIR /app
 
@@ -35,7 +35,7 @@ RUN cd apps/api && npx prisma generate && npx tsc
 # Build client
 RUN cd apps/client && npx next build
 
-FROM node:lts AS runner
+FROM node:22-bookworm-slim AS runner
 
 WORKDIR /app
 
@@ -52,5 +52,8 @@ RUN addgroup --system app && adduser --system --ingroup app app
 RUN chown -R app:app /app
 
 USER app
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD node -e "fetch('http://localhost:5003/').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
 
 CMD ["pm2-runtime", "ecosystem.config.js"]

@@ -156,6 +156,11 @@ model Ticket {
 
   knowledgeBase knowledgeBase[]
   notifications notifications[]
+
+  @@index([isComplete, hidden])
+  @@index([userId])
+  @@index([clientId])
+  @@index([status])
 }
 
 model TimeTracking {
