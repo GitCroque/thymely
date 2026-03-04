@@ -29,9 +29,8 @@ services:
       DB_USERNAME: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       DB_HOST: thymely_postgres
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@thymely_postgres:5432/${POSTGRES_DB:-thymely}
       SECRET: ${SECRET}
-    env_file:
-      - .env
 
 volumes:
   pgdata:
