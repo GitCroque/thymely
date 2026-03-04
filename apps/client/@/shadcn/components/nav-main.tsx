@@ -1,5 +1,6 @@
 import { type LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { safeJsonParse } from "../../../lib/safeJsonParse";
 
 import {
   SidebarGroup,
@@ -37,7 +38,7 @@ export function NavMain({
     const loadFlags = () => {
       const savedFlags = localStorage.getItem("featureFlags");
       if (savedFlags) {
-        const flags = JSON.parse(savedFlags);
+        const flags = safeJsonParse(savedFlags, []);
         const hideShortcuts = flags.find(
           (f: any) => f.name === "Hide Keyboard Shortcuts"
         )?.enabled;

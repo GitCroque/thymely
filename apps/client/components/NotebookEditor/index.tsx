@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shadcn/ui/dropdown-menu";
 import { BlockNoteEditor, PartialBlock } from "@blocknote/core";
+import { safeJsonParse } from "../../lib/safeJsonParse";
 import { BlockNoteView } from "@blocknote/mantine";
 import { getCookie } from "cookies-next";
 import { Ellipsis } from "lucide-react";
@@ -138,7 +139,7 @@ export default function NotebookEditor() {
       return undefined;
     } else {
       return storageString
-        ? (JSON.parse(storageString) as PartialBlock[])
+        ? safeJsonParse<PartialBlock[] | undefined>(storageString, undefined)
         : undefined;
     }
   }

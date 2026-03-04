@@ -1,5 +1,6 @@
 import { KanbanGrouping, SortOption, Ticket, UISettings, ViewMode } from '@/shadcn/types/tickets';
 import { useEffect, useState } from 'react';
+import { safeJsonParse } from '../../../lib/safeJsonParse';
 
 export function useTicketView(tickets: Ticket[] = []) {
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
@@ -18,14 +19,13 @@ export function useTicketView(tickets: Ticket[] = []) {
   });
 
   const [uiSettings, setUISettings] = useState<UISettings>(() => {
-    const saved = localStorage.getItem("preferred_ui_settings");
-    return saved ? JSON.parse(saved) : {
+    return safeJsonParse(localStorage.getItem("preferred_ui_settings"), {
       showAvatars: true,
       showDates: true,
       showPriority: true,
       showType: true,
       showTicketNumbers: true,
-    };
+    });
   });
 
   useEffect(() => {

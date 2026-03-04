@@ -34,7 +34,7 @@ export default function Tickets() {
     "allusertickets",
     () => getUserTickets(token),
     {
-      refetchInterval: 5000,
+      refetchInterval: 30000,
     }
   );
 

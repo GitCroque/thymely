@@ -1,5 +1,6 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { safeJsonParse } from "../../lib/safeJsonParse";
 
 interface FeatureFlag {
   name: string;
@@ -37,7 +38,7 @@ export default function FeatureFlags() {
     // Load flags from localStorage on component mount
     const savedFlags = localStorage.getItem("featureFlags");
     if (savedFlags) {
-      const parsedFlags = JSON.parse(savedFlags);
+      const parsedFlags = safeJsonParse(savedFlags, []);
       // Merge saved flags with default flags, adding any new flags
       const mergedFlags = defaultFlags.map(defaultFlag => {
         const savedFlag = parsedFlags.find((f: FeatureFlag) => f.name === defaultFlag.name);

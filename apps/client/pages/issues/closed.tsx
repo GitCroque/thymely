@@ -32,6 +32,7 @@ import moment from "moment";
 import Link from "next/link";
 import { useQuery } from "react-query";
 import { useUser } from "../../store/session";
+import { safeJsonParse } from "../../lib/safeJsonParse";
 
 async function getUserTickets(token: any) {
   const res = await fetch(`/api/v1/tickets/completed`, {
@@ -72,7 +73,7 @@ export default function Tickets() {
     "allusertickets",
     () => getUserTickets(token),
     {
-      refetchInterval: 5000,
+      refetchInterval: 30000,
     }
   );
 
@@ -84,16 +85,13 @@ export default function Tickets() {
 
   const [filterSelected, setFilterSelected] = useState();
   const [selectedPriorities, setSelectedPriorities] = useState<string[]>(() => {
-    const saved = localStorage.getItem("closed_selectedPriorities");
-    return saved ? JSON.parse(saved) : [];
+    return safeJsonParse(localStorage.getItem("closed_selectedPriorities"), []);
   });
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>(() => {
-    const saved = localStorage.getItem("closed_selectedStatuses");
-    return saved ? JSON.parse(saved) : [];
+    return safeJsonParse(localStorage.getItem("closed_selectedStatuses"), []);
   });
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>(() => {
-    const saved = localStorage.getItem("closed_selectedAssignees");
-    return saved ? JSON.parse(saved) : [];
+    return safeJsonParse(localStorage.getItem("closed_selectedAssignees"), []);
   });
   const [users, setUsers] = useState<any[]>([]);
 
