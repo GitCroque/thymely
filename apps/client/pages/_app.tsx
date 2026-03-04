@@ -4,14 +4,7 @@ import "../styles/globals.css";
 
 import { ThemeProvider } from "next-themes";
 
-import {
-  DocumentCheckIcon,
-  FolderIcon,
-  HomeIcon,
-  TicketIcon,
-} from "@heroicons/react/24/outline";
-
-import { MantineProvider } from "@mantine/core";
+import dynamic from "next/dynamic";
 import { Theme } from "@radix-ui/themes";
 import { useRouter } from "next/router";
 import { QueryClient, QueryClientProvider } from "react-query";
@@ -20,25 +13,19 @@ import { SessionProvider, useUser } from "../store/session";
 
 import React from "react";
 
-import AdminLayout from "../layouts/adminLayout";
-import NewLayout from "../layouts/newLayout";
-import NoteBookLayout from "../layouts/notebook";
-import PortalLayout from "../layouts/portalLayout";
-import Settings from "../layouts/settings";
-import ShadLayout from "../layouts/shad";
-import GlobalShortcut from "@/shadcn/block/GlobalShortcut";
-import { Toaster } from "@/shadcn/ui/toaster";
-
-import { SidebarProvider } from "@/shadcn/ui/sidebar";
+const AdminLayout = dynamic(() => import("../layouts/adminLayout"));
+const PortalLayout = dynamic(() => import("../layouts/portalLayout"));
+const Settings = dynamic(() => import("../layouts/settings"));
+const ShadLayout = dynamic(() => import("../layouts/shad"));
+const Toaster = dynamic(
+  () => import("@/shadcn/ui/toaster").then((mod) => mod.Toaster),
+  { ssr: false }
+);
 
 const queryClient = new QueryClient();
 
 function Auth({ children }: any) {
-  const { loading, user } = useUser();
-
-  React.useEffect(() => {
-    if (loading) return; 
-  }, [user, loading]);
+  const { user } = useUser();
 
   if (user) {
     return children;
@@ -49,10 +36,10 @@ function Auth({ children }: any) {
   );
 }
 
-function MyApp({ Component, pageProps: { session, ...pageProps } }: any) {
+function MyApp({ Component, pageProps }: any) {
   const router = useRouter();
 
-  if (router.asPath.slice(0, 5) === "/auth") {
+  if (router.pathname.startsWith("/auth")) {
     return (
       <ThemeProvider attribute="class" defaultTheme="light">
         <Component {...pageProps} />
@@ -145,7 +132,7 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }: any) {
               <ShadLayout>
                 <Component {...pageProps} />
                 <Toaster />
-                </ShadLayout>
+              </ShadLayout>
             </Auth>
           </QueryClientProvider>
         </Theme>
