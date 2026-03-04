@@ -48,8 +48,8 @@ COPY --from=builder /app/ecosystem.config.js ./ecosystem.config.js
 EXPOSE 3000 5003
 
 RUN npm install -g pm2
-RUN addgroup --system app && adduser --system --ingroup app app
-RUN chown -R app:app /app
+RUN addgroup --system app && adduser --system --home /home/app --ingroup app app
+RUN chown -R app:app /app /home/app
 
 USER app
 
