@@ -809,47 +809,39 @@ export function authRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/api/v1/auth/profile",
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const currentUser = await checkSession(request);
-      if (!currentUser) {
+      const user = await checkSession(request);
+      if (!user) {
         return reply.code(401).send({
           message: "Unauthorized",
           success: false,
         });
       }
 
-      const user = await prisma.user.findUnique({
-        where: { id: currentUser.id },
-      });
-
-      if (!user) {
-        return reply.code(401).send({
-          message: "Invalid user",
-        });
-      }
-
       const config = await prisma.config.findFirst();
 
-      const notifcations = await prisma.notifications.findMany({
-        where: { userId: user!.id },
+      const notifications = await prisma.notifications.findMany({
+        where: { userId: user.id },
         orderBy: {
           createdAt: "desc",
         },
       });
 
       const data = {
-        id: user!.id,
-        email: user!.email,
-        name: user!.name,
-        isAdmin: user!.isAdmin,
-        language: user!.language,
-        ticket_created: user!.notify_ticket_created,
-        ticket_status_changed: user!.notify_ticket_status_changed,
-        ticket_comments: user!.notify_ticket_comments,
-        ticket_assigned: user!.notify_ticket_assigned,
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        isAdmin: user.isAdmin,
+        language: user.language,
+        ticket_created: user.notify_ticket_created,
+        ticket_status_changed: user.notify_ticket_status_changed,
+        ticket_comments: user.notify_ticket_comments,
+        ticket_assigned: user.notify_ticket_assigned,
         sso_status: config!.sso_active,
         version: config!.client_version,
-        notifcations,
-        external_user: user!.external_user,
+        // TODO: remove "notifcations" key once client is updated to use "notifications"
+        notifcations: notifications,
+        notifications,
+        external_user: user.external_user,
       };
 
       await tracking("user_profile", {});
@@ -1060,7 +1052,7 @@ export function authRoutes(fastify: FastifyInstance) {
           });
           if (admins.length === 1) {
             reply.code(400).send({
-              message: "Atleast one admin is required",
+              message: "At least one admin is required",
               success: false,
             });
             return;

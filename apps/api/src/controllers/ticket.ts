@@ -138,13 +138,13 @@ export function ticketRoutes(fastify: FastifyInstance) {
       }
 
       if (engineer && engineer.name !== "Unassigned") {
-        const assgined = await prisma.user.findUnique({
+        const assigned = await prisma.user.findUnique({
           where: {
             id: ticket.userId,
           },
         });
 
-        await sendAssignedEmail(assgined!.email);
+        await sendAssignedEmail(assigned!.email);
 
         await assignedNotification(engineer, ticket, user);
       }
@@ -224,13 +224,13 @@ export function ticketRoutes(fastify: FastifyInstance) {
       }
 
       if (engineer && engineer.name !== "Unassigned") {
-        const assgined = await prisma.user.findUnique({
+        const assigned = await prisma.user.findUnique({
           where: {
             id: ticket.userId,
           },
         });
 
-        await sendAssignedEmail(assgined!.email);
+        await sendAssignedEmail(assigned!.email);
 
         const user = await checkSession(request);
 
@@ -325,7 +325,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
 
       reply.send({
         ticket: t,
-        sucess: true,
+        success: true,
       });
     }
   );
@@ -359,7 +359,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
 
       reply.send({
         tickets: tickets,
-        sucess: true,
+        success: true,
       });
     }
   );
@@ -417,7 +417,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
 
       reply.send({
         tickets: tickets,
-        sucess: true,
+        success: true,
       });
     }
   );
@@ -449,7 +449,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
 
       reply.send({
         tickets: tickets,
-        sucess: true,
+        success: true,
       });
     }
   );
@@ -479,7 +479,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
 
       reply.send({
         tickets: tickets,
-        sucess: true,
+        success: true,
       });
     }
   );
@@ -724,6 +724,26 @@ export function ticketRoutes(fastify: FastifyInstance) {
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { id }: any = request.body;
+
+      const token = await checkSession(request);
+
+      const comment = await prisma.comment.findUnique({
+        where: { id },
+      });
+
+      if (!comment) {
+        return reply.status(404).send({
+          success: false,
+          message: "Comment not found",
+        });
+      }
+
+      if (comment.userId !== token!.id && !token!.isAdmin) {
+        return reply.status(403).send({
+          success: false,
+          message: "Not authorized to delete this comment",
+        });
+      }
 
       await prisma.comment.delete({
         where: {
@@ -980,7 +1000,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
 
       reply.send({
         tickets: tickets,
-        sucess: true,
+        success: true,
       });
     }
   );
@@ -1012,7 +1032,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
 
       reply.send({
         tickets: tickets,
-        sucess: true,
+        success: true,
       });
     }
   );
@@ -1043,7 +1063,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
 
       reply.send({
         tickets: tickets,
-        sucess: true,
+        success: true,
       });
     }
   );
