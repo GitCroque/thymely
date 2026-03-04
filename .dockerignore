@@ -17,8 +17,15 @@ dist/
 
 lib/
 .github
-.yarn 
+.yarn
 
 apps/api/node_modules
 apps/api/dist
 apps/client/node_modules
+
+# Exclude files not needed for Docker build
+.claude/
+.git/
+apps/docs/
+apps/landing/
+*.md

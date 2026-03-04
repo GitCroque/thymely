@@ -20,6 +20,7 @@ COPY packages/config/package.json ./packages/config/
 COPY packages/tsconfig/package.json ./packages/tsconfig/
 
 # Install dependencies with lockfile (skip postinstall scripts)
+# This layer is cached as long as package.json/yarn.lock don't change
 RUN yarn install --mode=skip-build
 
 # Copy source code
@@ -27,19 +28,28 @@ COPY apps/api ./apps/api
 COPY apps/client ./apps/client
 COPY ecosystem.config.js ./
 
-# Run postinstall scripts now that source is available (prisma generate, re2 build, etc.)
-RUN yarn install && cd apps/api && npx prisma generate && npx tsc
+# Rebuild native modules + generate Prisma client + compile API
+RUN yarn rebuild && cd apps/api && npx prisma generate && npx tsc
 
 # Build client
 RUN cd apps/client && npx next build
 
-FROM node:22-bookworm-slim AS runner
+# Prepare production-only node_modules
+RUN cp -r node_modules node_modules_full && \
+    yarn workspaces focus api --production && \
+    mv node_modules node_modules_prod && \
+    mv node_modules_full node_modules
 
-RUN apt-get update && apt-get install -y --no-install-recommends openssl libstdc++6 && rm -rf /var/lib/apt/lists/*
+FROM node:22-bookworm-slim AS runner
 
 WORKDIR /app
 
-COPY --from=builder /app/node_modules ./node_modules
+# Install runtime deps + pm2 + create app user in a single layer
+RUN apt-get update && apt-get install -y --no-install-recommends openssl libstdc++6 && rm -rf /var/lib/apt/lists/* && \
+    npm install -g pm2 && \
+    addgroup --system app && adduser --system --home /home/app --ingroup app app
+
+COPY --from=builder /app/node_modules_prod ./node_modules
 COPY --from=builder /app/apps/api/ ./apps/api/
 COPY --from=builder /app/apps/client/.next/standalone/apps/client ./apps/client
 COPY --from=builder /app/apps/client/.next/standalone/node_modules ./apps/client/node_modules
@@ -47,11 +57,9 @@ COPY --from=builder /app/apps/client/.next/static ./apps/client/.next/static
 COPY --from=builder /app/apps/client/public ./apps/client/public
 COPY --from=builder /app/ecosystem.config.js ./ecosystem.config.js
 
-EXPOSE 3000 5003
-
-RUN npm install -g pm2
-RUN addgroup --system app && adduser --system --home /home/app --ingroup app app
 RUN chown -R app:app /app /home/app
+
+EXPOSE 3000 5003
 
 USER app
 
