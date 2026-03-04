@@ -34,12 +34,6 @@ RUN yarn rebuild && cd apps/api && npx prisma generate && npx tsc
 # Build client
 RUN cd apps/client && npx next build
 
-# Prepare production-only node_modules
-RUN cp -r node_modules node_modules_full && \
-    yarn workspaces focus api --production && \
-    mv node_modules node_modules_prod && \
-    mv node_modules_full node_modules
-
 FROM node:22-bookworm-slim AS runner
 
 WORKDIR /app
@@ -49,7 +43,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl libstdc
     npm install -g pm2 && \
     addgroup --system app && adduser --system --home /home/app --ingroup app app
 
-COPY --from=builder /app/node_modules_prod ./node_modules
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/ ./apps/api/
 COPY --from=builder /app/apps/client/.next/standalone/apps/client ./apps/client
 COPY --from=builder /app/apps/client/.next/standalone/node_modules ./apps/client/node_modules
