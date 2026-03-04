@@ -26,6 +26,8 @@ apps/client/node_modules
 # Exclude files not needed for Docker build
 .claude/
 .git/
-apps/docs/
-apps/landing/
+apps/docs/*
+!apps/docs/package.json
+apps/landing/*
+!apps/landing/package.json
 *.md
