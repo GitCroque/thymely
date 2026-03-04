@@ -19,9 +19,7 @@ COPY apps/landing/package.json ./apps/landing/
 COPY packages/config/package.json ./packages/config/
 COPY packages/tsconfig/package.json ./packages/tsconfig/
 
-# Install dependencies with lockfile
-# --mode=skip-build prevents Yarn from running postinstall/build scripts
-# (prisma generate needs the schema which isn't copied yet)
+# Install dependencies with lockfile (skip postinstall scripts)
 RUN yarn install --mode=skip-build
 
 # Copy source code
@@ -29,18 +27,22 @@ COPY apps/api ./apps/api
 COPY apps/client ./apps/client
 COPY ecosystem.config.js ./
 
-# Build API: generate Prisma client then compile TypeScript
-RUN cd apps/api && npx prisma generate && npx tsc
+# Run postinstall scripts now that source is available (prisma generate, re2 build, etc.)
+RUN yarn install && cd apps/api && npx prisma generate && npx tsc
 
 # Build client
 RUN cd apps/client && npx next build
 
 FROM node:22-bookworm-slim AS runner
 
+RUN apt-get update && apt-get install -y --no-install-recommends openssl libstdc++6 && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/ ./apps/api/
-COPY --from=builder /app/apps/client/.next/standalone ./apps/client
+COPY --from=builder /app/apps/client/.next/standalone/apps/client ./apps/client
+COPY --from=builder /app/apps/client/.next/standalone/node_modules ./apps/client/node_modules
 COPY --from=builder /app/apps/client/.next/static ./apps/client/.next/static
 COPY --from=builder /app/apps/client/public ./apps/client/public
 COPY --from=builder /app/ecosystem.config.js ./ecosystem.config.js
