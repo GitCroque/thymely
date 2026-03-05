@@ -37,8 +37,9 @@ const rawCorsOrigins = (process.env.CORS_ORIGIN || "")
 
 const isProduction = process.env.NODE_ENV === "production";
 if (isProduction && rawCorsOrigins.length === 0) {
-  throw new Error(
-    "CORS_ORIGIN must be configured in production (comma-separated allowlist)."
+  console.warn(
+    "[SECURITY] CORS_ORIGIN is not configured. Defaulting to permissive mode. " +
+      "Set CORS_ORIGIN to a comma-separated allowlist for production hardening."
   );
 }
 
