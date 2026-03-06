@@ -31,8 +31,9 @@ COPY ecosystem.config.js ./
 # Rebuild native modules + generate Prisma client + compile API
 RUN yarn rebuild && cd apps/api && npx prisma generate && npx tsc
 
-# Build client
-RUN cd apps/client && npx next build
+# Build client — version is inlined by Next.js at build time
+ARG APP_VERSION=dev
+RUN cd apps/client && NEXT_PUBLIC_CLIENT_VERSION=${APP_VERSION} npx next build
 
 FROM node:22-bookworm-slim AS runner
 
