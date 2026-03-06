@@ -10,7 +10,7 @@ import {
 import moment from "moment";
 import { useRouter } from "next/router";
 import { Fragment, useEffect, useState } from "react";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { getCookie } from "cookies-next";
 import useTranslation from "next-translate/useTranslation";
@@ -37,7 +37,7 @@ export default function Ticket() {
     return res.json();
   };
 
-  const { data, status, refetch } = useQuery("fetchTickets", fetchTicketById);
+  const { data, status, refetch } = useQuery({ queryKey: ["fetchTickets"], queryFn: fetchTicketById });
 
   useEffect(() => {
     refetch();
@@ -93,7 +93,7 @@ export default function Ticket() {
 
   return (
     <div>
-      {status === "loading" && (
+      {status === "pending" && (
         <div className="min-h-screen flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8">
           <h2> Loading data ... </h2>
           {/* <Spin /> */}

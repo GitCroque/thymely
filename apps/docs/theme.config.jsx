@@ -1,68 +1,40 @@
-import { useRouter } from 'next/router'
-import seoConfig from './seo.config.js'
-
 const config = {
   logo: "Thymely",
-  project: { link: 'https://github.com/GitCroque/thymely' },
-  useNextSeoProps() {
-    const { route } = useRouter()
-    const { url, images } = seoConfig.openGraph
-
-    return {
-      titleTemplate: seoConfig.title.template,
-      openGraph: { url, images: [{ url: `${url}${images}` }] }
-    }
-  },
-  docsRepositoryBase: 'https://github.com/GitCroque/thymely',
+  project: { link: "https://github.com/GitCroque/thymely" },
+  docsRepositoryBase: "https://github.com/GitCroque/thymely",
   sidebar: {
     defaultMenuCollapseLevel: 2,
     toggleButton: false,
   },
   chat: {
-    link: 'https://discord.gg/X9yFbcV2rF',
+    link: "https://discord.gg/X9yFbcV2rF",
   },
   footer: {
-    text: '',
-    component: () => <></>
+    content: "",
   },
-   banner: {
-    key: 'release',
-    text: (
+  banner: {
+    key: "release",
+    content: (
       <a href="https://github.com/GitCroque/thymely/releases" target="_blank">
         Thymely - Check out the latest release!
       </a>
-    )
+    ),
   },
-  head: () => {
-    const title = seoConfig.title.template
+  head: (
+    <>
+      <meta httpEquiv="Content-Language" content="en" />
+      <meta
+        name="description"
+        content="Thymely is an open source helpdesk and ticket management solution."
+      />
+      <meta name="og:title" content="Thymely Docs" />
+      <meta
+        name="og:description"
+        content="Thymely is an open source helpdesk and ticket management solution."
+      />
+      <meta name="apple-mobile-web-app-title" content="Thymely" />
+    </>
+  ),
+};
 
-    return (
-      <>
-        {seoConfig.icons.map((icon, index) => (
-          <link key={index} rel={icon.rel} href={icon.url} />
-        ))}
-        <meta httpEquiv="Content-Language" content="en" />
-        <meta
-          name="description"
-          content={seoConfig.description}
-        />
-        <meta
-          name="og:title"
-          content={title ? title + ' – Thymely' : seoConfig.title.default}
-        />
-        <meta
-          name="og:description"
-          content={seoConfig.description}
-        />
-        <meta name="og:image" content={seoConfig.openGraph.images} />
-        <meta name="og:url" content={seoConfig.openGraph.url} />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:site" content={seoConfig.twitter.site} />
-        <meta name="twitter:creator" content={seoConfig.twitter.creator} />
-        <meta name="apple-mobile-web-app-title" content="Thymely" />
-      </>
-    )
-  }
-}
-
-export default config
+export default config;

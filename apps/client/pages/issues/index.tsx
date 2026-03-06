@@ -10,7 +10,7 @@ import { Loader } from "lucide-react";
 import useTranslation from "next-translate/useTranslation";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useUser } from "../../store/session";
 
 async function getUserTickets(token: any) {
@@ -29,14 +29,11 @@ export default function Tickets() {
   const token = getCookie("session");
   const user = useUser();
   
-  // Fetch tickets data
-  const { data, status, refetch } = useQuery(
-    "allusertickets",
-    () => getUserTickets(token),
-    {
-      refetchInterval: 30000,
-    }
-  );
+  const { data, status, refetch } = useQuery({
+    queryKey: ["allusertickets"],
+    queryFn: () => getUserTickets(token),
+    refetchInterval: 30000,
+  });
 
   // Custom hooks for managing state
   const {
@@ -115,7 +112,7 @@ export default function Tickets() {
     localStorage.setItem("preferred_sort_by", sortBy);
   }, [viewMode, kanbanGrouping, sortBy]);
 
-  if (status === "loading") {
+  if (status === "pending") {
     return <Loader className="animate-spin" />;
   }
 

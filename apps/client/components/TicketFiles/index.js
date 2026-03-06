@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import fileDownload from "js-file-download";
 import axios from "axios";
-import { TrashIcon, DocumentDownloadIcon } from "@heroicons/react/solid";
+import { TrashIcon, ArrowDownTrayIcon } from "@heroicons/react/20/solid";
 
 export default function TicketFiles({ id, uploaded, setUploaded }) {
   const [files, setFiles] = useState([]);
@@ -72,7 +72,7 @@ export default function TicketFiles({ id, uploaded, setUploaded }) {
                       type="button"
                       className="float-right  border border-transparent rounded-full shadow-sm hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
-                      <DocumentDownloadIcon
+                      <ArrowDownTrayIcon
                         className="h-5 w-5"
                         aria-hidden="true"
                       />

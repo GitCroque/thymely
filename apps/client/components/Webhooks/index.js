@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Switch } from "@headlessui/react";
 
 async function getHooks() {
@@ -19,7 +19,7 @@ export default function Webhooks() {
   const [secret, setSecret] = useState();
   const [name, setName] = useState("");
 
-  const { data, status, error, refetch } = useQuery("gethooks", getHooks);
+  const { data, status, error, refetch } = useQuery({ queryKey: ["gethooks"], queryFn: getHooks });
 
   async function addHook() {
     await fetch("/api/v1/admin/webhooks/create", {

@@ -3,7 +3,7 @@ import { getCookie } from "cookies-next";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import Loader from "react-spinners/ClipLoader";
 
 async function fetchNotebooks(token) {
@@ -25,9 +25,9 @@ export default function NoteBookLayout({ children }) {
   const router = useRouter();
   const token = getCookie("session");
 
-  const { data, status, error, refetch } = useQuery("getUsersNotebooks", () =>
+  const { data, status, error, refetch } = useQuery({ queryKey: ["getUsersNotebooks"], queryFn: () =>
     fetchNotebooks(token)
-  );
+  });
 
   const [notebooks, setNotebooks] = useState<any>();
   const [selected, setSelected] = useState(0);
@@ -40,7 +40,7 @@ export default function NoteBookLayout({ children }) {
 
   return (
     <div>
-      {status === "loading" && (
+      {status === "pending" && (
         <div className="flex flex-col justify-center items-center h-screen">
           <Loader color="green" size={100} />
         </div>

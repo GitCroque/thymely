@@ -1,7 +1,7 @@
 import React, { useState, useEffect, Fragment } from "react";
 import { Dialog, Transition, Listbox } from "@headlessui/react";
-import { XIcon } from "@heroicons/react/24/outline";
-import { CheckIcon, SelectorIcon } from "@heroicons/react/20/solid";
+import { XMarkIcon } from "@heroicons/react/24/outline";
+import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import { useRouter } from "next/router";
 
 function classNames(...classes) {
@@ -73,7 +73,7 @@ export default function LinkTicket({ id }) {
               leaveFrom="opacity-100"
               leaveTo="opacity-0"
             >
-              <Dialog.Overlay className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
             </Transition.Child>
 
             {/* This element is to trick the browser into centering the modal contents. */}
@@ -100,7 +100,7 @@ export default function LinkTicket({ id }) {
                     onClick={() => setOpen(false)}
                   >
                     <span className="sr-only">Close</span>
-                    <XIcon className="h-6 w-6" aria-hidden="true" />
+                    <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                   </button>
                 </div>
                 <div className="sm:flex sm:items-start w-full">
@@ -127,7 +127,7 @@ export default function LinkTicket({ id }) {
                                     : "Please select new user"}
                                 </span>
                                 <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                                  <SelectorIcon
+                                  <ChevronUpDownIcon
                                     className="h-5 w-5 text-gray-400"
                                     aria-hidden="true"
                                   />

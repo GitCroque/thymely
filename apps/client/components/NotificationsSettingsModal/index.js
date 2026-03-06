@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Fragment, useRef } from "react";
 import { Dialog, Transition, Listbox } from "@headlessui/react";
-import { XIcon } from "@heroicons/react/solid";
+import { XMarkIcon } from "@heroicons/react/20/solid";
 import useTranslation from "next-translate/useTranslation";
 
 function classNames(...classes) {
@@ -83,7 +83,7 @@ export default function NotificationsSettingsModal() {
               leaveFrom="opacity-100"
               leaveTo="opacity-0"
             >
-              <Dialog.Overlay className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
             </Transition.Child>
 
             {/* This element is to trick the browser into centering the modal contents. */}
@@ -112,7 +112,7 @@ export default function NotificationsSettingsModal() {
                     onClick={() => setOpen(false)}
                   >
                     <span className="sr-only">Close</span>
-                    <XIcon className="h-4 w-4" aria-hidden="true" />
+                    <XMarkIcon className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </div>
 

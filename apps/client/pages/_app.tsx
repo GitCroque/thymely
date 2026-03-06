@@ -7,7 +7,7 @@ import { ThemeProvider } from "next-themes";
 import dynamic from "next/dynamic";
 import { Theme } from "@radix-ui/themes";
 import { useRouter } from "next/router";
-import { QueryClient, QueryClientProvider } from "react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { SessionProvider, useUser } from "../store/session";
 

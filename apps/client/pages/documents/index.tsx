@@ -12,7 +12,7 @@ import { getCookie } from "cookies-next";
 import useTranslation from "next-translate/useTranslation";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 
 function groupDocumentsByDate(notebooks) {
   const today = new Date();
@@ -85,9 +85,9 @@ export default function NoteBooksIndex() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const token = getCookie("session");
-  const { data, status, error } = useQuery("getUsersNotebooks", () =>
+  const { data, status, error } = useQuery({ queryKey: ["getUsersNotebooks"], queryFn: () =>
     fetchNotebooks(token)
-  );
+  });
 
   const router = useRouter();
 
@@ -158,7 +158,7 @@ export default function NoteBooksIndex() {
         </div>
       </div>
       <div className="mt-8 w-full flex justify-center">
-        {status === "loading" && <p>Loading...</p>}
+        {status === "pending" && <p>Loading...</p>}
         {status === "error" && <p>Error loading documents.</p>}
         {data && data.notebooks && data.notebooks.length === 0 ? (
           <div className="text-center py-8">

@@ -2,7 +2,7 @@ import { getCookie } from "cookies-next";
 import moment from "moment";
 import { useRouter } from "next/router";
 import React, { useMemo } from "react";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   useFilters,
   useGlobalFilter,
@@ -66,34 +66,34 @@ function Table({ columns, data }: any) {
     getTableProps,
     getTableBodyProps,
     headerGroups,
-    //@ts-expect-error
+    //@ts-ignore
     page,
     prepareRow,
-    //@ts-expect-error
+    //@ts-ignore
     canPreviousPage,
-    //@ts-expect-error
+    //@ts-ignore
     canNextPage,
-    //@ts-expect-error
+    //@ts-ignore
     pageCount,
-    //@ts-expect-error
+    //@ts-ignore
     gotoPage,
-    //@ts-expect-error
+    //@ts-ignore
     nextPage,
-    //@ts-expect-error
+    //@ts-ignore
     previousPage,
-    //@ts-expect-error
+    //@ts-ignore
     setPageSize,
-    //@ts-expect-error
+    //@ts-ignore
     state: { pageIndex, pageSize },
   } = useTable(
     {
       columns,
       data,
-      //@ts-expect-error
+      //@ts-ignore
       defaultColumn, // Be sure to pass the defaultColumn option
       filterTypes,
       initialState: {
-        //@ts-expect-error
+        //@ts-ignore
         pageIndex: 0,
       },
     },
@@ -206,10 +206,10 @@ function Table({ columns, data }: any) {
 }
 
 export default function Clients() {
-  const { data, status, refetch } = useQuery(
-    "fetchallTickets",
-    fetchALLTIckets
-  );
+  const { data, status, refetch } = useQuery({
+    queryKey: ["fetchallTickets"],
+    queryFn: fetchALLTIckets,
+  });
 
   const router = useRouter();
 
@@ -344,7 +344,7 @@ export default function Clients() {
               </div>
             </div>
             <div className="py-4">
-              {status === "loading" && (
+              {status === "pending" && (
                 <div className="min-h-screen flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8">
                   <h2> Loading data ... </h2>
                 </div>

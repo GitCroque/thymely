@@ -1,5 +1,5 @@
 import React from "react";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   useTable,
   useFilters,
@@ -196,7 +196,7 @@ export default function AssignedTickets() {
     return res.json();
   }
 
-  const { data, status, error } = useQuery("userTickets", getUserTickets);
+  const { data, status, error } = useQuery({ queryKey: ["userTickets"], queryFn: getUserTickets });
 
   const high = "bg-red-100 text-red-800";
   const low = "bg-blue-100 text-blue-800";

@@ -24,7 +24,7 @@ import useTranslation from "next-translate/useTranslation";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Frame from "react-frame-component";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "use-debounce";
 
 import { toast } from "@/shadcn/hooks/use-toast";
@@ -113,9 +113,7 @@ export default function Ticket() {
     return res.json();
   };
 
-  const { data, status, refetch } = useQuery("fetchTickets", fetchTicketById, {
-    enabled: false,
-  });
+  const { data, status, refetch } = useQuery({ queryKey: ["fetchTickets"], queryFn: fetchTicketById, enabled: false });
 
   useEffect(() => {
     refetch();
@@ -724,7 +722,7 @@ export default function Ticket() {
 
   return (
     <div>
-      {status === "loading" && (
+      {status === "pending" && (
         <div className="min-h-screen flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8">
           <h2> Loading data ... </h2>
           {/* <Spin /> */}

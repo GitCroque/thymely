@@ -1,7 +1,7 @@
 import { getCookie } from "cookies-next";
 import Link from "next/link";
 import React from "react";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   useFilters,
   useGlobalFilter,
@@ -201,9 +201,9 @@ function Table({ columns, data }) {
 
 export default function UserAuthPanel() {
   const token = getCookie("session");
-  const { data, status, refetch } = useQuery("fetchAuthUsers", () =>
+  const { data, status, refetch } = useQuery({ queryKey: ["fetchAuthUsers"], queryFn: () =>
     fetchUsers(token)
-  );
+  });
 
   async function deleteUser(id) {
     try {
@@ -286,7 +286,7 @@ export default function UserAuthPanel() {
               </div>
             </div>
             <div className="py-4">
-              {status === "loading" && (
+              {status === "pending" && (
                 <div className="min-h-screen flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8">
                   <h2> Loading data ... </h2>
                 </div>
