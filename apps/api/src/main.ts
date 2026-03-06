@@ -139,40 +139,49 @@ server.get(
 
 const start = async () => {
   try {
-    const prismaEnv = { ...process.env, NO_UPDATE_NOTIFIER: "1" };
+    const prismaEnv = { ...process.env, NO_UPDATE_NOTIFIER: "1", npm_config_update_notifier: "false" };
     const prismaOpts = { env: prismaEnv };
+
+    function filterPrismaOutput(text: string): string {
+      return text
+        .replace(/┌[\s\S]*?┘/g, "")           // Prisma update banner
+        .replace(/npm notice[^\n]*/g, "")       // npm notice lines
+        .replace(/New major version[^\n]*/g, "") // npm upgrade prompt
+        .replace(/To update run:[^\n]*/g, "")   // npm upgrade command
+        .replace(/```[\s\S]*?```/g, "")         // Prisma code examples
+        .replace(/See other ways[^\n]*/g, "")   // Prisma import hints
+        .replace(/or start using[^\n]*/g, "")   // Prisma edge hint
+        .replace(/Start using[^\n]*/g, "")      // Prisma usage hint
+        .replace(/\n{3,}/g, "\n")               // Collapse blank lines
+        .trim();
+    }
 
     const { stdout: migrateOut, stderr: migrateErr } = await execAsync(
       "npx prisma migrate deploy",
       prismaOpts
     );
-    console.log(migrateOut);
-    if (migrateErr) {
-      const filtered = migrateErr.replace(/npm notice[\s\S]*?npm notice\n?/g, "").trim();
-      if (filtered) console.error(filtered);
-    }
+    const cleanMigrate = filterPrismaOutput(migrateOut);
+    if (cleanMigrate) console.log(cleanMigrate);
+    const cleanMigrateErr = filterPrismaOutput(migrateErr || "");
+    if (cleanMigrateErr) console.error(cleanMigrateErr);
 
     const { stdout: generateOut, stderr: generateErr } = await execAsync(
       "npx prisma generate",
       prismaOpts
     );
-    // Filter Prisma update banner from stdout
-    const cleanGenerateOut = generateOut.replace(/┌[\s\S]*?┘\n?/g, "").trim();
-    if (cleanGenerateOut) console.log(cleanGenerateOut);
-    if (generateErr) {
-      const filtered = generateErr.replace(/npm notice[\s\S]*?npm notice\n?/g, "").trim();
-      if (filtered) console.error(filtered);
-    }
+    const cleanGenerate = filterPrismaOutput(generateOut);
+    if (cleanGenerate) console.log(cleanGenerate);
+    const cleanGenerateErr = filterPrismaOutput(generateErr || "");
+    if (cleanGenerateErr) console.error(cleanGenerateErr);
 
     const { stdout: seedOut, stderr: seedErr } = await execAsync(
       "npx prisma db seed",
       prismaOpts
     );
-    console.log(seedOut);
-    if (seedErr) {
-      const filtered = seedErr.replace(/npm notice[\s\S]*?npm notice\n?/g, "").trim();
-      if (filtered) console.error(filtered);
-    }
+    const cleanSeed = filterPrismaOutput(seedOut);
+    if (cleanSeed) console.log(cleanSeed);
+    const cleanSeedErr = filterPrismaOutput(seedErr || "");
+    if (cleanSeedErr) console.error(cleanSeedErr);
 
     await prisma.$connect();
     server.log.info("Connected to Prisma");

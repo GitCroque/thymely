@@ -3,7 +3,7 @@ module.exports = {
     {
       name: "client",
       script: "node",
-      args: "server.js",
+      args: "--disable-warning=DEP0060 server.js",
       cwd: "apps/client",
       instances: "1",
       autorestart: true,

@@ -6,7 +6,9 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 const UserContext = createContext();
 
-posthog.init(process.env.NEXT_PUBLIC_POSTHOG);
+if (process.env.NEXT_PUBLIC_POSTHOG) {
+  posthog.init(process.env.NEXT_PUBLIC_POSTHOG);
+}
 
 export const SessionProvider = ({ children }) => {
   const router = useRouter();
