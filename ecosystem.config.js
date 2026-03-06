@@ -16,7 +16,7 @@ module.exports = {
     {
       name: "api",
       script: "node",
-      args: "dist/main.js",
+      args: "--disable-warning=DEP0040 dist/main.js",
       cwd: "apps/api",
       instances: "1",
       autorestart: true,

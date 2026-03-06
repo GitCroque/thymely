@@ -349,6 +349,7 @@ export function authRoutes(fastify: FastifyInstance) {
       },
       schema: {
         body: {
+          type: "object",
           properties: {
             email: { type: "string" },
             password: { type: "string" },
