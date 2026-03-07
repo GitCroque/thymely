@@ -1,3 +1,4 @@
+import compress from "@fastify/compress";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
@@ -49,6 +50,7 @@ if (isProduction && (!process.env.SECRET || process.env.SECRET.length < 32)) {
   );
 }
 
+server.register(compress, { threshold: 1024 });
 server.register(cookie);
 
 server.register(cors, {
@@ -61,6 +63,7 @@ server.register(cors, {
 server.register(rateLimit, {
   max: 100,
   timeWindow: "1 minute",
+  keyGenerator: (request) => request.ip,
 });
 
 server.register(multer.contentParser);
@@ -68,6 +71,9 @@ server.register(multer.contentParser);
 server.setErrorHandler((error, request, reply) => {
   request.log.error(error);
   const statusCode = error.statusCode ?? 500;
+  if (statusCode === 403 || statusCode === 429) {
+    request.log.warn({ security: true, event: statusCode === 429 ? "rate_limit_hit" : "forbidden", ip: request.ip, url: request.url }, "Security event");
+  }
   reply.status(statusCode).send({
     success: false,
     message: statusCode === 500 ? "Internal server error" : error.message,
