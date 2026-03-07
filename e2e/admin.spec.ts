@@ -12,8 +12,8 @@ test.describe("Admin", () => {
       return res.json();
     });
 
-    expect(result.data).toBeDefined();
-    expect(Array.isArray(result.data)).toBe(true);
+    expect(result.users).toBeDefined();
+    expect(Array.isArray(result.users)).toBe(true);
     expect(result.pagination).toBeDefined();
   });
 
@@ -83,8 +83,8 @@ test.describe("Admin", () => {
       return res.json();
     });
 
-    expect(result.data).toBeDefined();
-    expect(Array.isArray(result.data)).toBe(true);
+    expect(result.clients).toBeDefined();
+    expect(Array.isArray(result.clients)).toBe(true);
   });
 
   test("should access admin settings page", async ({ page }) => {

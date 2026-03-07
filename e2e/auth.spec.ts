@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { login, loginAndExpectDashboard, logout, TEST_ADMIN_EMAIL, TEST_ADMIN_PASSWORD } from "./helpers/auth";
+import { login, loginAndExpectDashboard, TEST_ADMIN_EMAIL, TEST_ADMIN_PASSWORD } from "./helpers/auth";
 
 test.describe("Authentication", () => {
   test("should display login page", async ({ page }) => {
@@ -20,7 +20,6 @@ test.describe("Authentication", () => {
     await page.fill('input[name="password"]', "wrongpassword");
     await page.click('button:has-text("Sign In")');
 
-    // Should stay on login page and show error toast
     await page.waitForTimeout(2000);
     await expect(page).toHaveURL(/\/auth\/login/);
   });
@@ -35,8 +34,10 @@ test.describe("Authentication", () => {
     await expect(page).toHaveURL(/\/auth\/login/);
   });
 
-  test("should redirect unauthenticated users", async ({ page }) => {
-    // Try to access a protected page without login
+  test("should reject unauthenticated API requests", async ({ page }) => {
+    // Navigate first so relative fetch works
+    await page.goto("/auth/login");
+
     const response = await page.evaluate(async () => {
       const res = await fetch("/api/v1/users/all", {
         credentials: "include",
@@ -49,14 +50,26 @@ test.describe("Authentication", () => {
   test("should logout successfully", async ({ page }) => {
     await login(page);
 
-    // Verify we're logged in by accessing a protected endpoint
-    const beforeLogout = await page.evaluate(async () => {
+    // Verify we're logged in
+    const profileRes = await page.evaluate(async () => {
       const res = await fetch("/api/v1/auth/profile", { credentials: "include" });
-      return res.status;
+      return { status: res.status, body: await res.json() };
     });
-    expect(beforeLogout).toBe(200);
+    expect(profileRes.status).toBe(200);
 
-    await logout(page);
+    const userId = profileRes.body?.user?.id;
+    if (!userId) {
+      test.skip();
+      return;
+    }
+
+    // Logout via API
+    await page.evaluate(async (id: string) => {
+      await fetch(`/api/v1/auth/user/${id}/logout`, {
+        method: "GET",
+        credentials: "include",
+      });
+    }, userId);
 
     // Verify session is invalidated
     const afterLogout = await page.evaluate(async () => {

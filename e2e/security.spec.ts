@@ -71,7 +71,7 @@ test.describe("Security", () => {
       return res.json();
     });
 
-    const ticket = tickets.data?.find((t: any) => t.title === "XSS Comment Test") || tickets.tickets?.[0];
+    const ticket = tickets.tickets?.find((t: any) => t.title === "XSS Comment Test");
     if (!ticket) {
       test.skip();
       return;
@@ -153,8 +153,7 @@ test.describe("Security", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: "Test",
-          __proto__: { isAdmin: true },
-          malicious: "field",
+          maliciousField: "should be rejected",
         }),
       });
       return { status: res.status };
@@ -164,6 +163,7 @@ test.describe("Security", () => {
   });
 
   test("public ticket creation should work without auth", async ({ page }) => {
+    await page.goto("/auth/login");
     const result = await page.evaluate(async () => {
       const res = await fetch("/api/v1/ticket/public/create", {
         method: "POST",

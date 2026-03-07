@@ -15,11 +15,3 @@ export async function loginAndExpectDashboard(page: Page) {
   await login(page);
   await expect(page).toHaveURL(/\/(onboarding)?$/);
 }
-
-export async function logout(page: Page) {
-  // Navigate to settings which has logout, or call API directly
-  await page.evaluate(() => {
-    return fetch("/api/v1/auth/logout", { method: "GET", credentials: "include" });
-  });
-  await page.goto("/auth/login");
-}

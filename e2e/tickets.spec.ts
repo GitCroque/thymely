@@ -63,7 +63,7 @@ test.describe("Tickets", () => {
       return res.json();
     });
 
-    const ticket = tickets.data?.find((t: any) => t.title === "Ticket detail view test") || tickets.tickets?.[0];
+    const ticket = tickets.tickets?.find((t: any) => t.title === "Ticket detail view test") ;
     if (!ticket) {
       test.skip();
       return;
@@ -85,7 +85,7 @@ test.describe("Tickets", () => {
       return res.json();
     });
 
-    const ticket = tickets.data?.find((t: any) => t.title === "Ticket for comment test") || tickets.tickets?.[0];
+    const ticket = tickets.tickets?.find((t: any) => t.title === "Ticket for comment test") ;
     if (!ticket) {
       test.skip();
       return;
@@ -113,7 +113,7 @@ test.describe("Tickets", () => {
       return res.json();
     });
 
-    const ticket = tickets.data?.find((t: any) => t.title === "Ticket for status test") || tickets.tickets?.[0];
+    const ticket = tickets.tickets?.find((t: any) => t.title === "Ticket for status test") ;
     if (!ticket) {
       test.skip();
       return;
@@ -125,7 +125,7 @@ test.describe("Tickets", () => {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: ticketId, status: "closed" }),
+        body: JSON.stringify({ id: ticketId, status: true }),
       });
       return res.json();
     }, ticket.id);
@@ -143,6 +143,6 @@ test.describe("Tickets", () => {
     expect(result.pagination).toBeDefined();
     expect(result.pagination.limit).toBe(5);
     expect(result.pagination.page).toBe(1);
-    expect(result.data.length).toBeLessThanOrEqual(5);
+    expect(result.tickets.length).toBeLessThanOrEqual(5);
   });
 });
