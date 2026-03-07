@@ -38,6 +38,7 @@ const nextConfig = {
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-eval'",
+              // unsafe-inline required for Tailwind CSS runtime styles and Radix UI
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
@@ -45,6 +46,8 @@ const nextConfig = {
               "frame-src 'none'",
               "object-src 'none'",
               "base-uri 'self'",
+              "form-action 'self'",
+              "upgrade-insecure-requests",
             ].join("; "),
           },
         ],

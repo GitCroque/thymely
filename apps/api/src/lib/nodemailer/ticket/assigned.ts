@@ -1,16 +1,18 @@
 import handlebars from "handlebars";
 import { prisma } from "../../../prisma";
+import logger from "../../logger";
+import { sanitizeEmailAddress } from "../sanitize";
 import { createTransportProvider } from "../transport";
 
 export async function sendAssignedEmail(email: any) {
   try {
-
     const provider = await prisma.email.findFirst();
 
     if (provider) {
       const mail = await createTransportProvider();
 
-      console.log("Sending email to: ", email);
+      const to = sanitizeEmailAddress(email);
+      logger.debug({ to }, "Sending assignment notification email");
 
       const testhtml = await prisma.emailTemplate.findFirst({
         where: {
@@ -19,22 +21,22 @@ export async function sendAssignedEmail(email: any) {
       });
 
       var template = handlebars.compile(testhtml?.html);
-      var htmlToSend = template({}); // Pass an empty object as the argument to the template function
+      var htmlToSend = template({});
 
       await mail
         .sendMail({
-          from: provider?.reply, 
-          to: email, 
-          subject: `A new ticket has been assigned to you`, 
-          text: `Hello there, a ticket has been assigned to you`, 
+          from: provider?.reply,
+          to,
+          subject: `A new ticket has been assigned to you`,
+          text: `Hello there, a ticket has been assigned to you`,
           html: htmlToSend,
         })
         .then((info: any) => {
-          console.log("Message sent: %s", info.messageId);
+          logger.info({ messageId: info.messageId }, "Assignment email sent");
         })
-        .catch((err: any) => console.log(err));
+        .catch((err: any) => logger.error(err, "Failed to send assignment email"));
     }
   } catch (error) {
-    console.log(error);
+    logger.error(error, "Error in sendAssignedEmail");
   }
 }

@@ -3,6 +3,7 @@ import Imap from "imap";
 import { simpleParser } from "mailparser";
 import sanitizeHtml from "sanitize-html";
 import { prisma } from "../../prisma";
+import logger from "../logger";
 import { decryptSecret } from "../security/secrets";
 import { EmailConfig, EmailQueue } from "../types/email";
 import { AuthService } from "./auth.service";
@@ -57,7 +58,7 @@ function getReplyText(email: any): string {
   let replyText = "";
 
   fragments.forEach((fragment: any) => {
-    console.log("FRAGMENT", fragment._content, fragment.content);
+    logger.debug({ hasContent: !!fragment._content }, "Processing email fragment");
     if (!fragment._isHidden && !fragment._isSignature && !fragment._isQuoted) {
       replyText += fragment._content;
     }
@@ -187,18 +188,18 @@ export class ImapService {
   ): Promise<void> {
     const { from, subject, text, html, textAsHtml } = parsed;
 
-    console.log("isReply", isReply);
+    logger.debug({ isReply }, "Processing email");
 
     if (isReply) {
       // First try to match UUID format
       const uuidMatch = subject.match(
         /(?:ref:|#)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i
       );
-      console.log("UUID MATCH", uuidMatch);
+      logger.debug({ hasMatch: !!uuidMatch }, "UUID match check");
 
       const ticketId = uuidMatch?.[1];
 
-      console.log("TICKET ID", ticketId);
+      logger.debug({ ticketId }, "Extracted ticket ID");
 
       if (!ticketId) {
         throw new Error(`Could not extract ticket ID from subject: ${subject}`);
@@ -210,7 +211,7 @@ export class ImapService {
         },
       });
 
-      console.log("TICKET", ticket);
+      logger.debug({ ticketId: ticket?.id }, "Found ticket");
 
       if (!ticket) {
         throw new Error(`Ticket not found: ${ticketId}`);
@@ -225,9 +226,7 @@ export class ImapService {
 
       if (!authorized) {
         // Sender is not authorized: create a new ticket instead of injecting a comment
-        console.log(
-          `Unauthorized sender ${senderEmail} for ticket ${ticket.id}, creating new ticket instead`
-        );
+        logger.info({ senderEmail, ticketId: ticket.id }, "Unauthorized sender, creating new ticket");
 
         const sanitizedHtml = sanitize(html || textAsHtml || "");
 
@@ -306,7 +305,7 @@ export class ImapService {
         const imapConfig = await this.getImapConfig(queue);
 
         if (queue.serviceType === "other" && !imapConfig.password) {
-          console.error("IMAP configuration is missing a password");
+          logger.error("IMAP configuration is missing a password");
           throw new Error("IMAP configuration is missing a password");
         }
 
@@ -323,7 +322,7 @@ export class ImapService {
               imap.search(["UNSEEN", ["ON", today]], (err, results) => {
                 if (err) reject(err);
                 if (!results?.length) {
-                  console.log("No new messages");
+                  logger.debug("No new messages");
                   imap.end();
                   resolve(null);
                   return;
@@ -333,7 +332,7 @@ export class ImapService {
 
                 fetch.on("message", (msg) => {
                   msg.on("body", (stream) => {
-                    simpleParser(stream, async (err, parsed) => {
+                    simpleParser(stream as any, async (err, parsed) => {
                       if (err) throw err;
                       const subjectLower = parsed.subject?.toLowerCase() || "";
                       const isReply =
@@ -345,14 +344,14 @@ export class ImapService {
 
                   msg.once("attributes", (attrs) => {
                     imap.addFlags(attrs.uid, ["\\Seen"], () => {
-                      console.log("Marked as read!");
+                      logger.debug("Message marked as read");
                     });
                   });
                 });
 
                 fetch.once("error", reject);
                 fetch.once("end", () => {
-                  console.log("Done fetching messages");
+                  logger.debug("Done fetching messages");
                   imap.end();
                   resolve(null);
                 });
@@ -362,14 +361,14 @@ export class ImapService {
 
           imap.once("error", reject);
           imap.once("end", () => {
-            console.log("Connection ended");
+            logger.debug("IMAP connection ended");
             resolve(null);
           });
 
           imap.connect();
         });
       } catch (error) {
-        console.error(`Error processing queue ${queue.id}:`, error);
+        logger.error({ queueId: queue.id }, "Error processing IMAP queue");
       }
     }
   }

@@ -1,5 +1,7 @@
 import handlebars from "handlebars";
 import { prisma } from "../../../prisma";
+import logger from "../../logger";
+import { sanitizeEmailAddress, sanitizeEmailHeader, sanitizeTemplateValue } from "../sanitize";
 import { createTransportProvider } from "../transport";
 
 export async function sendTicketCreate(ticket: any) {
@@ -17,24 +19,27 @@ export async function sendTicketCreate(ticket: any) {
 
       var template = handlebars.compile(testhtml?.html);
       var replacements = {
-        id: ticket.id,
+        id: sanitizeTemplateValue(String(ticket.id)),
       };
       var htmlToSend = template(replacements);
+
+      const to = sanitizeEmailAddress(ticket.email);
+      const subject = sanitizeEmailHeader(`Issue #${ticket.id} has just been created & logged`);
 
       await transport
         .sendMail({
           from: email?.reply,
-          to: ticket.email,
-          subject: `Issue #${ticket.id} has just been created & logged`,
+          to,
+          subject,
           text: `Hello there, Issue #${ticket.id}, which you reported on ${ticket.createdAt}, has now been created and logged`,
           html: htmlToSend,
         })
         .then((info: any) => {
-          console.log("Message sent: %s", info.messageId);
+          logger.info({ messageId: info.messageId }, "Ticket creation email sent");
         })
-        .catch((err: any) => console.log(err));
+        .catch((err: any) => logger.error(err, "Failed to send ticket creation email"));
     }
   } catch (error) {
-    console.log(error);
+    logger.error(error, "Error in sendTicketCreate");
   }
 }

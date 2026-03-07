@@ -1,4 +1,5 @@
 import { prisma } from "../../../prisma";
+import logger from "../../logger";
 
 /**
  * Creates comment notifications for all ticket followers.
@@ -30,6 +31,6 @@ export async function commentNotification(issue: any, commenter: any) {
         })),
     });
   } catch (error) {
-    console.error("Error creating comment notifications:", error);
+    logger.error(error, "Error creating comment notifications");
   }
 }

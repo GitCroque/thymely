@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
 import { OAuth2Client } from "google-auth-library";
 import { track } from "../lib/hog";
+import logger from "../lib/logger";
 import { requirePermission } from "../lib/roles";
 import { decryptSecret, encryptSecret } from "../lib/security/secrets";
 import { prisma } from "../prisma";
@@ -114,7 +115,7 @@ export function emailQueueRoutes(fastify: FastifyInstance) {
         mailbox?.redirectUri
       );
 
-      console.log(google);
+      logger.debug("Google OAuth client initialized");
 
       const r = await google.getToken(code);
 

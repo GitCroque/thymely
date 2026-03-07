@@ -1,4 +1,5 @@
 import { prisma } from "../../../prisma";
+import logger from "../../logger";
 
 export async function activeStatusNotification(
   ticket: any,
@@ -29,7 +30,7 @@ export async function activeStatusNotification(
         })),
     });
   } catch (error) {
-    console.error("Error creating status change notifications:", error);
+    logger.error(error, "Error creating status change notifications");
   }
 }
 
@@ -60,6 +61,6 @@ export async function statusUpdateNotification(
         })),
     });
   } catch (error) {
-    console.error("Error creating status update notifications:", error);
+    logger.error(error, "Error creating status update notifications");
   }
 }

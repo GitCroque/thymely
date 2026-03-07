@@ -1,4 +1,6 @@
 import { prisma } from "../../../prisma";
+import logger from "../../logger";
+import { sanitizeEmailAddress, sanitizeEmailHeader } from "../sanitize";
 import { createTransportProvider } from "../transport";
 
 export async function forgotPassword(
@@ -16,10 +18,13 @@ export async function forgotPassword(
 
     const transport = await createTransportProvider();
 
+    const to = sanitizeEmailAddress(recipientEmail);
+    const subject = sanitizeEmailHeader("Password Reset Request");
+
     await transport.sendMail({
       from: emailConfig.reply,
-      to: recipientEmail,
-      subject: "Password Reset Request",
+      to,
+      subject,
       text: `Reset your password using this link: ${resetLink}`,
       html: `
       <!DOCTYPE html>
@@ -46,6 +51,6 @@ export async function forgotPassword(
       `,
     });
   } catch (error) {
-    console.log(error);
+    logger.error(error, "Failed to send password reset email");
   }
 }

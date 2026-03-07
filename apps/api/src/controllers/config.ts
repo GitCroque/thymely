@@ -7,7 +7,9 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { OAuth2Client } from "google-auth-library";
 
+import { auditLog } from "../lib/audit";
 import { track } from "../lib/hog";
+import logger from "../lib/logger";
 import { createTransportProvider } from "../lib/nodemailer/transport";
 import { requirePermission } from "../lib/roles";
 import { decryptSecret, encryptSecret } from "../lib/security/secrets";
@@ -92,6 +94,8 @@ export function configRoutes(fastify: FastifyInstance) {
         });
       }
 
+      await auditLog(request, { action: "config.sso_update", metadata: { provider: "oidc" } });
+
       await tracking("oidc_provider_updated", {});
 
       reply.send({
@@ -155,6 +159,8 @@ export function configRoutes(fastify: FastifyInstance) {
         });
       }
 
+      await auditLog(request, { action: "config.sso_update", metadata: { provider: "oauth" } });
+
       await tracking("oauth_provider_updated", {});
 
       reply.send({
@@ -214,13 +220,12 @@ export function configRoutes(fastify: FastifyInstance) {
         const verification = await new Promise((resolve) => {
           provider.verify(function (error: any, success: any) {
             if (error) {
-              console.log("ERROR", error);
+              logger.error(error, "Email verification failed");
               resolve(error);
               return;
             }
 
-            console.log("SUCCESS", success);
-            console.log("Server is ready to take our messages");
+            logger.debug("Email verification successful");
             resolve(success);
           });
         });

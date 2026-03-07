@@ -73,11 +73,13 @@ export function dataRoutes(fastify: FastifyInstance) {
       );
 
       // Avoid returning unbounded data and reduce accidental secret leakage.
-      const maxChars = 100_000;
+      const maxChars = 50_000;
       const safeLogs =
         logs.length > maxChars ? logs.slice(logs.length - maxChars) : logs;
 
-      reply.send({ logs: safeLogs });
+      const SENSITIVE_PATTERNS = /eyJ[A-Za-z0-9_-]{10,}|password["\s:=]+[^\s,}]+|secret["\s:=]+[^\s,}]+|token["\s:=]+[^\s,}]+/gi;
+      const redactedLogs = safeLogs.replace(SENSITIVE_PATTERNS, "[REDACTED]");
+      reply.send({ logs: redactedLogs });
     }
   );
 }

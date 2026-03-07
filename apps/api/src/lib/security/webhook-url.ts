@@ -85,15 +85,20 @@ export async function assertSafeWebhookUrl(rawUrl: string) {
     throw new Error("Webhook hostname is not allowed");
   }
 
-  const family = net.isIP(url.hostname);
+  // url.hostname for IPv6 addresses includes brackets: "[::1]" — strip them
+  const rawHostname = url.hostname.startsWith("[") && url.hostname.endsWith("]")
+    ? url.hostname.slice(1, -1)
+    : url.hostname;
+
+  const family = net.isIP(rawHostname);
   if (family !== 0) {
-    if (isPrivateAddress(url.hostname)) {
+    if (isPrivateAddress(rawHostname)) {
       throw new Error("Webhook IP address is private or local");
     }
     return;
   }
 
-  const records = await dns.lookup(url.hostname, { all: true, verbatim: true });
+  const records = await dns.lookup(rawHostname, { all: true, verbatim: true });
   if (!records.length) {
     throw new Error("Unable to resolve webhook hostname");
   }

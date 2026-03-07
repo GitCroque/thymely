@@ -1,4 +1,5 @@
 import { prisma } from "../../../prisma";
+import logger from "../../logger";
 
 export async function priorityNotification(
   issue: any,
@@ -28,6 +29,6 @@ export async function priorityNotification(
         })),
     });
   } catch (error) {
-    console.error("Error creating priority change notifications:", error);
+    logger.error(error, "Error creating priority change notifications");
   }
 }

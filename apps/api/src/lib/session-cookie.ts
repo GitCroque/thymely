@@ -34,7 +34,7 @@ export function setSessionCookie(
   reply.setCookie(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     secure,
-    sameSite: "lax",
+    sameSite: "strict",
     path: "/",
     maxAge: SESSION_MAX_AGE_SECONDS,
   });
@@ -46,7 +46,7 @@ export function clearSessionCookie(request: FastifyRequest, reply: FastifyReply)
   reply.clearCookie(SESSION_COOKIE_NAME, {
     httpOnly: true,
     secure,
-    sameSite: "lax",
+    sameSite: "strict",
     path: "/",
   });
 }

@@ -1,5 +1,6 @@
 import axios from "axios";
 import crypto from "crypto";
+import logger from "../logger";
 import { decryptSecret } from "../security/secrets";
 import { assertSafeWebhookUrl } from "../security/webhook-url";
 
@@ -109,9 +110,9 @@ export async function sendWebhookNotification(webhook: any, message: any) {
       });
     } catch (error: any) {
       if (error.response) {
-        console.error("Discord API response error:", error.response.data);
+        logger.error({ status: error.response?.status }, "Discord webhook API error");
       } else {
-        console.error("Error sending Discord webhook:", error.message);
+        logger.error({ error: error.message }, "Discord webhook send error");
       }
       throw error;
     }
@@ -130,7 +131,7 @@ export async function sendWebhookNotification(webhook: any, message: any) {
         },
       });
     } catch (error) {
-      console.error("Error sending webhook:", error);
+      logger.error({ error: (error as Error).message }, "Webhook send error");
     }
   }
 }

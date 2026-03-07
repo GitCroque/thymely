@@ -1,4 +1,5 @@
 import { prisma } from "../../../prisma";
+import logger from "../../logger";
 
 /**
  * Creates assignment notifications for all ticket followers.
@@ -35,6 +36,6 @@ export async function assignedNotification(
         })),
     });
   } catch (error) {
-    console.error("Error creating assignment notifications:", error);
+    logger.error(error, "Error creating assignment notifications");
   }
 }

@@ -1,5 +1,7 @@
 import handlebars from "handlebars";
 import { prisma } from "../../../prisma";
+import logger from "../../logger";
+import { sanitizeEmailAddress, sanitizeEmailHeader, sanitizeTemplateValue } from "../sanitize";
 import { createTransportProvider } from "../transport";
 
 export async function sendTicketStatus(ticket: any) {
@@ -16,26 +18,26 @@ export async function sendTicketStatus(ticket: any) {
 
     var template = handlebars.compile(testhtml?.html);
     var replacements = {
-      title: ticket.title,
+      title: sanitizeTemplateValue(String(ticket.title)),
       status: ticket.isComplete ? "COMPLETED" : "OUTSTANDING",
     };
     var htmlToSend = template(replacements);
 
+    const statusLabel = ticket.isComplete ? "COMPLETED" : "OUTSTANDING";
+    const to = sanitizeEmailAddress(ticket.email);
+    const subject = sanitizeEmailHeader(`Issue #${ticket.Number} status is now ${statusLabel}`);
+
     await transport
       .sendMail({
-        from: email?.reply, 
-        to: ticket.email,
-        subject: `Issue #${ticket.Number} status is now ${
-          ticket.isComplete ? "COMPLETED" : "OUTSTANDING"
-        }`, 
-        text: `Hello there, Issue #${ticket.Number}, now has a status of ${
-          ticket.isComplete ? "COMPLETED" : "OUTSTANDING"
-        }`,
+        from: email?.reply,
+        to,
+        subject,
+        text: `Hello there, Issue #${ticket.Number}, now has a status of ${statusLabel}`,
         html: htmlToSend,
       })
       .then((info: any) => {
-        console.log("Message sent: %s", info.messageId);
+        logger.info({ messageId: info.messageId }, "Status email sent");
       })
-      .catch((err: any) => console.log(err));
+      .catch((err: any) => logger.error(err, "Failed to send status email"));
   }
 }
