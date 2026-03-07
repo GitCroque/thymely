@@ -2,6 +2,9 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
 import axios from "axios";
 import crypto from "crypto";
+import sanitizeHtml from "sanitize-html";
+
+import { auditLog } from "../lib/audit";
 
 //@ts-ignore
 import { track } from "../lib/hog";
@@ -17,6 +20,7 @@ import {
   statusUpdateNotification,
 } from "../lib/notifications/issue/status";
 import { sendWebhookNotification } from "../lib/notifications/webhook";
+import { parsePagination } from "../lib/pagination";
 import { requirePermission } from "../lib/roles";
 import { decryptSecret } from "../lib/security/secrets";
 import { assertSafeWebhookUrl } from "../lib/security/webhook-url";
@@ -79,179 +83,86 @@ async function dispatchTicketCreatedWebhooks(ticket: any) {
   );
 }
 
+const ticketCreateSchema = {
+  type: "object" as const,
+  properties: {
+    name: { type: "string" as const, maxLength: 200 },
+    title: { type: "string" as const, maxLength: 500 },
+    detail: {},
+    priority: { type: "string" as const, enum: ["low", "medium", "high", "urgent"] },
+    email: { type: "string" as const, format: "email", maxLength: 254 },
+    type: { type: "string" as const, enum: ["support", "bug", "feature", "maintenance"] },
+    company: {},
+    engineer: {},
+    createdBy: {},
+  },
+  required: ["title"],
+  additionalProperties: false,
+};
+
+async function createTicketCore(request: FastifyRequest, reply: FastifyReply, options: { authenticated: boolean }) {
+  const { name, company, detail, title, priority, email, engineer, type, createdBy }: any = request.body;
+
+  const user = options.authenticated ? await checkSession(request) : null;
+
+  const ticket: any = await prisma.ticket.create({
+    data: {
+      name,
+      title,
+      detail: JSON.stringify(detail),
+      priority: priority ? priority : "low",
+      email,
+      type: type ? type.toLowerCase() : "support",
+      createdBy: createdBy
+        ? { id: createdBy.id, name: createdBy.name, role: createdBy.role, email: createdBy.email }
+        : undefined,
+      client: company !== undefined ? { connect: { id: company.id || company } } : undefined,
+      fromImap: false,
+      assignedTo: engineer && engineer.name !== "Unassigned" ? { connect: { id: engineer.id } } : undefined,
+      isComplete: Boolean(false),
+    },
+  });
+
+  if (email && validateEmail(email)) {
+    await sendTicketCreate(ticket);
+  }
+
+  if (engineer && engineer.name !== "Unassigned") {
+    const assigned = await prisma.user.findUnique({ where: { id: ticket.userId } });
+    await sendAssignedEmail(assigned!.email);
+    const assigner = user || await checkSession(request);
+    await assignedNotification(engineer, ticket, assigner);
+  }
+
+  await dispatchTicketCreatedWebhooks(ticket);
+
+  if (options.authenticated && user) {
+    await auditLog(request, { action: "ticket.create", userId: user.id, target: "Ticket", targetId: ticket.id });
+  }
+
+  const hog = track();
+  hog.capture({ event: "ticket_created", distinctId: ticket.id });
+
+  reply.status(200).send({ message: "Ticket created correctly", success: true, id: ticket.id });
+}
+
 export function ticketRoutes(fastify: FastifyInstance) {
   fastify.post(
     "/api/v1/ticket/create",
     {
       preHandler: requirePermission(["issue::create"]),
+      schema: { body: ticketCreateSchema },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const {
-        name,
-        company,
-        detail,
-        title,
-        priority,
-        email,
-        engineer,
-        type,
-        createdBy,
-      }: any = request.body;
-
-      const user = await checkSession(request);
-
-      const ticket: any = await prisma.ticket.create({
-        data: {
-          name,
-          title,
-          detail: JSON.stringify(detail),
-          priority: priority ? priority : "low",
-          email,
-          type: type ? type.toLowerCase() : "support",
-          createdBy: createdBy
-            ? {
-                id: createdBy.id,
-                name: createdBy.name,
-                role: createdBy.role,
-                email: createdBy.email,
-              }
-            : undefined,
-          client:
-            company !== undefined
-              ? {
-                  connect: { id: company.id || company },
-                }
-              : undefined,
-          fromImap: false,
-          assignedTo:
-            engineer && engineer.name !== "Unassigned"
-              ? {
-                  connect: { id: engineer.id },
-                }
-              : undefined,
-          isComplete: Boolean(false),
-        },
-      });
-
-      if (email && validateEmail(email)) {
-        await sendTicketCreate(ticket);
-      }
-
-      if (engineer && engineer.name !== "Unassigned") {
-        const assigned = await prisma.user.findUnique({
-          where: {
-            id: ticket.userId,
-          },
-        });
-
-        await sendAssignedEmail(assigned!.email);
-
-        await assignedNotification(engineer, ticket, user);
-      }
-
-      await dispatchTicketCreatedWebhooks(ticket);
-
-      const hog = track();
-
-      hog.capture({
-        event: "ticket_created",
-        distinctId: ticket.id,
-      });
-
-      reply.status(200).send({
-        message: "Ticket created correctly",
-        success: true,
-        id: ticket.id,
-      });
-    }
+    (request, reply) => createTicketCore(request, reply, { authenticated: true })
   );
 
   fastify.post(
     "/api/v1/ticket/public/create",
     {
-      config: {
-        rateLimit: { max: 20, timeWindow: "15 minutes" },
-      },
+      config: { rateLimit: { max: 20, timeWindow: "15 minutes" } },
+      schema: { body: ticketCreateSchema },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const {
-        name,
-        company,
-        detail,
-        title,
-        priority,
-        email,
-        engineer,
-        type,
-        createdBy,
-      }: any = request.body;
-
-      const ticket: any = await prisma.ticket.create({
-        data: {
-          name,
-          title,
-          detail: JSON.stringify(detail),
-          priority: priority ? priority : "low",
-          email,
-          type: type ? type.toLowerCase() : "support",
-          createdBy: createdBy
-            ? {
-                id: createdBy.id,
-                name: createdBy.name,
-                role: createdBy.role,
-                email: createdBy.email,
-              }
-            : undefined,
-          client:
-            company !== undefined
-              ? {
-                  connect: { id: company.id || company },
-                }
-              : undefined,
-          fromImap: false,
-          assignedTo:
-            engineer && engineer.name !== "Unassigned"
-              ? {
-                  connect: { id: engineer.id },
-                }
-              : undefined,
-          isComplete: Boolean(false),
-        },
-      });
-
-      if (email && validateEmail(email)) {
-        await sendTicketCreate(ticket);
-      }
-
-      if (engineer && engineer.name !== "Unassigned") {
-        const assigned = await prisma.user.findUnique({
-          where: {
-            id: ticket.userId,
-          },
-        });
-
-        await sendAssignedEmail(assigned!.email);
-
-        const user = await checkSession(request);
-
-        await assignedNotification(engineer, ticket, user);
-      }
-
-      await dispatchTicketCreatedWebhooks(ticket);
-
-      const hog = track();
-
-      hog.capture({
-        event: "ticket_created",
-        distinctId: ticket.id,
-      });
-
-      reply.status(200).send({
-        message: "Ticket created correctly",
-        success: true,
-        id: ticket.id,
-      });
-    }
+    (request, reply) => createTicketCore(request, reply, { authenticated: false })
   );
 
   // Get a ticket by id - requires auth
@@ -300,6 +211,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
         prisma.comment.findMany({
           where: {
             ticketId: ticket.id,
+            isDeleted: false,
           },
           include: {
             user: {
@@ -337,28 +249,34 @@ export function ticketRoutes(fastify: FastifyInstance) {
       preHandler: requirePermission(["issue::read"]),
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const tickets = await prisma.ticket.findMany({
-        where: { isComplete: false, hidden: false },
-        orderBy: [
-          {
-            createdAt: "desc",
+      const { skip, take, page, limit } = parsePagination(request.query as { page?: string; limit?: string });
+
+      const where = { isComplete: false, hidden: false, isDeleted: false };
+
+      const [tickets, total] = await Promise.all([
+        prisma.ticket.findMany({
+          where,
+          orderBy: [{ createdAt: "desc" }],
+          skip,
+          take,
+          include: {
+            client: {
+              select: { id: true, name: true, number: true },
+            },
+            assignedTo: {
+              select: { id: true, name: true },
+            },
+            team: {
+              select: { id: true, name: true },
+            },
           },
-        ],
-        include: {
-          client: {
-            select: { id: true, name: true, number: true },
-          },
-          assignedTo: {
-            select: { id: true, name: true },
-          },
-          team: {
-            select: { id: true, name: true },
-          },
-        },
-      });
+        }),
+        prisma.ticket.count({ where }),
+      ]);
 
       reply.send({
-        tickets: tickets,
+        tickets,
+        pagination: { page, limit, total },
         success: true,
       });
     }
@@ -369,20 +287,31 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/tickets/search",
     {
       preHandler: requirePermission(["issue::read"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            query: { type: "string", maxLength: 500 },
+          },
+          required: ["query"],
+          additionalProperties: false,
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { query }: any = request.body;
+      const { skip, take, page, limit } = parsePagination(request.query as { page?: string; limit?: string });
 
-      const tickets = await prisma.ticket.findMany({
-        where: {
-          title: {
-            contains: query,
-          },
-        },
-      });
+      const where = { title: { contains: query }, isDeleted: false };
+
+      const [tickets, total] = await Promise.all([
+        prisma.ticket.findMany({ where, skip, take }),
+        prisma.ticket.count({ where }),
+      ]);
 
       reply.send({
-        tickets: tickets,
+        tickets,
+        pagination: { page, limit, total },
         success: true,
       });
     }
@@ -395,28 +324,34 @@ export function ticketRoutes(fastify: FastifyInstance) {
       preHandler: requirePermission(["issue::read"]),
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const tickets = await prisma.ticket.findMany({
-        where: { hidden: false },
-        orderBy: [
-          {
-            createdAt: "desc",
+      const { skip, take, page, limit } = parsePagination(request.query as { page?: string; limit?: string });
+
+      const where = { hidden: false, isDeleted: false };
+
+      const [tickets, total] = await Promise.all([
+        prisma.ticket.findMany({
+          where,
+          orderBy: [{ createdAt: "desc" }],
+          skip,
+          take,
+          include: {
+            client: {
+              select: { id: true, name: true, number: true },
+            },
+            assignedTo: {
+              select: { id: true, name: true },
+            },
+            team: {
+              select: { id: true, name: true },
+            },
           },
-        ],
-        include: {
-          client: {
-            select: { id: true, name: true, number: true },
-          },
-          assignedTo: {
-            select: { id: true, name: true },
-          },
-          team: {
-            select: { id: true, name: true },
-          },
-        },
-      });
+        }),
+        prisma.ticket.count({ where }),
+      ]);
 
       reply.send({
-        tickets: tickets,
+        tickets,
+        pagination: { page, limit, total },
         success: true,
       });
     }
@@ -431,24 +366,33 @@ export function ticketRoutes(fastify: FastifyInstance) {
 
     async (request: FastifyRequest, reply: FastifyReply) => {
       const user = await checkSession(request);
+      const { skip, take, page, limit } = parsePagination(request.query as { page?: string; limit?: string });
 
-      const tickets = await prisma.ticket.findMany({
-        where: { isComplete: false, userId: user!.id, hidden: false },
-        include: {
-          client: {
-            select: { id: true, name: true, number: true },
+      const where = { isComplete: false, userId: user!.id, hidden: false, isDeleted: false };
+
+      const [tickets, total] = await Promise.all([
+        prisma.ticket.findMany({
+          where,
+          skip,
+          take,
+          include: {
+            client: {
+              select: { id: true, name: true, number: true },
+            },
+            assignedTo: {
+              select: { id: true, name: true },
+            },
+            team: {
+              select: { id: true, name: true },
+            },
           },
-          assignedTo: {
-            select: { id: true, name: true },
-          },
-          team: {
-            select: { id: true, name: true },
-          },
-        },
-      });
+        }),
+        prisma.ticket.count({ where }),
+      ]);
 
       reply.send({
-        tickets: tickets,
+        tickets,
+        pagination: { page, limit, total },
         success: true,
       });
     }
@@ -462,23 +406,33 @@ export function ticketRoutes(fastify: FastifyInstance) {
     },
 
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const tickets = await prisma.ticket.findMany({
-        where: { isComplete: true, hidden: false },
-        include: {
-          client: {
-            select: { id: true, name: true, number: true },
+      const { skip, take, page, limit } = parsePagination(request.query as { page?: string; limit?: string });
+
+      const where = { isComplete: true, hidden: false, isDeleted: false };
+
+      const [tickets, total] = await Promise.all([
+        prisma.ticket.findMany({
+          where,
+          skip,
+          take,
+          include: {
+            client: {
+              select: { id: true, name: true, number: true },
+            },
+            assignedTo: {
+              select: { id: true, name: true },
+            },
+            team: {
+              select: { id: true, name: true },
+            },
           },
-          assignedTo: {
-            select: { id: true, name: true },
-          },
-          team: {
-            select: { id: true, name: true },
-          },
-        },
-      });
+        }),
+        prisma.ticket.count({ where }),
+      ]);
 
       reply.send({
-        tickets: tickets,
+        tickets,
+        pagination: { page, limit, total },
         success: true,
       });
     }
@@ -492,17 +446,19 @@ export function ticketRoutes(fastify: FastifyInstance) {
     },
 
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const tickets = await prisma.ticket.findMany({
-        where: {
-          isComplete: false,
-          assignedTo: null,
-          hidden: false,
-        },
-      });
+      const { skip, take, page, limit } = parsePagination(request.query as { page?: string; limit?: string });
+
+      const where = { isComplete: false, assignedTo: null, hidden: false, isDeleted: false };
+
+      const [tickets, total] = await Promise.all([
+        prisma.ticket.findMany({ where, skip, take }),
+        prisma.ticket.count({ where }),
+      ]);
 
       reply.send({
         success: true,
-        tickets: tickets,
+        tickets,
+        pagination: { page, limit, total },
       });
     }
   );
@@ -512,6 +468,22 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/ticket/update",
     {
       preHandler: requirePermission(["issue::update"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+            note: { type: "string", maxLength: 10000 },
+            detail: {},
+            title: { type: "string", maxLength: 500 },
+            priority: { type: "string", enum: ["low", "medium", "high", "urgent"] },
+            status: { type: "string", maxLength: 100 },
+            client: {},
+          },
+          required: ["id"],
+          additionalProperties: false,
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { id, note, detail, title, priority, status, client }: any =
@@ -553,6 +525,17 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/ticket/transfer",
     {
       preHandler: requirePermission(["issue::transfer"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            user: { type: "string", format: "uuid" },
+            id: { type: "string", format: "uuid" },
+          },
+          required: ["id"],
+          additionalProperties: false,
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { user, id }: any = request.body;
@@ -599,6 +582,17 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/ticket/transfer/client",
     {
       preHandler: requirePermission(["issue::transfer"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            client: { type: "string", format: "uuid" },
+            id: { type: "string", format: "uuid" },
+          },
+          required: ["id"],
+          additionalProperties: false,
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { client, id }: any = request.body;
@@ -675,15 +669,35 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/ticket/comment",
     {
       preHandler: requirePermission(["issue::comment"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            text: { type: "string", maxLength: 10000 },
+            id: { type: "string", format: "uuid" },
+            public: { type: "boolean" },
+          },
+          required: ["text", "id"],
+          additionalProperties: false,
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { text, id, public: public_comment }: any = request.body;
 
       const user = await checkSession(request);
 
+      const sanitizedText = sanitizeHtml(text, {
+        allowedTags: ["p", "br", "a", "b", "i", "strong", "em", "ul", "ol", "li",
+          "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "pre", "code", "div", "span"],
+        allowedAttributes: { a: ["href"] },
+        allowedSchemes: ["http", "https", "mailto"],
+        disallowedTagsMode: "discard",
+      });
+
       await prisma.comment.create({
         data: {
-          text: text,
+          text: sanitizedText,
           public: public_comment,
           ticketId: id,
           userId: user!.id,
@@ -699,7 +713,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
       //@ts-expect-error
       const { email, title } = ticket;
       if (public_comment && email) {
-        sendComment(text, title, ticket!.id, email!);
+        sendComment(sanitizedText, title, ticket!.id, email!);
       }
 
       await commentNotification(ticket, user);
@@ -721,6 +735,16 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/ticket/comment/delete",
     {
       preHandler: requirePermission(["issue::comment"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+          },
+          required: ["id"],
+          additionalProperties: false,
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { id }: any = request.body;
@@ -745,11 +769,16 @@ export function ticketRoutes(fastify: FastifyInstance) {
         });
       }
 
-      await prisma.comment.delete({
-        where: {
-          id: id,
+      await prisma.comment.update({
+        where: { id: id },
+        data: {
+          isDeleted: true,
+          deletedAt: new Date(),
+          deletedBy: token!.id,
         },
       });
+
+      await auditLog(request, { action: "comment.delete", userId: token!.id, target: "Comment", targetId: id });
 
       reply.send({
         success: true,
@@ -762,6 +791,17 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/ticket/status/update",
     {
       preHandler: requirePermission(["issue::update"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            status: { type: "boolean" },
+            id: { type: "string", format: "uuid" },
+          },
+          required: ["status", "id"],
+          additionalProperties: false,
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { status, id }: any = request.body;
@@ -793,7 +833,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
           try {
             await assertSafeWebhookUrl(webhook.url);
           } catch (error) {
-            console.error("Unsafe webhook URL blocked:", webhook.url, error);
+            request.log.error({ url: webhook.url }, "Unsafe webhook URL blocked");
             return;
           }
 
@@ -837,6 +877,17 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/ticket/status/hide",
     {
       preHandler: requirePermission(["issue::update"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            hidden: { type: "boolean" },
+            id: { type: "string", format: "uuid" },
+          },
+          required: ["hidden", "id"],
+          additionalProperties: false,
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { hidden, id }: any = request.body;
@@ -859,6 +910,17 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/ticket/status/lock",
     {
       preHandler: requirePermission(["issue::update"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            locked: { type: "boolean" },
+            id: { type: "string", format: "uuid" },
+          },
+          required: ["locked", "id"],
+          additionalProperties: false,
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { locked, id }: any = request.body;
@@ -881,13 +943,32 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/ticket/delete",
     {
       preHandler: requirePermission(["issue::delete"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+          },
+          required: ["id"],
+          additionalProperties: false,
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { id }: any = request.body;
 
-      await prisma.ticket.delete({
+      const user = await checkSession(request);
+
+      await prisma.ticket.update({
         where: { id: id },
+        data: {
+          isDeleted: true,
+          deletedAt: new Date(),
+          deletedBy: user!.id,
+        },
       });
+
+      await auditLog(request, { action: "ticket.delete", userId: user!.id, target: "Ticket", targetId: id });
 
       reply.send({
         success: true,
@@ -952,18 +1033,41 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/ticket/template/:id",
     {
       preHandler: requirePermission(["email_template::manage"]),
+      schema: {
+        params: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+          },
+          required: ["id"],
+        },
+        body: {
+          type: "object",
+          properties: {
+            html: { type: "string", maxLength: 50000 },
+          },
+          required: ["html"],
+          additionalProperties: false,
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { id }: any = request.params;
 
       const { html }: any = request.body;
 
+      const sanitizedHtml = sanitizeHtml(html, {
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img", "style", "table", "thead", "tbody", "tr", "td", "th", "div", "span", "h1", "h2", "h3", "h4", "h5", "h6"]),
+        allowedAttributes: false,
+        allowedSchemes: ["http", "https", "mailto", "data"],
+      });
+
       await prisma.emailTemplate.update({
         where: {
           id: id,
         },
         data: {
-          html: html,
+          html: sanitizedHtml,
         },
       });
 
@@ -982,24 +1086,33 @@ export function ticketRoutes(fastify: FastifyInstance) {
 
     async (request: FastifyRequest, reply: FastifyReply) => {
       const user = await checkSession(request);
+      const { skip, take, page, limit } = parsePagination(request.query as { page?: string; limit?: string });
 
-      const tickets = await prisma.ticket.findMany({
-        where: { isComplete: false, email: user!.email, hidden: false },
-        include: {
-          client: {
-            select: { id: true, name: true, number: true },
+      const where = { isComplete: false, email: user!.email, hidden: false, isDeleted: false };
+
+      const [tickets, total] = await Promise.all([
+        prisma.ticket.findMany({
+          where,
+          skip,
+          take,
+          include: {
+            client: {
+              select: { id: true, name: true, number: true },
+            },
+            assignedTo: {
+              select: { id: true, name: true },
+            },
+            team: {
+              select: { id: true, name: true },
+            },
           },
-          assignedTo: {
-            select: { id: true, name: true },
-          },
-          team: {
-            select: { id: true, name: true },
-          },
-        },
-      });
+        }),
+        prisma.ticket.count({ where }),
+      ]);
 
       reply.send({
-        tickets: tickets,
+        tickets,
+        pagination: { page, limit, total },
         success: true,
       });
     }
@@ -1014,24 +1127,33 @@ export function ticketRoutes(fastify: FastifyInstance) {
 
     async (request: FastifyRequest, reply: FastifyReply) => {
       const user = await checkSession(request);
+      const { skip, take, page, limit } = parsePagination(request.query as { page?: string; limit?: string });
 
-      const tickets = await prisma.ticket.findMany({
-        where: { isComplete: true, email: user!.email, hidden: false },
-        include: {
-          client: {
-            select: { id: true, name: true, number: true },
+      const where = { isComplete: true, email: user!.email, hidden: false, isDeleted: false };
+
+      const [tickets, total] = await Promise.all([
+        prisma.ticket.findMany({
+          where,
+          skip,
+          take,
+          include: {
+            client: {
+              select: { id: true, name: true, number: true },
+            },
+            assignedTo: {
+              select: { id: true, name: true },
+            },
+            team: {
+              select: { id: true, name: true },
+            },
           },
-          assignedTo: {
-            select: { id: true, name: true },
-          },
-          team: {
-            select: { id: true, name: true },
-          },
-        },
-      });
+        }),
+        prisma.ticket.count({ where }),
+      ]);
 
       reply.send({
-        tickets: tickets,
+        tickets,
+        pagination: { page, limit, total },
         success: true,
       });
     }
@@ -1045,24 +1167,33 @@ export function ticketRoutes(fastify: FastifyInstance) {
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const user = await checkSession(request);
+      const { skip, take, page, limit } = parsePagination(request.query as { page?: string; limit?: string });
 
-      const tickets = await prisma.ticket.findMany({
-        where: { email: user!.email, hidden: false },
-        include: {
-          client: {
-            select: { id: true, name: true, number: true },
+      const where = { email: user!.email, hidden: false, isDeleted: false };
+
+      const [tickets, total] = await Promise.all([
+        prisma.ticket.findMany({
+          where,
+          skip,
+          take,
+          include: {
+            client: {
+              select: { id: true, name: true, number: true },
+            },
+            assignedTo: {
+              select: { id: true, name: true },
+            },
+            team: {
+              select: { id: true, name: true },
+            },
           },
-          assignedTo: {
-            select: { id: true, name: true },
-          },
-          team: {
-            select: { id: true, name: true },
-          },
-        },
-      });
+        }),
+        prisma.ticket.count({ where }),
+      ]);
 
       reply.send({
-        tickets: tickets,
+        tickets,
+        pagination: { page, limit, total },
         success: true,
       });
     }

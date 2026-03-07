@@ -13,6 +13,7 @@ import { getSessionToken } from "../lib/request-token";
 import { requirePermission } from "../lib/roles";
 import { checkSession } from "../lib/session";
 import { clearSessionCookie, setSessionCookie } from "../lib/session-cookie";
+import { auditLog } from "../lib/audit";
 import { getOAuthClient } from "../lib/utils/oauth_client";
 import { getOidcClient } from "../lib/utils/oidc_client";
 import { prisma } from "../prisma";
@@ -84,14 +85,17 @@ export function authRoutes(fastify: FastifyInstance) {
   fastify.post(
     "/api/v1/auth/user/register",
     {
+      config: {
+        rateLimit: { max: 10, timeWindow: "15 minutes" },
+      },
       schema: {
         body: {
           type: "object",
           properties: {
-            email: { type: "string" },
-            password: { type: "string" },
+            email: { type: "string", format: "email", maxLength: 254 },
+            password: { type: "string", minLength: 8, maxLength: 128 },
             admin: { type: "boolean" },
-            name: { type: "string" },
+            name: { type: "string", maxLength: 200 },
           },
           required: ["email", "password", "name", "admin"],
         },
@@ -128,11 +132,13 @@ export function authRoutes(fastify: FastifyInstance) {
       const user = await prisma.user.create({
         data: {
           email,
-          password: await bcrypt.hash(password, 10),
+          password: await bcrypt.hash(password, 12),
           name,
           isAdmin: admin,
         },
       });
+
+      await auditLog(request, { action: "user.create", userId: requester!.id, target: "User", targetId: user.id });
 
       const hog = track();
 
@@ -158,9 +164,9 @@ export function authRoutes(fastify: FastifyInstance) {
         body: {
           type: "object",
           properties: {
-            email: { type: "string" },
-            password: { type: "string" },
-            name: { type: "string" },
+            email: { type: "string", format: "email", maxLength: 254 },
+            password: { type: "string", minLength: 8, maxLength: 128 },
+            name: { type: "string", maxLength: 200 },
             language: { type: "string" },
           },
           required: ["email", "password", "name"],
@@ -190,7 +196,7 @@ export function authRoutes(fastify: FastifyInstance) {
       const user = await prisma.user.create({
         data: {
           email,
-          password: await bcrypt.hash(password, 10),
+          password: await bcrypt.hash(password, 12),
           name,
           isAdmin: false,
           language,
@@ -322,7 +328,7 @@ export function authRoutes(fastify: FastifyInstance) {
       await prisma.user.update({
         where: { id: resetToken.userId },
         data: {
-          password: await bcrypt.hash(password, 10),
+          password: await bcrypt.hash(password, 12),
         },
       });
 
@@ -333,6 +339,8 @@ export function authRoutes(fastify: FastifyInstance) {
       await prisma.passwordResetToken.deleteMany({
         where: { userId: resetToken.userId },
       });
+
+      await auditLog(request, { action: "auth.password_reset", target: "User", targetId: resetToken.userId });
 
       reply.send({
         success: true,
@@ -351,8 +359,8 @@ export function authRoutes(fastify: FastifyInstance) {
         body: {
           type: "object",
           properties: {
-            email: { type: "string" },
-            password: { type: "string" },
+            email: { type: "string", format: "email", maxLength: 254 },
+            password: { type: "string", maxLength: 128 },
           },
           required: ["email", "password"],
         },
@@ -368,7 +376,9 @@ export function authRoutes(fastify: FastifyInstance) {
         where: { email },
       });
 
-      if (!user?.password) {
+      if (!user?.password || user.isDeleted) {
+        request.log.warn({ security: true, event: "login_failed", email, ip: request.ip }, "Failed login attempt");
+        await auditLog(request, { action: "auth.login_failed", metadata: { email } });
         return reply.code(401).send({
           message: "Invalid email or password",
         });
@@ -377,6 +387,8 @@ export function authRoutes(fastify: FastifyInstance) {
       const isPasswordValid = await bcrypt.compare(password, user!.password);
 
       if (!isPasswordValid) {
+        request.log.warn({ security: true, event: "login_failed", email, ip: request.ip }, "Failed login attempt");
+        await auditLog(request, { action: "auth.login_failed", metadata: { email } });
         reply.code(401).send({
           message: "Invalid email or password",
         });
@@ -395,6 +407,8 @@ export function authRoutes(fastify: FastifyInstance) {
           ipAddress: request.ip,
         },
       });
+
+      await auditLog(request, { action: "auth.login", userId: user!.id });
 
       await tracking("user_logged_in_password", {});
 
@@ -609,7 +623,7 @@ export function authRoutes(fastify: FastifyInstance) {
           user = await prisma.user.create({
             data: {
               email: userInfo.email,
-              password: await bcrypt.hash(generateRandomPassword(12), 10), // Set a random password of length 12
+              password: await bcrypt.hash(generateRandomPassword(12), 12), // Set a random password of length 12
               name: userInfo.name || "New User", // Use the name from userInfo or a default
               isAdmin: false, // Set isAdmin to false for basic users
               language: "en", // Set a default language
@@ -640,7 +654,7 @@ export function authRoutes(fastify: FastifyInstance) {
           success: true,
         });
       } catch (error: any) {
-        console.error("Authentication error:", error);
+        request.log.error(error, "Authentication error");
         reply.status(403).send({
           success: false,
           error: "OIDC callback error",
@@ -749,7 +763,7 @@ export function authRoutes(fastify: FastifyInstance) {
           success: true,
         });
       } catch (error: any) {
-        console.error("Authentication error:", error);
+        request.log.error(error, "Authentication error");
         reply.status(403).send({
           success: false,
           error: "OAuth callback error",
@@ -768,6 +782,8 @@ export function authRoutes(fastify: FastifyInstance) {
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { id } = request.params as { id: string };
 
+      const requester = await checkSession(request);
+
       // Check if user exists
       const userToDelete = await prisma.user.findUnique({
         where: { id },
@@ -783,7 +799,7 @@ export function authRoutes(fastify: FastifyInstance) {
       // Prevent deletion of admin accounts if they're the last admin
       if (userToDelete.isAdmin) {
         const adminCount = await prisma.user.count({
-          where: { isAdmin: true },
+          where: { isAdmin: true, isDeleted: false },
         });
 
         if (adminCount <= 1) {
@@ -798,9 +814,16 @@ export function authRoutes(fastify: FastifyInstance) {
       await prisma.session.deleteMany({ where: { userId: id } });
       await prisma.notifications.deleteMany({ where: { userId: id } });
 
-      await prisma.user.delete({
+      await prisma.user.update({
         where: { id },
+        data: {
+          isDeleted: true,
+          deletedAt: new Date(),
+          deletedBy: requester!.id,
+        },
       });
+
+      await auditLog(request, { action: "user.delete", userId: requester!.id, target: "User", targetId: id });
 
       reply.send({ success: true });
     }
@@ -876,7 +899,7 @@ export function authRoutes(fastify: FastifyInstance) {
         });
       }
 
-      const hashedPass = await bcrypt.hash(password, 10);
+      const hashedPass = await bcrypt.hash(password, 12);
 
       await prisma.user.update({
         where: { id: session.id },
@@ -923,7 +946,7 @@ export function authRoutes(fastify: FastifyInstance) {
         });
       }
 
-      const hashedPass = await bcrypt.hash(password, 10);
+      const hashedPass = await bcrypt.hash(password, 12);
 
       await prisma.user.update({
         where: { id: user },
@@ -1030,6 +1053,8 @@ export function authRoutes(fastify: FastifyInstance) {
         where: { userId: id },
       });
 
+      await auditLog(request, { action: "auth.logout", userId: session!.id, target: "User", targetId: id });
+
       clearSessionCookie(request, reply);
 
       reply.send({ success: true });
@@ -1065,6 +1090,8 @@ export function authRoutes(fastify: FastifyInstance) {
             isAdmin: role,
           },
         });
+
+        await auditLog(request, { action: "user.role_change", userId: session!.id, target: "User", targetId: id, metadata: { newRole: role } });
 
         reply.send({ success: true });
       } else {
@@ -1132,6 +1159,80 @@ export function authRoutes(fastify: FastifyInstance) {
       });
 
       reply.send({ sessions });
+    }
+  );
+
+  // GDPR: Right to erasure — anonymize user data
+  fastify.post(
+    "/api/v1/admin/gdpr/erase/:userId",
+    {
+      preHandler: requirePermission(["user::manage"]),
+      config: {
+        rateLimit: { max: 3, timeWindow: "15 minutes" },
+      },
+      schema: {
+        params: {
+          type: "object",
+          properties: {
+            userId: { type: "string", format: "uuid" },
+          },
+          required: ["userId"],
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const { userId } = request.params as { userId: string };
+      const session = await checkSession(request);
+
+      if (!session?.isAdmin) {
+        return reply.code(403).send({ message: "Admin access required", success: false });
+      }
+
+      const userToErase = await prisma.user.findUnique({ where: { id: userId } });
+      if (!userToErase) {
+        return reply.code(404).send({ message: "User not found", success: false });
+      }
+
+      // Anonymize user data
+      const anonymizedEmail = `deleted-${crypto.randomBytes(8).toString("hex")}@erased.local`;
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          name: "Deleted User",
+          email: anonymizedEmail,
+          password: null,
+          image: null,
+          isDeleted: true,
+          deletedAt: new Date(),
+          deletedBy: session.id,
+        },
+      });
+
+      // Delete all sessions
+      await prisma.session.deleteMany({ where: { userId } });
+
+      // Anonymize comments
+      await prisma.comment.updateMany({
+        where: { userId },
+        data: {
+          replyEmail: null,
+        },
+      });
+
+      // Delete notifications
+      await prisma.notifications.deleteMany({ where: { userId } });
+
+      // Delete notes
+      await prisma.notes.deleteMany({ where: { userId } });
+
+      await auditLog(request, {
+        action: "gdpr.erase",
+        userId: session.id,
+        target: "User",
+        targetId: userId,
+      });
+
+      reply.send({ success: true, message: "User data erased" });
     }
   );
 

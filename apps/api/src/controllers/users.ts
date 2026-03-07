@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
 import { track } from "../lib/hog";
+import { parsePagination } from "../lib/pagination";
 import { requirePermission } from "../lib/roles";
 import { checkSession } from "../lib/session";
 import { prisma } from "../prisma";
@@ -14,23 +15,31 @@ export function userRoutes(fastify: FastifyInstance) {
       preHandler: requirePermission(["user::read"]),
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const users = await prisma.user.findMany({
-        where: {
-          external_user: false,
-        },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          isAdmin: true,
-          createdAt: true,
-          updatedAt: true,
-          language: true,
-        },
-      });
+      const { skip, take, page, limit } = parsePagination(request.query as { page?: string; limit?: string });
+
+      const where = { external_user: false, isDeleted: false };
+
+      const [users, total] = await Promise.all([
+        prisma.user.findMany({
+          where,
+          skip,
+          take,
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            isAdmin: true,
+            createdAt: true,
+            updatedAt: true,
+            language: true,
+          },
+        }),
+        prisma.user.count({ where }),
+      ]);
 
       reply.send({
         users,
+        pagination: { page, limit, total },
         success: true,
       });
     }
@@ -41,6 +50,19 @@ export function userRoutes(fastify: FastifyInstance) {
     "/api/v1/user/new",
     {
       preHandler: requirePermission(["user::manage"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            email: { type: "string", format: "email", maxLength: 254 },
+            password: { type: "string", minLength: 8, maxLength: 128 },
+            name: { type: "string", maxLength: 200 },
+            admin: { type: "boolean" },
+          },
+          required: ["email", "password", "name"],
+          additionalProperties: false,
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const session = await checkSession(request);
@@ -50,7 +72,7 @@ export function userRoutes(fastify: FastifyInstance) {
 
         const e = email.toLowerCase();
 
-        const hash = await bcrypt.hash(password, 10);
+        const hash = await bcrypt.hash(password, 12);
 
         await prisma.user.create({
           data: {
@@ -84,6 +106,17 @@ export function userRoutes(fastify: FastifyInstance) {
     "/api/v1/user/reset-password",
     {
       preHandler: requirePermission(["user::manage"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            password: { type: "string", minLength: 8, maxLength: 128 },
+            id: { type: "string", format: "uuid" },
+          },
+          required: ["password", "id"],
+          additionalProperties: false,
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { password, id }: any = request.body;
@@ -91,7 +124,7 @@ export function userRoutes(fastify: FastifyInstance) {
       const session = await checkSession(request);
 
       if (session!.isAdmin) {
-        const hashedPass = await bcrypt.hash(password, 10);
+        const hashedPass = await bcrypt.hash(password, 12);
         await prisma.user.update({
           where: { id: id },
           data: {

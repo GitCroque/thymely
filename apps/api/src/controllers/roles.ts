@@ -1,5 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { auditLog } from "../lib/audit";
 import { track } from "../lib/hog";
+import { parsePagination } from "../lib/pagination";
 import { requirePermission } from "../lib/roles";
 import { checkSession } from "../lib/session";
 import { prisma } from "../prisma";
@@ -10,6 +12,19 @@ export function roleRoutes(fastify: FastifyInstance) {
     "/api/v1/role/create",
     {
       preHandler: requirePermission(["role::create"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            name: { type: "string", maxLength: 100 },
+            description: { type: "string", maxLength: 500 },
+            permissions: { type: "array", items: { type: "string" } },
+            isDefault: { type: "boolean" },
+          },
+          required: ["name"],
+          additionalProperties: false,
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const user = await checkSession(request);
@@ -26,7 +41,7 @@ export function roleRoutes(fastify: FastifyInstance) {
         });
       }
 
-      await prisma.role.create({
+      const role = await prisma.role.create({
         data: {
           name,
           description,
@@ -34,6 +49,8 @@ export function roleRoutes(fastify: FastifyInstance) {
           isDefault: isDefault || false,
         },
       });
+
+      await auditLog(request, { action: "role.create", userId: user!.id, target: "Role", targetId: role.id, metadata: { name } });
 
       const client = track();
       client.capture({
@@ -53,19 +70,25 @@ export function roleRoutes(fastify: FastifyInstance) {
       preHandler: requirePermission(["role::read"]),
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const roles = await prisma.role.findMany({
-        include: {
-          users: false,
-        },
-      });
+      const { skip, take, page, limit } = parsePagination(request.query as { page?: string; limit?: string });
 
-      const active = await prisma.config.findFirst({
-        select: {
-          roles_active: true,
-        },
-      });
+      const [roles, total, active] = await Promise.all([
+        prisma.role.findMany({
+          skip,
+          take,
+          include: {
+            users: false,
+          },
+        }),
+        prisma.role.count(),
+        prisma.config.findFirst({
+          select: {
+            roles_active: true,
+          },
+        }),
+      ]);
 
-      reply.status(200).send({ roles, success: true, roles_active: active });
+      reply.status(200).send({ roles, pagination: { page, limit, total }, success: true, roles_active: active });
     }
   );
 
@@ -150,6 +173,8 @@ export function roleRoutes(fastify: FastifyInstance) {
         await prisma.role.delete({
           where: { id },
         });
+
+        await auditLog(request, { action: "role.delete", target: "Role", targetId: id });
 
         reply.status(200).send({ success: true });
       } catch (error: any) {

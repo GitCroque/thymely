@@ -1,5 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { auditLog } from "../lib/audit";
 import { track } from "../lib/hog";
+import { parsePagination } from "../lib/pagination";
 import { requirePermission } from "../lib/roles";
 import { prisma } from "../prisma";
 
@@ -9,6 +11,19 @@ export function clientRoutes(fastify: FastifyInstance) {
     "/api/v1/client/create",
     {
       preHandler: requirePermission(["client::create"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            name: { type: "string", maxLength: 200 },
+            email: { type: "string", format: "email", maxLength: 254 },
+            number: { type: "string", maxLength: 50 },
+            contactName: { type: "string", maxLength: 200 },
+          },
+          required: ["name"],
+          additionalProperties: false,
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { name, email, number, contactName }: any = request.body;
@@ -40,6 +55,20 @@ export function clientRoutes(fastify: FastifyInstance) {
     "/api/v1/client/update",
     {
       preHandler: requirePermission(["client::update"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+            name: { type: "string", maxLength: 200 },
+            email: { type: "string", format: "email", maxLength: 254 },
+            number: { type: "string", maxLength: 50 },
+            contactName: { type: "string", maxLength: 200 },
+          },
+          required: ["id"],
+          additionalProperties: false,
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { name, email, number, contactName, id }: any = request.body;
@@ -67,11 +96,19 @@ export function clientRoutes(fastify: FastifyInstance) {
       preHandler: requirePermission(["client::read"]),
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const clients = await prisma.client.findMany({});
+      const { skip, take, page, limit } = parsePagination(request.query as { page?: string; limit?: string });
+
+      const where = { isDeleted: false };
+
+      const [clients, total] = await Promise.all([
+        prisma.client.findMany({ where, skip, take }),
+        prisma.client.count({ where }),
+      ]);
 
       reply.send({
         success: true,
-        clients: clients,
+        clients,
+        pagination: { page, limit, total },
       });
     }
   );
@@ -85,9 +122,15 @@ export function clientRoutes(fastify: FastifyInstance) {
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { id }: any = request.params;
 
-      await prisma.client.delete({
+      await prisma.client.update({
         where: { id: id },
+        data: {
+          isDeleted: true,
+          deletedAt: new Date(),
+        },
       });
+
+      await auditLog(request, { action: "client.delete", target: "Client", targetId: id });
 
       reply.send({
         success: true,

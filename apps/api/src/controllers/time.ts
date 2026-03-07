@@ -7,7 +7,21 @@ export function timeTrackingRoutes(fastify: FastifyInstance) {
   // Create a new entry
   fastify.post(
     "/api/v1/time/new",
-    { preHandler: requirePermission(["time_entry::create"]) },
+    {
+      preHandler: requirePermission(["time_entry::create"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            time: { type: "number", minimum: 0, maximum: 10000 },
+            ticket: { type: "string", format: "uuid" },
+            title: { type: "string", maxLength: 500 },
+          },
+          required: ["time", "ticket"],
+          additionalProperties: false,
+        },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { time, ticket, title }: any = request.body;
 

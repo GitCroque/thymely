@@ -56,6 +56,15 @@ export function objectStoreRoutes(fastify: FastifyInstance) {
       }
 
       const { id } = request.params as { id: string };
+
+      const ticket = await prisma.ticket.findUnique({ where: { id } });
+      if (!ticket) {
+        return reply.code(404).send({
+          message: "Ticket not found",
+          success: false,
+        });
+      }
+
       const file = (request as any).file;
 
       if (!file) {
