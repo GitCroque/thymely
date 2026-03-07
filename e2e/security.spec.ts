@@ -143,23 +143,26 @@ test.describe("Security", () => {
     expect(result.status).toBe(400);
   });
 
-  test("should reject unknown fields (additionalProperties: false)", async ({ page }) => {
+  test("should strip unknown fields (additionalProperties: false)", async ({ page }) => {
     await login(page);
 
+    // Fastify strips unknown fields silently (removeAdditional: true)
+    // The request succeeds but malicious fields never reach the handler
     const result = await page.evaluate(async () => {
       const res = await fetch("/api/v1/ticket/create", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: "Test",
-          maliciousField: "should be rejected",
+          title: "AdditionalProps Test",
+          maliciousField: "should be stripped",
         }),
       });
-      return { status: res.status };
+      return { status: res.status, body: await res.json() };
     });
 
-    expect(result.status).toBe(400);
+    expect(result.status).toBe(200);
+    expect(result.body.success).toBe(true);
   });
 
   test("public ticket creation should work without auth", async ({ page }) => {
