@@ -97,6 +97,9 @@ model User {
   out_of_office_message        String?
   out_of_office_start          DateTime?
   out_of_office_end            DateTime?
+  isDeleted                    Boolean   @default(false)
+  deletedAt                    DateTime?
+  deletedBy                    String?
 
   todos         Todos[]
   tickets       Ticket[]
@@ -141,6 +144,9 @@ model Ticket {
   hidden     Boolean      @default(false)
   createdBy  Json?
   locked     Boolean      @default(false)
+  isDeleted  Boolean      @default(false)
+  deletedAt  DateTime?
+  deletedBy  String?
   following  Json?
 
   TicketFile   TicketFile[]
@@ -190,6 +196,9 @@ model Comment {
   edited     Boolean   @default(false)
   editedAt   DateTime?
   previous   String?
+  isDeleted  Boolean   @default(false)
+  deletedAt  DateTime?
+  deletedBy  String?
 
   userId   String?
   user     User?   @relation(fields: [userId], references: [id])
@@ -208,6 +217,9 @@ model Client {
   notes        String?
   tickets      Ticket[]
   active       Boolean        @default(true)
+  isDeleted    Boolean        @default(false)
+  deletedAt    DateTime?
+  deletedBy    String?
   TimeTracking TimeTracking[]
 }
 
@@ -417,6 +429,22 @@ model emailTemplate {
 
   html String
   type Template
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  userId    String?
+  action    String
+  target    String?
+  targetId  String?
+  metadata  Json?
+  ip        String?
+  userAgent String?
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
 }
 
 enum Hook {
