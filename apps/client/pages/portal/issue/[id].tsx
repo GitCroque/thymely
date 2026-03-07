@@ -7,7 +7,7 @@ import {
   LockClosedIcon,
   LockOpenIcon,
 } from "@heroicons/react/20/solid";
-import moment from "moment";
+import dayjs from "dayjs";
 import { useRouter } from "next/router";
 import { Fragment, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -173,7 +173,7 @@ export default function Ticket() {
                       />
                       <span className="text-sm font-medium text-gray-900 dark:text-white">
                         Created on{" "}
-                        {moment(data.ticket.createdAt).format("DD/MM/YYYY")}
+                        {dayjs(data.ticket.createdAt).format("DD/MM/YYYY")}
                       </span>
                     </div>
 
@@ -415,7 +415,7 @@ export default function Ticket() {
                                             </span>
 
                                             <span className="text-xs text-gray-500 dark:text-white">
-                                              {moment(item.createdAt).format(
+                                              {dayjs(item.createdAt).format(
                                                 "DD/MM/YYYY hh:mm"
                                               )}
                                             </span>
@@ -537,7 +537,7 @@ export default function Ticket() {
                     {t("created_at")}
                   </span>
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {moment(data.ticket.createdAt).format("DD/MM/YYYY")}
+                    {dayjs(data.ticket.createdAt).format("DD/MM/YYYY")}
                   </span>
                 </div>
               </div>

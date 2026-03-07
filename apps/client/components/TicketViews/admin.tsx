@@ -1,5 +1,5 @@
 import { getCookie } from "cookies-next";
-import moment from "moment";
+import dayjs from "dayjs";
 import { useRouter } from "next/router";
 import React, { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -315,7 +315,7 @@ export default function AdminTicketLayout() {
         accessor: "createdAt",
         id: "created",
         Cell: ({ row, value }) => {
-          const now = moment(value).format("DD/MM/YYYY");
+          const now = dayjs(value).format("DD/MM/YYYY");
           return (
             <>
               <span className="">{now}</span>

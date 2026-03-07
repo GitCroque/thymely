@@ -1,5 +1,5 @@
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/shadcn/ui/context-menu';
-import moment from 'moment';
+import dayjs from 'dayjs';
 import Link from 'next/link';
 import { Ticket, UISettings } from '../../types/tickets';
 
@@ -48,7 +48,7 @@ export default function TicketList({
                   <div className="flex flex-row space-x-3 items-center">
                     {uiSettings.showDates && (
                       <span className="text-xs">
-                        {moment(ticket.createdAt).format("DD/MM/yyyy")}
+                        {dayjs(ticket.createdAt).format("DD/MM/yyyy")}
                       </span>
                     )}
                     {uiSettings.showType && (

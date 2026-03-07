@@ -29,7 +29,7 @@ export default function Notifications() {
   const [step, setStep] = useState(0);
   const [config, setConfig] = useState();
   const [error, setError]: any = useState();
-  const [templates, setTemplates] = useState([]);
+  const [templates, setTemplates] = useState<any[]>([]);
 
   async function deleteEmailConfig() {
     setLoading(true);

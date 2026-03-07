@@ -5,7 +5,7 @@ import useTranslation from "next-translate/useTranslation";
 import { useRouter } from "next/router";
 
 import { getCookie } from "cookies-next";
-import moment from "moment";
+import dayjs from "dayjs";
 import { useUser } from "../../store/session";
 
 export default function Home() {
@@ -181,7 +181,7 @@ export default function Home() {
                                 )}
                               </td>
                               <td className="px-3 py-1 text-sm text-gray-500 dark:text-white w-[110px]">
-                                {moment(item.createdAt).format("DD/MM/YYYY")}
+                                {dayjs(item.createdAt).format("DD/MM/YYYY")}
                               </td>
                               <td className="px-3 py-1 text-sm text-gray-500 w-[130px] dark:text-white truncate whitespace-nowrap">
                                 {item.assignedTo ? item.assignedTo.name : "-"}

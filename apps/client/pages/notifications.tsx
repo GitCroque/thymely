@@ -1,6 +1,6 @@
 
 import { getCookie } from "cookies-next";
-import moment from "moment";
+import dayjs from "dayjs";
 import Link from "next/link";
 import { useUser } from "../store/session";
 
@@ -53,7 +53,7 @@ export default function Tickets() {
                         mark as read
                       </button>
                       <span className="text-xs">
-                        {moment(item.createdAt).format("DD/MM/yyyy")}
+                        {dayjs(item.createdAt).format("DD/MM/yyyy")}
                       </span>
                     </div>
                   </div>

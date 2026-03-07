@@ -3,7 +3,7 @@ import { getCookie } from "cookies-next";
 import { useEffect, useState } from "react";
 
 const Logs = () => {
-  const [logs, setLogs] = useState([]);
+  const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchLogs = async () => {

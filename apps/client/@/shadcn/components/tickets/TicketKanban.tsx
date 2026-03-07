@@ -1,5 +1,5 @@
 import { draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
-import moment from 'moment';
+import dayjs from 'dayjs';
 import Link from 'next/link';
 import { KanbanColumn, UISettings } from '../../types/tickets';
 
@@ -65,7 +65,7 @@ export default function TicketKanban({ columns, uiSettings }: TicketKanbanProps)
                     <div className="flex flex-wrap gap-2 mt-1">
                       {uiSettings.showDates && (
                         <span className="text-xs text-gray-500 flex-shrink-0">
-                          {moment(ticket.createdAt).format("DD/MM/yyyy")}
+                          {dayjs(ticket.createdAt).format("DD/MM/yyyy")}
                         </span>
                       )}
                       

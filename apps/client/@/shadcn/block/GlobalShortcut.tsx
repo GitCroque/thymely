@@ -17,7 +17,7 @@ export default function GlobalShortcut() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [tickets, setTickets] = useState([]);
+  const [tickets, setTickets] = useState<any[]>([]);
 
   const { user } = useUser();
 

@@ -28,7 +28,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
 import { getCookie } from "cookies-next";
 import { CheckIcon, Filter, X } from "lucide-react";
-import moment from "moment";
+import dayjs from "dayjs";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "../../store/session";
@@ -550,7 +550,7 @@ export default function Tickets() {
                           <div className="flex flex-row space-x-3 items-center">
                             <div>
                               <span className="text-xs">
-                                {moment(ticket.createdAt).format("DD/MM/yyyy")}
+                                {dayjs(ticket.createdAt).format("DD/MM/yyyy")}
                               </span>
                             </div>
                             <div>

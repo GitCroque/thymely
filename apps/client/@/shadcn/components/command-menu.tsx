@@ -16,7 +16,9 @@ import {
     User2,
     UserPlus2,
 } from "lucide-react";
-import moment from "moment";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
 import { useRouter } from "next/router";
 
 import {
@@ -220,7 +222,7 @@ export function CommandMenu() {
                     >
                       <span>{ticket.title}</span>
                       <span className="text-xs text-muted-foreground">
-                        #{ticket.id} • {ticket.assignedTo?.name || "Unassigned"} • {moment(ticket.createdAt).fromNow()}
+                        #{ticket.id} • {ticket.assignedTo?.name || "Unassigned"} • {dayjs(ticket.createdAt).fromNow()}
                       </span>
                     </CommandItem>
                   ))}
@@ -238,7 +240,7 @@ export function CommandMenu() {
                     >
                       <span>{ticket.title}</span>
                       <span className="text-xs text-muted-foreground">
-                        #{ticket.id} • {ticket.assignedTo?.name || "Unassigned"} • {moment(ticket.createdAt).fromNow()}
+                        #{ticket.id} • {ticket.assignedTo?.name || "Unassigned"} • {dayjs(ticket.createdAt).fromNow()}
                       </span>
                     </CommandItem>
                   ))}

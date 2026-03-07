@@ -153,7 +153,7 @@ export default function CreateTicketModal({ keypress, setKeyPressDown }) {
     const loadFlags = () => {
       const savedFlags = localStorage.getItem("featureFlags");
       if (savedFlags) {
-        const flags = safeJsonParse(savedFlags, []);
+        const flags = safeJsonParse<any[]>(savedFlags, []);
         const hideShortcuts = flags.find(
           (f: any) => f.name === "Hide Keyboard Shortcuts"
         )?.enabled;

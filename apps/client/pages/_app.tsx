@@ -12,6 +12,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SessionProvider, useUser } from "../store/session";
 
 import React from "react";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 
 const AdminLayout = dynamic(() => import("../layouts/adminLayout"));
 const PortalLayout = dynamic(() => import("../layouts/portalLayout"));
@@ -49,103 +50,117 @@ function MyApp({ Component, pageProps }: any) {
 
   if (router.pathname.startsWith("/auth")) {
     return (
-      <ThemeProvider attribute="class" defaultTheme="light">
-        <Component {...pageProps} />
-        <Toaster />
-      </ThemeProvider>
+      <ErrorBoundary>
+        <ThemeProvider attribute="class" defaultTheme="light">
+          <Component {...pageProps} />
+          <Toaster />
+        </ThemeProvider>
+      </ErrorBoundary>
     );
   }
 
   if (router.pathname.includes("/admin")) {
     return (
-      <SessionProvider>
-        <ThemeProvider attribute="class" defaultTheme="light">
-          <Theme>
-            <QueryClientProvider client={queryClient}>
-              <Auth>
-                <AdminLayout>
-                  <Component {...pageProps} />
-                  <Toaster />
-                </AdminLayout>
-              </Auth>
-            </QueryClientProvider>
-          </Theme>
-        </ThemeProvider>
-      </SessionProvider>
+      <ErrorBoundary>
+        <SessionProvider>
+          <ThemeProvider attribute="class" defaultTheme="light">
+            <Theme>
+              <QueryClientProvider client={queryClient}>
+                <Auth>
+                  <AdminLayout>
+                    <Component {...pageProps} />
+                    <Toaster />
+                  </AdminLayout>
+                </Auth>
+              </QueryClientProvider>
+            </Theme>
+          </ThemeProvider>
+        </SessionProvider>
+      </ErrorBoundary>
     );
   }
 
   if (router.pathname.includes("/settings")) {
     return (
+      <ErrorBoundary>
+        <SessionProvider>
+          <ThemeProvider attribute="class" defaultTheme="light">
+            <Theme>
+              <QueryClientProvider client={queryClient}>
+                <Auth>
+                  <ShadLayout>
+                    <Settings>
+                      <Component {...pageProps} />
+                      <Toaster />
+                    </Settings>
+                  </ShadLayout>
+                </Auth>
+              </QueryClientProvider>
+            </Theme>
+          </ThemeProvider>
+        </SessionProvider>
+      </ErrorBoundary>
+    );
+  }
+
+  if (router.pathname.startsWith("/portal")) {
+    return (
+      <ErrorBoundary>
+        <SessionProvider>
+          <Theme>
+            <QueryClientProvider client={queryClient}>
+              <Auth>
+                <PortalLayout>
+                  <Component {...pageProps} />
+                  <Toaster />
+                </PortalLayout>
+              </Auth>
+            </QueryClientProvider>
+          </Theme>
+        </SessionProvider>
+      </ErrorBoundary>
+    );
+  }
+
+  if (router.pathname === "/onboarding") {
+    return (
+      <ErrorBoundary>
+        <SessionProvider>
+          <Component {...pageProps} />
+          <Toaster />
+        </SessionProvider>
+      </ErrorBoundary>
+    );
+  }
+
+  if (router.pathname === "/submit") {
+    return (
+      <ErrorBoundary>
+        <>
+          <Component {...pageProps} />
+          <Toaster />
+        </>
+      </ErrorBoundary>
+    );
+  }
+
+  return (
+    <ErrorBoundary>
       <SessionProvider>
         <ThemeProvider attribute="class" defaultTheme="light">
           <Theme>
             <QueryClientProvider client={queryClient}>
               <Auth>
                 <ShadLayout>
-                  <Settings>
-                    <Component {...pageProps} />
-                    <Toaster />
-                  </Settings>
+                  <Component {...pageProps} />
+                  <Toaster />
                 </ShadLayout>
               </Auth>
             </QueryClientProvider>
           </Theme>
         </ThemeProvider>
       </SessionProvider>
-    );
-  }
-
-  if (router.pathname.startsWith("/portal")) {
-    return (
-      <SessionProvider>
-        <Theme>
-          <QueryClientProvider client={queryClient}>
-            <Auth>
-              <PortalLayout>
-                <Component {...pageProps} />
-                <Toaster />
-              </PortalLayout>
-            </Auth>
-          </QueryClientProvider>
-        </Theme>
-      </SessionProvider>
-    );
-  }
-
-  if (router.pathname === "/onboarding") {
-    return (
-      <SessionProvider>
-        <Component {...pageProps} />
-        <Toaster />
-      </SessionProvider>
-    );
-  }
-
-  if (router.pathname === "/submit") {
-    return (
-      <>
-        <Component {...pageProps} />
-        <Toaster />
-      </>
-    );
-  }
-
-  return (
-    <SessionProvider>
-      <ThemeProvider attribute="class" defaultTheme="light">
-        <Theme>
-          <QueryClientProvider client={queryClient}>
-            <Auth>
-              <ShadLayout>
-                <Component {...pageProps} />
-                <Toaster />
-              </ShadLayout>
-            </Auth>
-          </QueryClientProvider>
-        </Theme>
-      </ThemeProvider>
-    </SessionProvider>
+    </ErrorBoundary>
   );
 }
 

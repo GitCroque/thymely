@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import Loader from "react-spinners/ClipLoader";
 
 import { getCookie } from "cookies-next";
-import moment from "moment";
+import dayjs from "dayjs";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "../../../store/session";
@@ -82,7 +82,7 @@ export default function Tickets() {
                       <div className="flex flex-row space-x-3 items-center">
                         <span className="text-xs">
                           created at{" "}
-                          {moment(ticket.createdAt).format("DD/MM/yyyy")}
+                          {dayjs(ticket.createdAt).format("DD/MM/yyyy")}
                         </span>
                         <span
                           className={`inline-flex items-center rounded-md px-2 justify-center w-16 py-1 text-xs font-medium ring-1 ring-inset ring-gray-500/10 ${badge}`}

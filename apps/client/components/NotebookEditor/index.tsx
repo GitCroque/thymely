@@ -11,7 +11,7 @@ import { safeJsonParse } from "../../lib/safeJsonParse";
 import { BlockNoteView } from "@blocknote/mantine";
 import { getCookie } from "cookies-next";
 import { Ellipsis } from "lucide-react";
-import moment from "moment";
+import dayjs from "dayjs";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
 import { useDebounce } from "use-debounce";
@@ -171,7 +171,7 @@ export default function NotebookEditor() {
           <span className="text-xs">saving ....</span>
         ) : (
           <span className="text-xs cursor-pointer">
-            last saved: {moment(lastSaved).format("hh:mm:ss")}
+            last saved: {dayjs(lastSaved).format("hh:mm:ss")}
           </span>
         )}
         <DropdownMenu>

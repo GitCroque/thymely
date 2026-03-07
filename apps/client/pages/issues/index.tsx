@@ -26,7 +26,7 @@ export default function Tickets() {
   const router = useRouter();
   const { t } = useTranslation("thymely");
 
-  const token = getCookie("session");
+  const token = getCookie("session") as string;
   const user = useUser();
   
   const { data, status, refetch } = useQuery({
