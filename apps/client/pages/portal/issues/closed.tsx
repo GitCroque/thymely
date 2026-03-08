@@ -50,7 +50,7 @@ export default function Tickets() {
               </span>
             </div>
             {data.tickets.length > 0 ? (
-              data.tickets.map((ticket) => {
+              data.tickets.map((ticket: { id: string; Number: number; priority: string; title: string; createdAt: string; isComplete: boolean; assignedTo?: { name: string } | null }) => {
                 const p = ticket.priority;
                 let badge;
 

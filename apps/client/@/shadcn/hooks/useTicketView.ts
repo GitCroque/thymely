@@ -49,8 +49,8 @@ export function useTicketView(tickets: Ticket[] = []) {
       case 'oldest':
         return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       case 'priority':
-        const priorityOrder = { high: 0, normal: 1, low: 2 };
-        return priorityOrder[a.priority.toLowerCase()] - priorityOrder[b.priority.toLowerCase()];
+        const priorityOrder: Record<string, number> = { high: 0, normal: 1, low: 2 };
+        return (priorityOrder[a.priority.toLowerCase()] ?? 3) - (priorityOrder[b.priority.toLowerCase()] ?? 3);
       case 'title':
         return a.title.localeCompare(b.title);
       default:

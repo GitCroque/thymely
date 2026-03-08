@@ -5,7 +5,7 @@ import { useState } from "react";
 export default function Login({}) {
   const router = useRouter();
 
-  const validateEmail = (email) => {
+  const validateEmail = (email: string) => {
     return String(email)
       .toLowerCase()
       .match(

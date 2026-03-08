@@ -110,7 +110,7 @@ export function CommandMenu() {
   const filteredAndGroupedTickets = useMemo(() => {
     if (!ticketsData) return null;
 
-    const filtered = ticketsData.filter((ticket) => {
+    const filtered = ticketsData.filter((ticket: Ticket) => {
       const searchLower = search.toLowerCase();
       return (
         ticket.title.toLowerCase().includes(searchLower) ||
@@ -122,8 +122,8 @@ export function CommandMenu() {
 
     // Group by status
     const groups = {
-      open: filtered.filter(t => !t.isComplete),
-      closed: filtered.filter(t => t.isComplete),
+      open: filtered.filter((t: Ticket) => !t.isComplete),
+      closed: filtered.filter((t: Ticket) => t.isComplete),
     };
 
     return groups;
@@ -186,7 +186,7 @@ export function CommandMenu() {
               {/* Open Tickets */}
               {filteredAndGroupedTickets.open.length > 0 && (
                 <CommandGroup heading="Open Tickets">
-                  {filteredAndGroupedTickets.open.map((ticket) => (
+                  {filteredAndGroupedTickets.open.map((ticket: Ticket) => (
                     <CommandItem
                       key={ticket.id}
                       onSelect={() => router.push(`/issue/${ticket.id}`)}
@@ -204,7 +204,7 @@ export function CommandMenu() {
               {/* Closed Tickets */}
               {filteredAndGroupedTickets.closed.length > 0 && (
                 <CommandGroup heading="Closed Tickets">
-                  {filteredAndGroupedTickets.closed.map((ticket) => (
+                  {filteredAndGroupedTickets.closed.map((ticket: Ticket) => (
                     <CommandItem
                       key={ticket.id}
                       onSelect={() => router.push(`/issue/${ticket.id}`)}

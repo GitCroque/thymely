@@ -3,7 +3,7 @@ import { useState } from "react";
 import { getCookie } from "cookies-next";
 import { toast } from "@/shadcn/hooks/use-toast";
 
-export default function PasswordChange({ children: _children }) {
+export default function PasswordChange({ children: _children }: { children?: React.ReactNode }) {
   const token = getCookie("session");
 
   const [password, setPassword] = useState("");

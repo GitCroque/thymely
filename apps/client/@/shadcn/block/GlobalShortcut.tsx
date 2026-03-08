@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useUser } from "../../../store/session";
 
-function classNames(...classes) {
+function classNames(...classes: (string | boolean | undefined | null)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
@@ -77,7 +77,7 @@ export default function GlobalShortcut() {
     }
   }, [query]);
 
-  function handleRouting(id) {
+  function handleRouting(id: string) {
     setQuery("");
     setOpen(false);
     router.push(`/ticket/${id}`);

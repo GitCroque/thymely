@@ -13,7 +13,7 @@ import dynamic from "next/dynamic";
 
 const Editor = dynamic(() => import("../BlockEditor"), { ssr: false });
 
-function classNames(...classes) {
+function classNames(...classes: (string | boolean | undefined | null)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
@@ -27,7 +27,7 @@ const type = [
   { id: 8, name: "Feedback" },
 ];
 
-export default function CreateTicketModal({ keypress, setKeyPressDown }) {
+export default function CreateTicketModal({ keypress, setKeyPressDown }: { keypress: boolean; setKeyPressDown: (v: boolean) => void }) {
   const { t } = useTranslation("thymely");
   const [open, setOpen] = useState(false);
 

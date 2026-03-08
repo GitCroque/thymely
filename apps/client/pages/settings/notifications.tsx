@@ -3,7 +3,7 @@ import { getCookie } from "cookies-next";
 import { useState } from "react";
 import { useUser } from "../../store/session";
 
-function classNames(...classes) {
+function classNames(...classes: (string | boolean | undefined)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
@@ -19,7 +19,7 @@ export default function UserNotifications() {
   const [ticket_comments, setTicket_comments] = useState(user.ticket_comments);
 
   async function updateNotifications() {
-    await fetch(`/api/v1/auth/profile/notifcations/emails`, {
+    await fetch(`/api/v1/auth/profile/notifications/emails`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

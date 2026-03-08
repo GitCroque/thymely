@@ -10,8 +10,8 @@ export default function Tickets() {
 
   const { user, fetchUserProfile } = useUser();
 
-  async function markasread(id) {
-    await fetch(`/api/v1/user/notifcation/${id}`, {
+  async function markasread(id: string) {
+    await fetch(`/api/v1/user/notification/${id}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -26,15 +26,15 @@ export default function Tickets() {
       <div className="flex flex-col">
         <div className="py-2 px-6 flex flex-row items-center justify-between bg-gray-200 dark:bg-[#0A090C] border-b-[1px]">
           <span className="text-sm font-bold">
-            You have {user.notifcations.filter((e) => !e.read).length} unread
-            notifcations
-            {user.notifcations.length > 1 ? "'s" : ""}
+            You have {user.notifications.filter((e: { read: boolean }) => !e.read).length} unread
+            notifications
+            {user.notifications.length > 1 ? "'s" : ""}
           </span>
         </div>
-        {user.notifcations.filter((e) => !e.read).length > 0 ? (
-          user.notifcations
-            .filter((e) => !e.read)
-            .map((item) => {
+        {user.notifications.filter((e: { read: boolean }) => !e.read).length > 0 ? (
+          user.notifications
+            .filter((e: { read: boolean }) => !e.read)
+            .map((item: { id: string; ticketId: string; text: string; createdAt: string; read: boolean }) => {
               return (
                 <Link href={`/issue/${item.ticketId}`}>
                   <div className="flex flex-row w-full bg-white dark:bg-[#0A090C] dark:hover:bg-green-600 border-b-[1px] p-2 justify-between px-6 hover:bg-gray-100">
@@ -63,7 +63,7 @@ export default function Tickets() {
         ) : (
           <div className="min-h-screen flex items-center justify-center">
             <span className="block text-sm font-semibold text-foreground">
-              You have no notifcations
+              You have no notifications
             </span>
           </div>
         )}

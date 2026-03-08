@@ -4,7 +4,7 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import { getCookie } from "cookies-next";
 import { Fragment, useState } from "react";
 
-export default function UpdateUserModal({ user }) {
+export default function UpdateUserModal({ user }: { user: { id: string; isAdmin: boolean } }) {
   const [open, setOpen] = useState(false);
 
   const [admin, setAdmin] = useState(user.isAdmin);

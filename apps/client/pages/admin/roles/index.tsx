@@ -31,7 +31,7 @@ export default function Roles() {
     fetchRoles();
   }, []);
 
-  const handleDeleteRole = async (roleId) => {
+  const handleDeleteRole = async (roleId: string) => {
     if (!confirm("Are you sure you want to delete this role?")) return;
 
     await fetch(`/api/v1/role/${roleId}/delete`, {

@@ -25,7 +25,7 @@ export default function UserProfile() {
   const [email, setEmail] = useState(user.email);
   const [language, setLanguage] = useState(user.language);
 
-  function changeLanguage(locale) {
+  function changeLanguage(locale: string) {
     setLanguage(locale);
     router.push(router.pathname, router.asPath, {
       locale,

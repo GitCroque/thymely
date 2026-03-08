@@ -1,3 +1,4 @@
+import React from "react";
 import { classNames } from "@/shadcn/lib/utils";
 import { SidebarProvider } from "@/shadcn/ui/sidebar";
 import { Bell, Flag, KeyRound, SearchSlashIcon } from "lucide-react";
@@ -5,7 +6,7 @@ import useTranslation from "next-translate/useTranslation";
 import Link from "next/link";
 import { useRouter } from "next/router";
 
-export default function Settings({ children }) {
+export default function Settings({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   const { t } = useTranslation("thymely");

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function EmailQueues() {
-  const [queues, setQueues]: any = useState();
+  const [queues, setQueues] = useState<{ id: string; name: string; username: string; hostname: string; tls: boolean }[]>();
 
   async function fetchQueues() {
     const res = await fetch(`/api/v1/email-queues/all`, {
@@ -15,7 +15,7 @@ export default function EmailQueues() {
     setQueues(res.queues);
   }
 
-  async function deleteItem(id) {
+  async function deleteItem(id: string) {
     await fetch(`/api/v1/email-queue/delete`, {
       method: "delete",
       headers: {
@@ -94,7 +94,7 @@ export default function EmailQueues() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {queues && queues.map((item) => (
+                      {queues && queues.map((item: { id: string; name: string; username: string; hostname: string; tls: boolean }) => (
                         <tr key={item.id}>
                           <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-0">
                             {item.name}

@@ -24,7 +24,7 @@ export default function ThemeSettings() {
     document.documentElement.className = savedTheme;
   }, []);
 
-  const toggleTheme = (selectedTheme) => {
+  const toggleTheme = (selectedTheme: string) => {
     // Update the class on the root element
     document.documentElement.className = selectedTheme;
     // Update state and save the theme in localStorage

@@ -2,11 +2,11 @@ import { PlusIcon as PlusIconMini } from "@heroicons/react/20/solid";
 import { getCookie } from "cookies-next";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Loader from "react-spinners/ClipLoader";
 
-async function fetchNotebooks(token) {
+async function fetchNotebooks(token: string | undefined) {
   const res = await fetch(`/api/v1/notebooks/all`, {
     method: "GET",
     headers: {
@@ -17,11 +17,11 @@ async function fetchNotebooks(token) {
   return res.json();
 }
 
-function classNames(...classes) {
+function classNames(...classes: (string | boolean | undefined | null)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function NoteBookLayout({ children }) {
+export default function NoteBookLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const token = getCookie("session");
 
@@ -60,7 +60,7 @@ export default function NoteBookLayout({ children }) {
                     </Link>
                   </div>
                   {notebooks &&
-                    notebooks.map((item) => (
+                    notebooks.map((item: { id: string; title: string }) => (
                       <Link
                         key={item.id}
                         href={`/notebook/${item.id}`}

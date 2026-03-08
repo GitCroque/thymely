@@ -10,16 +10,16 @@ import {
 import { deleteCookie, getCookie } from "cookies-next";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { Fragment, useEffect, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 
 import useTranslation from "next-translate/useTranslation";
 import { useUser } from "../store/session";
 
-function classNames(...classes) {
+function classNames(...classes: (string | boolean | undefined | null)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function PortalLayout({ children }: any) {
+export default function PortalLayout({ children }: { children: React.ReactNode }) {
   const location = useRouter();
 
   const { loading, user } = useUser();

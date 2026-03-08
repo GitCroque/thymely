@@ -867,8 +867,6 @@ export function authRoutes(fastify: FastifyInstance) {
         ticket_assigned: user.notify_ticket_assigned,
         sso_status: config!.sso_active,
         version: config!.client_version,
-        // TODO: remove "notifcations" key once client is updated to use "notifications"
-        notifcations: notifications,
         notifications,
         external_user: user.external_user,
       };
@@ -1002,7 +1000,7 @@ export function authRoutes(fastify: FastifyInstance) {
 
   // Update a users Email notification settings
   fastify.put(
-    "/api/v1/auth/profile/notifcations/emails",
+    "/api/v1/auth/profile/notifications/emails",
     {
       preHandler: requirePermission(["user::update"]),
     },

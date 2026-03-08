@@ -13,13 +13,28 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-function groupDocumentsByDate(notebooks) {
+interface Notebook {
+  id: string;
+  title: string;
+  updatedAt: string;
+  createdAt: string;
+}
+
+interface DocumentGroups {
+  today: Notebook[];
+  yesterday: Notebook[];
+  thisWeek: Notebook[];
+  thisMonth: Notebook[];
+  older: Notebook[];
+}
+
+function groupDocumentsByDate(notebooks: Notebook[]): DocumentGroups {
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
   return notebooks.reduce(
-    (groups, notebook) => {
+    (groups: DocumentGroups, notebook: Notebook) => {
       const updatedAt = new Date(notebook.updatedAt);
 
       if (updatedAt.toDateString() === today.toDateString()) {
@@ -46,20 +61,20 @@ function groupDocumentsByDate(notebooks) {
   );
 }
 
-function isThisWeek(date, today) {
+function isThisWeek(date: Date, today: Date) {
   const weekStart = new Date(today);
   weekStart.setDate(today.getDate() - today.getDay());
   return date >= weekStart;
 }
 
-function isThisMonth(date, today) {
+function isThisMonth(date: Date, today: Date) {
   return (
     date.getMonth() === today.getMonth() &&
     date.getFullYear() === today.getFullYear()
   );
 }
 
-async function fetchNotebooks(token) {
+async function fetchNotebooks(token: string | undefined) {
   const res = await fetch(`/api/v1/notebooks/all`, {
     method: "GET",
     headers: {
@@ -109,18 +124,18 @@ export default function NoteBooksIndex() {
       });
   }
 
-  const sortedAndFilteredNotebooks = (notebooks) => {
+  const sortedAndFilteredNotebooks = (notebooks: Notebook[]) => {
     if (!notebooks) return [];
 
     // First filter by search query
-    const filtered = notebooks.filter((notebook) =>
+    const filtered = notebooks.filter((notebook: Notebook) =>
       notebook.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // Then sort
-    return filtered.sort((a, b) => {
-      const dateA = new Date(a[sortBy]);
-      const dateB = new Date(b[sortBy]);
+    return filtered.sort((a: Notebook, b: Notebook) => {
+      const dateA = new Date(sortBy === "createdAt" ? a.createdAt : a.updatedAt);
+      const dateB = new Date(sortBy === "createdAt" ? b.createdAt : b.updatedAt);
       return dateB.getTime() - dateA.getTime();
     });
   };

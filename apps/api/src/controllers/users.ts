@@ -158,7 +158,7 @@ export function userRoutes(fastify: FastifyInstance) {
       id: string;
     };
   }>(
-    "/api/v1/user/notifcation/:id",
+    "/api/v1/user/notification/:id",
     async (request, reply) => {
       const { id } = request.params;
       const session = await checkSession(request);

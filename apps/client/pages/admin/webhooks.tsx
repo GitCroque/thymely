@@ -19,7 +19,7 @@ async function getHooks() {
   return res.json(); // Return the parsed JSON response
 }
 
-function classNames(...classes) {
+function classNames(...classes: (string | boolean | undefined | null)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
@@ -63,7 +63,7 @@ export default function Notifications() {
       });
   }
 
-  async function deleteHook(id) {
+  async function deleteHook(id: string) {
     await fetch(`/api/v1/admin/webhook/${id}/delete`, {
       method: "DELETE",
       headers: {
@@ -137,7 +137,7 @@ export default function Notifications() {
                     <div className="mt-4">
                       {data !== undefined && data.webhooks.length > 0 ? (
                         <div className="flex flex-col gap-4">
-                          {data.webhooks.map((hook) => (
+                          {data.webhooks.map((hook: { id: string; name: string; url: string; type: string }) => (
                             <div
                               key={hook.id}
                               className="rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3"

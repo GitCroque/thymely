@@ -17,8 +17,8 @@ const Logs = () => {
     // Split logs by newline and parse each line as JSON
     const parsedLogs = data.logs
       .split("\n")
-      .filter((line) => line.trim()) // Remove empty lines
-      .map((line) => {
+      .filter((line: string) => line.trim()) // Remove empty lines
+      .map((line: string) => {
         try {
           return JSON.parse(line);
         } catch (e) {
@@ -26,8 +26,8 @@ const Logs = () => {
           return null;
         }
       })
-      .filter((log) => log !== null) // Remove any
-      .sort((a, b) => b.time - a.time);
+      .filter((log: { time: number; msg: string } | null) => log !== null) // Remove any
+      .sort((a: { time: number }, b: { time: number }) => b.time - a.time);
 
     setLogs(parsedLogs);
     setLoading(false);

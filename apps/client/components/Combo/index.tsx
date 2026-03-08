@@ -13,6 +13,21 @@ import {
 } from "@/shadcn/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
 
+interface ComboOption {
+  name: string;
+  value: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}
+
+interface UserComboProps {
+  value: ComboOption[];
+  update: (val: ComboOption | null) => void;
+  defaultName?: string;
+  hideInitial?: boolean;
+  disabled?: boolean;
+  placeholder?: string;
+}
+
 export function UserCombo({
   value,
   update,
@@ -20,7 +35,7 @@ export function UserCombo({
   hideInitial,
   disabled,
   placeholder,
-}) {
+}: UserComboProps) {
   const [open, setOpen] = React.useState(false);
   const [selectedStatus, setSelectedStatus] = React.useState<any | null>(null);
 
@@ -96,11 +111,11 @@ export function UserCombo({
                   <CommandItem
                     className=" hover:cursor-pointer"
                     key={val.value}
-                    value={val}
-                    onSelect={(selected) => {
-                      const user = value.find((k) => k.name === selected);
+                    value={val.name}
+                    onSelect={(selected: string) => {
+                      const user = value.find((k: ComboOption) => k.name === selected);
                       setSelectedStatus(user);
-                      update(user);
+                      update(user ?? null);
                       setOpen(false);
                     }}
                   >
@@ -116,16 +131,24 @@ export function UserCombo({
   );
 }
 
+interface IconComboProps {
+  value: ComboOption[];
+  update: (val: ComboOption | null) => void;
+  defaultName?: string;
+  hideInitial?: boolean;
+  disabled?: boolean;
+}
+
 export function IconCombo({
   value,
   update,
   defaultName,
   hideInitial,
   disabled,
-}) {
+}: IconComboProps) {
   const [open, setOpen] = React.useState(false);
   const [selectedStatus, setSelectedStatus] = React.useState<any | null>(null);
-  const defaultIcon = value.find((k) => k.value === defaultName);
+  const defaultIcon = value.find((k: ComboOption) => k.value === defaultName);
 
   console.log(disabled);
 
@@ -159,7 +182,7 @@ export function IconCombo({
                 <div className="flex-shrink-0">
                   <span className="inline-flex h-6 w-6 pl-2.5 items-center justify-center ">
                     <span className="text-xs font-medium leading-none text-foreground uppercase ">
-                      {defaultIcon && (
+                      {defaultIcon && defaultIcon.icon && (
                         <defaultIcon.icon className="mr-2 h-4 w-4 shrink-0" />
                       )}
                     </span>
@@ -182,22 +205,24 @@ export function IconCombo({
                   <CommandItem
                     className=" hover:cursor-pointer"
                     key={val.value}
-                    value={val}
-                    onSelect={(selected) => {
-                      const user = value.find((k) => k.name === selected);
+                    value={val.name}
+                    onSelect={(selected: string) => {
+                      const user = value.find((k: ComboOption) => k.name === selected);
                       setSelectedStatus(user);
-                      update(user);
+                      update(user ?? null);
                       setOpen(false);
                     }}
                   >
-                    <val.icon
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        val.value === selectedStatus?.value
-                          ? "opacity-100"
-                          : "opacity-40"
-                      )}
-                    />
+                    {val.icon && (
+                      <val.icon
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          val.value === selectedStatus?.value
+                            ? "opacity-100"
+                            : "opacity-40"
+                        )}
+                      />
+                    )}
                     <span>{val.name}</span>
                   </CommandItem>
                 ))}
@@ -210,12 +235,19 @@ export function IconCombo({
   );
 }
 
+interface ClientComboProps {
+  value: ComboOption[];
+  update: (val: ComboOption | null) => void;
+  defaultName?: string;
+  disabled?: boolean;
+}
+
 export function ClientCombo({
   value,
   update,
   defaultName,
   disabled,
-}) {
+}: ClientComboProps) {
   const [open, setOpen] = React.useState(false);
   const [selectedStatus, setSelectedStatus] = React.useState<any | null>(null);
 
@@ -287,11 +319,11 @@ export function ClientCombo({
                   <CommandItem
                     className=" hover:cursor-pointer"
                     key={val.value}
-                    value={val}
-                    onSelect={(selected) => {
-                      const user = value.find((k) => k.name === selected);
+                    value={val.name}
+                    onSelect={(selected: string) => {
+                      const user = value.find((k: ComboOption) => k.name === selected);
                       setSelectedStatus(user);
-                      update(user);
+                      update(user ?? null);
                       setOpen(false);
                     }}
                   >

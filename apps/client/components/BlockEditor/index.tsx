@@ -5,7 +5,7 @@ import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 
-export default function BlockNoteEditor({ setIssue }) {
+export default function BlockNoteEditor({ setIssue }: { setIssue: (value: unknown) => void }) {
   const editor = useCreateBlockNote();
 
   return (

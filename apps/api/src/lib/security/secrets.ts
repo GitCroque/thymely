@@ -29,7 +29,7 @@ function normalizeKey(rawKey: Buffer): Buffer {
     return rawKey;
   }
 
-  return crypto.createHash("sha256").update(rawKey as any).digest();
+  return crypto.createHash("sha256").update(new Uint8Array(rawKey)).digest();
 }
 
 async function resolveEncryptionKey(): Promise<Buffer> {
@@ -76,12 +76,16 @@ export async function encryptSecret(
 
   const key = await resolveEncryptionKey();
   const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv("aes-256-gcm", key as any, iv as any);
+  const cipher = crypto.createCipheriv(
+    "aes-256-gcm",
+    new Uint8Array(key),
+    new Uint8Array(iv)
+  );
 
   const encrypted = Buffer.concat([
-    cipher.update(value, "utf8") as any,
-    cipher.final() as any,
-  ] as any);
+    cipher.update(value, "utf8"),
+    cipher.final(),
+  ]);
   const tag = cipher.getAuthTag();
 
   return `${ENCRYPTION_PREFIX}:${iv.toString("base64")}:${tag.toString(
@@ -114,13 +118,14 @@ export async function decryptSecret(
 
   const decipher = crypto.createDecipheriv(
     "aes-256-gcm",
-    key as any,
-    iv as any
+    new Uint8Array(key),
+    new Uint8Array(iv)
   );
-  decipher.setAuthTag(tag as any);
+  decipher.setAuthTag(new Uint8Array(tag));
 
-  const decrypted = Buffer.concat(
-    [decipher.update(data as any) as any, decipher.final() as any] as any
-  );
+  const decrypted = Buffer.concat([
+    decipher.update(new Uint8Array(data)),
+    decipher.final(),
+  ]);
   return decrypted.toString("utf8");
 }

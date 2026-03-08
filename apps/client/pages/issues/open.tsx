@@ -145,7 +145,7 @@ export default function Tickets() {
   };
 
   const filteredTickets = data
-    ? data.tickets.filter((ticket) => {
+    ? data.tickets.filter((ticket: { priority: string; isComplete: boolean; assignedTo?: { name: string } | null }) => {
         const priorityMatch =
           selectedPriorities.length === 0 ||
           selectedPriorities.includes(ticket.priority);
@@ -180,9 +180,9 @@ export default function Tickets() {
 
   const filteredAssignees = useMemo(() => {
     const assignees = data?.tickets
-      .map((t) => t.assignedTo?.name || "Unassigned")
-      .filter((name, index, self) => self.indexOf(name) === index);
-    return assignees?.filter((assignee) =>
+      .map((t: { assignedTo?: { name: string } | null }) => t.assignedTo?.name || "Unassigned")
+      .filter((name: string, index: number, self: string[]) => self.indexOf(name) === index);
+    return assignees?.filter((assignee: string) =>
       assignee.toLowerCase().includes(filterSearch.toLowerCase())
     );
   }, [data?.tickets, filterSearch]);
@@ -441,7 +441,7 @@ export default function Tickets() {
                         <CommandList>
                           <CommandEmpty>No assignees found.</CommandEmpty>
                           <CommandGroup heading="Assigned To">
-                            {filteredAssignees?.map((name) => (
+                            {filteredAssignees?.map((name: string) => (
                               <CommandItem
                                 key={name}
                                 onSelect={() => handleAssigneeToggle(name)}
@@ -522,7 +522,7 @@ export default function Tickets() {
               <div></div>
             </div>
             {filteredTickets.length > 0 ? (
-              filteredTickets.map((ticket) => {
+              filteredTickets.map((ticket: { id: string; Number: number; priority: string; title: string; type: string; createdAt: string; isComplete: boolean; assignedTo?: { name: string } | null }) => {
                 const p = ticket.priority;
                 let badge;
 
