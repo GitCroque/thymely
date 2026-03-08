@@ -1,5 +1,4 @@
 import useTranslation from "next-translate/useTranslation";
-import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
 import Loader from "react-spinners/ClipLoader";
 
@@ -65,11 +64,10 @@ const FilterBadge = ({
 );
 
 export default function Tickets() {
-  const router = useRouter();
   const { t } = useTranslation("thymely");
 
   const token = getCookie("session");
-  const { data, status, error, refetch } = useQuery({
+  const { data, status, refetch } = useQuery({
     queryKey: ["allusertickets"],
     queryFn: () => getUserTickets(token),
     refetchInterval: 30000,
@@ -81,7 +79,6 @@ export default function Tickets() {
   const low = "bg-blue-100 text-blue-800";
   const normal = "bg-green-100 text-green-800";
 
-  const [filterSelected, setFilterSelected] = useState();
   const [selectedPriorities, setSelectedPriorities] = useState<string[]>(() => {
     return safeJsonParse(localStorage.getItem("open_selectedPriorities"), []);
   });
@@ -206,7 +203,7 @@ export default function Tickets() {
       });
   }
 
-  async function updateTicketStatus(e: any, ticket: any) {
+  async function updateTicketStatus(_e: any, ticket: any) {
     await fetch(`/api/v1/ticket/status/update`, {
       method: "PUT",
       headers: {
@@ -526,7 +523,7 @@ export default function Tickets() {
             </div>
             {filteredTickets.length > 0 ? (
               filteredTickets.map((ticket) => {
-                let p = ticket.priority;
+                const p = ticket.priority;
                 let badge;
 
                 if (p === "Low") {

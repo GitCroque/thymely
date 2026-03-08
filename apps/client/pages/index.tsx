@@ -16,15 +16,12 @@ export default function Home() {
   const { user } = useUser();
   const token = getCookie("session");
 
-  const [hour, setHour] = useState<number>();
+  const [, setHour] = useState<number>();
   const [openTickets, setOpenTickets] = useState(0);
   const [completedTickets, setCompletedTickets] = useState(0);
   const [unassigned, setUnassigned] = useState(0);
-  const [uploaded, setUploaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<any>();
-
-  let file: any;
 
   async function time() {
     const date = new Date();

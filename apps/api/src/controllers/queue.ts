@@ -21,10 +21,22 @@ async function tracking(event: string, properties: any) {
 
 export function emailQueueRoutes(fastify: FastifyInstance) {
   // Create a new email queue
-  fastify.post(
+  fastify.post<{
+    Body: {
+      name: string;
+      username: string;
+      password: string;
+      hostname: string;
+      tls: boolean;
+      serviceType: string;
+      clientId: string | undefined;
+      clientSecret: string | undefined;
+      redirectUri: string | undefined;
+    };
+  }>(
     "/api/v1/email-queue/create",
     { preHandler: requirePermission(["settings::manage"]) },
-    async (request: FastifyRequest, reply: FastifyReply) => {
+    async (request, reply) => {
       const {
         name,
         username,
@@ -35,7 +47,7 @@ export function emailQueueRoutes(fastify: FastifyInstance) {
         clientId,
         clientSecret,
         redirectUri,
-      }: any = request.body;
+      } = request.body;
       const encryptedPassword = await encryptSecret(password);
       const encryptedClientSecret = await encryptSecret(clientSecret);
 
@@ -95,11 +107,16 @@ export function emailQueueRoutes(fastify: FastifyInstance) {
   );
 
   // Google oauth callback
-  fastify.get(
+  fastify.get<{
+    Querystring: {
+      code: string;
+      mailboxId: string;
+    };
+  }>(
     "/api/v1/email-queue/oauth/gmail",
     { preHandler: requirePermission(["settings::manage"]) },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { code, mailboxId }: any = request.query;
+    async (request, reply) => {
+      const { code, mailboxId } = request.query;
 
       const mailbox = await prisma.emailQueue.findFirst({
         where: {
@@ -164,11 +181,15 @@ export function emailQueueRoutes(fastify: FastifyInstance) {
   );
 
   // Delete an email queue
-  fastify.delete(
+  fastify.delete<{
+    Body: {
+      id: string;
+    };
+  }>(
     "/api/v1/email-queue/delete",
     { preHandler: requirePermission(["settings::manage"]) },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { id }: any = request.body;
+    async (request, reply) => {
+      const { id } = request.body;
 
       await prisma.emailQueue.delete({
         where: {

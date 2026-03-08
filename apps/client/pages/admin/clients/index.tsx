@@ -1,6 +1,5 @@
 import { getCookie } from "cookies-next";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -67,34 +66,21 @@ function Table({ columns, data }: any) {
     getTableProps,
     getTableBodyProps,
     headerGroups,
-    //@ts-ignore
     page,
     prepareRow,
-    //@ts-ignore
     canPreviousPage,
-    //@ts-ignore
     canNextPage,
-    //@ts-ignore
-    pageCount,
-    //@ts-ignore
-    gotoPage,
-    //@ts-ignore
     nextPage,
-    //@ts-ignore
     previousPage,
-    //@ts-ignore
     setPageSize,
-    //@ts-ignore
-    state: { pageIndex, pageSize },
+    state: { pageSize },
   } = useTable(
     {
       columns,
       data,
-      //@ts-ignore
       defaultColumn, // Be sure to pass the defaultColumn option
       filterTypes,
       initialState: {
-        //@ts-ignore
         pageIndex: 0,
       },
     },
@@ -135,7 +121,7 @@ function Table({ columns, data }: any) {
               ))}
             </thead>
             <tbody {...getTableBodyProps()}>
-              {page.map((row: any, i: any) => {
+              {page.map((row: any) => {
                 prepareRow(row);
                 return (
                   <tr {...row.getRowProps()} className="bg-white">
@@ -212,8 +198,6 @@ export default function Clients() {
     queryFn: fetchAllClients,
   });
 
-  const router = useRouter();
-
   async function deleteClient(id: any) {
     await fetch(`/api/v1/clients/${id}/delete-client`, {
       method: "DELETE",
@@ -243,7 +227,7 @@ export default function Clients() {
       {
         Header: "",
         id: "actions",
-        Cell: ({ row, value }: any) => {
+        Cell: ({ row }: any) => {
           return (
             <div className="space-x-4 flex flex-row">
               {/* <UpdateClientModal client={row.original} />

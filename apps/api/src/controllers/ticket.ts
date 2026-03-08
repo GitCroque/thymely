@@ -83,6 +83,18 @@ async function dispatchTicketCreatedWebhooks(ticket: any) {
   );
 }
 
+interface TicketCreateBody {
+  name?: string;
+  title: string;
+  detail?: unknown;
+  priority?: "low" | "medium" | "high" | "urgent";
+  email?: string;
+  type?: "support" | "bug" | "feature" | "maintenance";
+  company?: { id: string; [key: string]: unknown } | string;
+  engineer?: { id: string; name: string; [key: string]: unknown };
+  createdBy?: { id: string; name: string; role: string; email: string };
+}
+
 const ticketCreateSchema = {
   type: "object" as const,
   properties: {
@@ -100,8 +112,8 @@ const ticketCreateSchema = {
   additionalProperties: false,
 };
 
-async function createTicketCore(request: FastifyRequest, reply: FastifyReply, options: { authenticated: boolean }) {
-  const { name, company, detail, title, priority, email, engineer, type, createdBy }: any = request.body;
+async function createTicketCore(request: FastifyRequest<{ Body: TicketCreateBody }>, reply: FastifyReply, options: { authenticated: boolean }) {
+  const { name, company, detail, title, priority, email, engineer, type, createdBy } = request.body;
 
   const user = options.authenticated ? await checkSession(request) : null;
 
@@ -112,11 +124,11 @@ async function createTicketCore(request: FastifyRequest, reply: FastifyReply, op
       detail: JSON.stringify(detail),
       priority: priority ? priority : "low",
       email,
-      type: type ? type.toLowerCase() : "support",
+      type: type ? type.toLowerCase() as any : "support",
       createdBy: createdBy
         ? { id: createdBy.id, name: createdBy.name, role: createdBy.role, email: createdBy.email }
         : undefined,
-      client: company !== undefined ? { connect: { id: company.id || company } } : undefined,
+      client: company !== undefined ? { connect: { id: typeof company === "string" ? company : company.id } } : undefined,
       fromImap: false,
       assignedTo: engineer && engineer.name !== "Unassigned" ? { connect: { id: engineer.id } } : undefined,
       isComplete: Boolean(false),
@@ -147,7 +159,7 @@ async function createTicketCore(request: FastifyRequest, reply: FastifyReply, op
 }
 
 export function ticketRoutes(fastify: FastifyInstance) {
-  fastify.post(
+  fastify.post<{ Body: TicketCreateBody }>(
     "/api/v1/ticket/create",
     {
       preHandler: requirePermission(["issue::create"]),
@@ -156,7 +168,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
     (request, reply) => createTicketCore(request, reply, { authenticated: true })
   );
 
-  fastify.post(
+  fastify.post<{ Body: TicketCreateBody }>(
     "/api/v1/ticket/public/create",
     {
       config: { rateLimit: { max: 20, timeWindow: "15 minutes" } },
@@ -166,13 +178,13 @@ export function ticketRoutes(fastify: FastifyInstance) {
   );
 
   // Get a ticket by id - requires auth
-  fastify.get(
+  fastify.get<{ Params: { id: string } }>(
     "/api/v1/ticket/:id",
     {
       preHandler: requirePermission(["issue::read"]),
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { id }: any = request.params;
+    async (request, reply) => {
+      const { id } = request.params;
 
       const ticket = await prisma.ticket.findUnique({
         where: {
@@ -228,7 +240,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
         }),
       ]);
 
-      var t = {
+      const t = {
         ...ticket,
         comments: [...comments],
         TimeTracking: [...timeTracking],
@@ -298,8 +310,8 @@ export function ticketRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { query }: any = request.body;
+    async (request: FastifyRequest<{ Body: { query: string } }>, reply: FastifyReply) => {
+      const { query } = request.body;
       const { skip, take, page, limit } = parsePagination(request.query as { page?: string; limit?: string });
 
       const where = { title: { contains: query }, isDeleted: false };
@@ -485,8 +497,8 @@ export function ticketRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { id, note, detail, title, priority, status, client }: any =
+    async (request: FastifyRequest<{ Body: { id: string; note?: string; detail?: string; title?: string; priority?: string; status?: "hold" | "needs_support" | "in_progress" | "in_review" | "done"; client?: unknown } }>, reply: FastifyReply) => {
+      const { id, note, detail, title, priority, status, client } =
         request.body;
 
       const user = await checkSession(request);
@@ -537,8 +549,8 @@ export function ticketRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { user, id }: any = request.body;
+    async (request: FastifyRequest<{ Body: { user?: string; id: string } }>, reply: FastifyReply) => {
+      const { user, id } = request.body;
 
       const assigner = await checkSession(request);
 
@@ -594,8 +606,8 @@ export function ticketRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { client, id }: any = request.body;
+    async (request: FastifyRequest<{ Body: { client?: string; id: string } }>, reply: FastifyReply) => {
+      const { client, id } = request.body;
 
       if (client) {
         await prisma.ticket.update({
@@ -682,8 +694,8 @@ export function ticketRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { text, id, public: public_comment }: any = request.body;
+    async (request: FastifyRequest<{ Body: { text: string; id: string; public?: boolean } }>, reply: FastifyReply) => {
+      const { text, id, public: public_comment } = request.body;
 
       const user = await checkSession(request);
 
@@ -746,8 +758,8 @@ export function ticketRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { id }: any = request.body;
+    async (request: FastifyRequest<{ Body: { id: string } }>, reply: FastifyReply) => {
+      const { id } = request.body;
 
       const token = await checkSession(request);
 
@@ -803,8 +815,8 @@ export function ticketRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { status, id }: any = request.body;
+    async (request: FastifyRequest<{ Body: { status: boolean; id: string } }>, reply: FastifyReply) => {
+      const { status, id } = request.body;
 
       const user = await checkSession(request);
 
@@ -815,7 +827,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
         },
       });
 
-      await activeStatusNotification(ticket, user, status);
+      await activeStatusNotification(ticket, user, status ? "Completed" : "Outstanding");
 
       await sendTicketStatus(ticket);
 
@@ -889,8 +901,8 @@ export function ticketRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { hidden, id }: any = request.body;
+    async (request: FastifyRequest<{ Body: { hidden: boolean; id: string } }>, reply: FastifyReply) => {
+      const { hidden, id } = request.body;
 
       await prisma.ticket.update({
         where: { id: id },
@@ -922,8 +934,8 @@ export function ticketRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { locked, id }: any = request.body;
+    async (request: FastifyRequest<{ Body: { locked: boolean; id: string } }>, reply: FastifyReply) => {
+      const { locked, id } = request.body;
 
       await prisma.ticket.update({
         where: { id: id },
@@ -954,8 +966,8 @@ export function ticketRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { id }: any = request.body;
+    async (request: FastifyRequest<{ Body: { id: string } }>, reply: FastifyReply) => {
+      const { id } = request.body;
 
       const user = await checkSession(request);
 
@@ -1007,13 +1019,13 @@ export function ticketRoutes(fastify: FastifyInstance) {
   );
 
   // GET ticket template by ID
-  fastify.get(
+  fastify.get<{ Params: { id: string } }>(
     "/api/v1/ticket/template/:id",
     {
       preHandler: requirePermission(["email_template::manage"]),
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { id }: any = request.params;
+    async (request, reply) => {
+      const { id } = request.params;
 
       const template = await prisma.emailTemplate.findMany({
         where: {
@@ -1029,7 +1041,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
   );
 
   // PUT ticket template by ID
-  fastify.put(
+  fastify.put<{ Params: { id: string }; Body: { html: string } }>(
     "/api/v1/ticket/template/:id",
     {
       preHandler: requirePermission(["email_template::manage"]),
@@ -1051,10 +1063,10 @@ export function ticketRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { id }: any = request.params;
+    async (request, reply) => {
+      const { id } = request.params;
 
-      const { html }: any = request.body;
+      const { html } = request.body;
 
       const sanitizedHtml = sanitizeHtml(html, {
         allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img", "style", "table", "thead", "tbody", "tr", "td", "th", "div", "span", "h1", "h2", "h3", "h4", "h5", "h6"]),
@@ -1200,13 +1212,13 @@ export function ticketRoutes(fastify: FastifyInstance) {
   );
 
   // Subscribe to a ticket
-  fastify.get(
+  fastify.get<{ Params: { id: string } }>(
     "/api/v1/ticket/subscribe/:id",
     {
       preHandler: requirePermission(["issue::read"]),
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { id }: any = request.params;
+    async (request, reply) => {
+      const { id } = request.params;
 
       const user = await checkSession(request);
 
@@ -1246,13 +1258,13 @@ export function ticketRoutes(fastify: FastifyInstance) {
   );
 
   // Unsubscribe from a ticket
-  fastify.get(
+  fastify.get<{ Params: { id: string } }>(
     "/api/v1/ticket/unsubscribe/:id",
     {
       preHandler: requirePermission(["issue::read"]),
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { id }: any = request.params;
+    async (request, reply) => {
+      const { id } = request.params;
       const user = await checkSession(request);
 
       if (id) {

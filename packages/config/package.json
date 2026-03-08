@@ -1,18 +1,15 @@
 {
-    "name": "config",
-    "version": "1.0.0",
-    "main": "index.js",
-    "license": "MIT",
-    "files": [
-        "eslint-preset.js"
-    ],
-    "dependencies": {
-        "eslint-config-next": "latest",
-        "eslint-config-prettier": "^8.3.0",
-        "eslint-config-turbo": "latest",
-        "eslint-plugin-react": "7.28.0"
-    },
-    "devDependencies": {
-        "typescript": "^4.5.3"
-    }
+  "name": "config",
+  "version": "2.0.0",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    "./eslint-api": "./eslint-api.mjs",
+    "./eslint-next": "./eslint-next.mjs"
+  },
+  "peerDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8",
+    "@typescript-eslint/parser": "^8",
+    "eslint": "^9"
+  }
 }

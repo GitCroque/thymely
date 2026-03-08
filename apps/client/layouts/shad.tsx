@@ -17,10 +17,10 @@ import { useUser } from "../store/session";
 export default function ShadLayout({ children }: any) {
   const location = useRouter();
 
-  const { loading, user, fetchUserProfile } = useUser();
+  const { loading, user } = useUser();
 
 
-  const { t, lang } = useTranslation("thymely");
+  useTranslation("thymely");
 
   if (!user) {
     location.push("/auth/login");

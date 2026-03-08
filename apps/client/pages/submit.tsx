@@ -39,7 +39,7 @@ export default function ClientTicketNew() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [view, setView] = useState("new");
-  const [ticketID, setTicketID] = useState("");
+  const [, setTicketID] = useState("");
 
   const [selected, setSelected] = useState(type[2]);
   const [name, setName] = useState("");

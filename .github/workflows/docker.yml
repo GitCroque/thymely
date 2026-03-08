@@ -27,8 +27,7 @@ jobs:
       - run: yarn install --immutable
       - run: yarn lint
       - name: Security audit
-        run: yarn npm audit --all --severity high
-        continue-on-error: true
+        run: yarn npm audit --all --severity high --environment production
       - name: Run tests
         run: cd apps/api && yarn test
       - run: cd apps/api && npx tsc --noEmit

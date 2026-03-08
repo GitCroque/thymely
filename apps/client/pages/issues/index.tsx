@@ -8,7 +8,7 @@ import { useTicketView } from "@/shadcn/hooks/useTicketView";
 import { getCookie } from "cookies-next";
 import { Loader } from "lucide-react";
 import useTranslation from "next-translate/useTranslation";
-import { useRouter } from "next/router";
+
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "../../store/session";
@@ -23,8 +23,7 @@ async function getUserTickets(token: any) {
 }
 
 export default function Tickets() {
-  const router = useRouter();
-  const { t } = useTranslation("thymely");
+  useTranslation("thymely");
 
   const token = getCookie("session") as string;
   const user = useUser();

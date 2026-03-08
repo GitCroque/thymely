@@ -1,4 +1,3 @@
-import { toast } from "@/shadcn/hooks/use-toast";
 import { Button } from "@/shadcn/ui/button";
 import {
   Card,
@@ -8,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shadcn/ui/card";
-import { Input } from "@/shadcn/ui/input";
 import { Label } from "@/shadcn/ui/label";
 import {
   Select,
@@ -27,7 +25,7 @@ export default function Notifications() {
   const [enabled, setEnabled] = useState(false);
   const [provider, setProvider] = useState("");
   const [step, setStep] = useState(0);
-  const [config, setConfig] = useState();
+  const [, setConfig] = useState();
   const [error, setError]: any = useState();
   const [templates, setTemplates] = useState<any[]>([]);
 

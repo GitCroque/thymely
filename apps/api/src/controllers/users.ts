@@ -46,7 +46,14 @@ export function userRoutes(fastify: FastifyInstance) {
   );
 
   // New user
-  fastify.post(
+  fastify.post<{
+    Body: {
+      email: string;
+      password: string;
+      name: string;
+      admin: boolean | undefined;
+    };
+  }>(
     "/api/v1/user/new",
     {
       preHandler: requirePermission(["user::manage"]),
@@ -64,11 +71,11 @@ export function userRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
+    async (request, reply) => {
       const session = await checkSession(request);
 
       if (session!.isAdmin) {
-        const { email, password, name, admin }: any = request.body;
+        const { email, password, name, admin } = request.body;
 
         const e = email.toLowerCase();
 
@@ -102,7 +109,12 @@ export function userRoutes(fastify: FastifyInstance) {
   );
 
   // (ADMIN) Reset password
-  fastify.put(
+  fastify.put<{
+    Body: {
+      password: string;
+      id: string;
+    };
+  }>(
     "/api/v1/user/reset-password",
     {
       preHandler: requirePermission(["user::manage"]),
@@ -118,8 +130,8 @@ export function userRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { password, id }: any = request.body;
+    async (request, reply) => {
+      const { password, id } = request.body;
 
       const session = await checkSession(request);
 
@@ -141,10 +153,14 @@ export function userRoutes(fastify: FastifyInstance) {
   );
 
   // Mark Notification as read
-  fastify.get(
+  fastify.get<{
+    Params: {
+      id: string;
+    };
+  }>(
     "/api/v1/user/notifcation/:id",
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { id }: any = request.params;
+    async (request, reply) => {
+      const { id } = request.params;
       const session = await checkSession(request);
       
       if (!session) {

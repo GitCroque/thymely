@@ -12,11 +12,6 @@ export default function CreateClientPage() {
   const [contactName, setContactName] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const isEnabled =
-    number.length > 0 &&
-    contactName.length > 0 &&
-    name.length > 0 &&
-    email.length > 0;
 
   async function createClient() {
     await fetch(`/api/v1/client/create`, {

@@ -1,6 +1,5 @@
 import { Button } from "@radix-ui/themes";
 import {
-    AlertCircle,
     CheckCircle2,
     Circle,
     Clock,
@@ -10,7 +9,6 @@ import {
     SignalHigh,
     SignalLow,
     SignalMedium,
-    Timer,
     Trash2,
     User,
     User2,
@@ -131,32 +129,6 @@ export function CommandMenu() {
     return groups;
   }, [ticketsData, search]);
 
-  const getStatusIcon = (ticket: Ticket) => {
-    if (ticket.isComplete) return CheckCircle2;
-    switch (ticket.priority.toLowerCase()) {
-      case 'high':
-        return AlertCircle;
-      case 'medium':
-        return Clock;
-      case 'low':
-        return Timer;
-      default:
-        return Circle;
-    }
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority.toLowerCase()) {
-      case 'high':
-        return 'text-red-500';
-      case 'medium':
-        return 'text-yellow-500';
-      case 'low':
-        return 'text-blue-500';
-      default:
-        return 'text-gray-500';
-    }
-  };
 
   return (
     <>

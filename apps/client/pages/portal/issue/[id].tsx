@@ -25,7 +25,7 @@ export default function Ticket() {
 
   const token = getCookie("session");
 
-  const { user } = useUser();
+  useUser();
 
   const fetchTicketById = async () => {
     const id = router.query.id;
@@ -43,20 +43,15 @@ export default function Ticket() {
     refetch();
   }, [router]);
 
-  const [users, setUsers] = useState<any>();
+  const [users, _setUsers] = useState<any>();
   const [n, setN] = useState<any>();
 
-  const [issue, setIssue] = useState<any>();
   const [comment, setComment] = useState<any>();
-  const [timeSpent, setTimeSpent] = useState<any>();
-  const [publicComment, setPublicComment] = useState<any>(false);
-  const [timeReason, setTimeReason] = useState("");
+  const [publicComment] = useState<any>(false);
 
   const history = useRouter();
 
   const { id } = history.query;
-
-  let file: any = [];
 
   async function updateStatus() {
     await fetch(`/api/v1/ticket/status/update`, {

@@ -20,8 +20,8 @@ export async function sendAssignedEmail(email: any) {
         },
       });
 
-      var template = handlebars.compile(testhtml?.html);
-      var htmlToSend = template({});
+      const template = handlebars.compile(testhtml?.html);
+      const htmlToSend = template({});
 
       await mail
         .sendMail({

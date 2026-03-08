@@ -1,4 +1,4 @@
-import { getCookie, setCookie } from "cookies-next";
+import { getCookie } from "cookies-next";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 

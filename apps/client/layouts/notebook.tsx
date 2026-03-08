@@ -25,12 +25,11 @@ export default function NoteBookLayout({ children }) {
   const router = useRouter();
   const token = getCookie("session");
 
-  const { data, status, error, refetch } = useQuery({ queryKey: ["getUsersNotebooks"], queryFn: () =>
+  const { data, status } = useQuery({ queryKey: ["getUsersNotebooks"], queryFn: () =>
     fetchNotebooks(token)
   });
 
   const [notebooks, setNotebooks] = useState<any>();
-  const [selected, setSelected] = useState(0);
 
   useEffect(() => {
     if (data) {
@@ -61,7 +60,7 @@ export default function NoteBookLayout({ children }) {
                     </Link>
                   </div>
                   {notebooks &&
-                    notebooks.map((item, index) => (
+                    notebooks.map((item) => (
                       <Link
                         key={item.id}
                         href={`/notebook/${item.id}`}

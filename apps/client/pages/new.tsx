@@ -36,7 +36,7 @@ export default function CreateTicket() {
   const [email, setEmail] = useState("");
   const [issue, setIssue] = useState<any>("");
   const [title, setTitle] = useState("");
-  const [priority, setPriority] = useState("medium");
+  const [priority] = useState("medium");
   const [options, setOptions] = useState<any>();
   const [users, setUsers] = useState<any>();
   const [selected, setSelected] = useState<any>(type[3]);

@@ -31,12 +31,12 @@ import { useUser } from "../store/session";
 export default function NewLayout({ children }: any) {
   const location = useRouter();
 
-  const { loading, user, fetchUserProfile } = useUser();
+  const { loading, user } = useUser();
   const locale = user ? user.language : "en";
 
   const [keypressdown, setKeyPressDown] = useState(false);
 
-  const { t, lang } = useTranslation("thymely");
+  const { t } = useTranslation("thymely");
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 

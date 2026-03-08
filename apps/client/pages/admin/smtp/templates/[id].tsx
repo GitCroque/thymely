@@ -12,7 +12,7 @@ export default function EmailTemplates() {
 
   const router = useRouter();
 
-  const [code, setCode] = useState(`function add(a, b) {\n  return a + b;\n}`);
+  const [_code, _setCode] = useState(`function add(a, b) {\n  return a + b;\n}`);
 
   async function fetchTemplate() {
     await fetch(`/api/v1/ticket/template/${router.query.id}`, {

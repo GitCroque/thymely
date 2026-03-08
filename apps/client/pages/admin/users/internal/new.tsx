@@ -7,9 +7,6 @@ import { useUser } from "../../../../store/session";
 import { toast } from "@/shadcn/hooks/use-toast";
 
 export default function CreateUser() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [auth, setAuth] = useState(undefined);
-
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -54,23 +51,24 @@ export default function CreateUser() {
       });
   }
 
-  async function checkAuth() {
-    await fetch(`/api/v1/auth/check`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + getCookie("session"),
-      },
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        if (res.success === true) {
-          setAuth(res.auth);
-          setIsLoading(false);
-        } else {
-        }
-      });
-  }
+  // TODO: Wire up auth check in UI
+  // async function checkAuth() {
+  //   await fetch(`/api/v1/auth/check`, {
+  //     method: "GET",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //       Authorization: "Bearer " + getCookie("session"),
+  //     },
+  //   })
+  //     .then((res) => res.json())
+  //     .then((res) => {
+  //       if (res.success === true) {
+  //         setAuth(res.auth);
+  //         setIsLoading(false);
+  //       } else {
+  //       }
+  //     });
+  // }
 
   return (
     <div>

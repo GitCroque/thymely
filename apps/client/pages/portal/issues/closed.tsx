@@ -8,10 +8,6 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "../../../store/session";
 
-function classNames(...classes: any) {
-  return classes.filter(Boolean).join(" ");
-}
-
 async function getUserTickets(token: any) {
   const res = await fetch(`/api/v1/tickets/user/closed/external`, {
     headers: {
@@ -23,14 +19,14 @@ async function getUserTickets(token: any) {
 
 export default function Tickets() {
   const router = useRouter();
-  const { t } = useTranslation("thymely");
+  useTranslation("thymely");
 
   const token = getCookie("session");
-  const { data, status, error } = useQuery({ queryKey: ["allusertickets"], queryFn: () =>
+  const { data, status } = useQuery({ queryKey: ["allusertickets"], queryFn: () =>
     getUserTickets(token)
   });
 
-  const user = useUser();
+  useUser();
 
   const high = "bg-red-100 text-red-800";
   const low = "bg-blue-100 text-blue-800";
@@ -55,7 +51,7 @@ export default function Tickets() {
             </div>
             {data.tickets.length > 0 ? (
               data.tickets.map((ticket) => {
-                let p = ticket.priority;
+                const p = ticket.priority;
                 let badge;
 
                 if (p === "Low") {

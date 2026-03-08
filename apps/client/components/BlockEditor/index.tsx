@@ -10,7 +10,6 @@ export default function BlockNoteEditor({ setIssue }) {
 
   return (
     <BlockNoteView
-      //@ts-ignore
       editor={editor}
       sideMenu={false}
       theme="light"

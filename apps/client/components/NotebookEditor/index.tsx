@@ -87,7 +87,7 @@ export default function NotebookEditor() {
     });
     const data = await res.json();
     setSaving(false);
-    let date = new Date();
+    const date = new Date();
     // @ts-ignore
     setLastSaved(new Date(date).getTime());
     if(data.status) {

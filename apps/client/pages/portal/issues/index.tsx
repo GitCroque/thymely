@@ -22,7 +22,7 @@ export default function Tickets() {
   const router = useRouter();
 
   const token = getCookie("session");
-  const { data, status, error } = useQuery({ queryKey: ["allusertickets"], queryFn: () =>
+  const { data, status } = useQuery({ queryKey: ["allusertickets"], queryFn: () =>
     getUserTickets(token)
   });
 
@@ -46,7 +46,7 @@ export default function Tickets() {
             </div>
             {data.tickets.length > 0 ? (
               data.tickets.map((ticket) => {
-                let p = ticket.priority;
+                const p = ticket.priority;
                 let badge;
 
                 if (p === "Low") {

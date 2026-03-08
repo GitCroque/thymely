@@ -5,7 +5,13 @@ import { prisma } from "../prisma";
 
 export function timeTrackingRoutes(fastify: FastifyInstance) {
   // Create a new entry
-  fastify.post(
+  fastify.post<{
+    Body: {
+      time: number;
+      ticket: string;
+      title: string;
+    };
+  }>(
     "/api/v1/time/new",
     {
       preHandler: requirePermission(["time_entry::create"]),
@@ -22,8 +28,8 @@ export function timeTrackingRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { time, ticket, title }: any = request.body;
+    async (request, reply) => {
+      const { time, ticket, title } = request.body;
 
       const session = await checkSession(request);
       if (!session) {

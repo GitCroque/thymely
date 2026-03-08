@@ -9,7 +9,6 @@ import { useUser } from "../../store/session";
 
 import { toast } from "@/shadcn/hooks/use-toast";
 import { safeJsonParse } from "../../lib/safeJsonParse";
-import { useSidebar } from "@/shadcn/ui/sidebar";
 import dynamic from "next/dynamic";
 
 const Editor = dynamic(() => import("../BlockEditor"), { ssr: false });
@@ -29,7 +28,7 @@ const type = [
 ];
 
 export default function CreateTicketModal({ keypress, setKeyPressDown }) {
-  const { t, lang } = useTranslation("thymely");
+  const { t } = useTranslation("thymely");
   const [open, setOpen] = useState(false);
 
   const router = useRouter();
@@ -37,7 +36,6 @@ export default function CreateTicketModal({ keypress, setKeyPressDown }) {
   const token = getCookie("session");
 
   const { user } = useUser();
-  const { state } = useSidebar();
 
   const [name, setName] = useState("");
   const [company, setCompany] = useState<any>();
@@ -45,7 +43,7 @@ export default function CreateTicketModal({ keypress, setKeyPressDown }) {
   const [email, setEmail] = useState("");
   const [issue, setIssue] = useState<any>();
   const [title, setTitle] = useState("");
-  const [priority, setPriority] = useState("medium");
+  const [priority] = useState("medium");
   const [options, setOptions] = useState<any>();
   const [users, setUsers] = useState<any>();
   const [selected, setSelected] = useState<any>(type[3]);
@@ -145,7 +143,7 @@ export default function CreateTicketModal({ keypress, setKeyPressDown }) {
 
   useEffect(() => checkPress(), [keypress]);
 
-  const [hideKeyboardShortcuts, setHideKeyboardShortcuts] = useState(false);
+  const [, setHideKeyboardShortcuts] = useState(false);
   const [hideName, setHideName] = useState(false);
   const [hideEmail, setHideEmail] = useState(false);
 

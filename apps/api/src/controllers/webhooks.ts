@@ -4,18 +4,27 @@ import { requirePermission } from "../lib/roles";
 import { encryptSecret } from "../lib/security/secrets";
 import { assertSafeWebhookUrl } from "../lib/security/webhook-url";
 import { checkSession } from "../lib/session";
+import { Hook } from "@prisma/client";
 import { prisma } from "../prisma";
 
 export function webhookRoutes(fastify: FastifyInstance) {
   // Create a new webhook
-  fastify.post(
+  fastify.post<{
+    Body: {
+      name: string;
+      url: string;
+      type: Hook;
+      active: boolean;
+      secret: string | undefined;
+    };
+  }>(
     "/api/v1/webhook/create",
     {
       preHandler: requirePermission(["webhook::create"]),
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
+    async (request, reply) => {
       const user = await checkSession(request);
-      const { name, url, type, active, secret }: any = request.body;
+      const { name, url, type, active, secret } = request.body;
 
       try {
         await assertSafeWebhookUrl(url);
@@ -74,13 +83,17 @@ export function webhookRoutes(fastify: FastifyInstance) {
   );
 
   // Delete a webhook
-  fastify.delete(
+  fastify.delete<{
+    Params: {
+      id: string;
+    };
+  }>(
     "/api/v1/admin/webhook/:id/delete",
     {
       preHandler: requirePermission(["webhook::delete"]),
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { id }: any = request.params;
+    async (request, reply) => {
+      const { id } = request.params;
       await prisma.webhooks.delete({
         where: {
           id: id,

@@ -26,12 +26,12 @@ import { useUser } from "../../../store/session";
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useRouter();
 
-  const { loading, user, fetchUserProfile } = useUser();
+  const { user } = useUser();
   const locale = user ? user.language : "en";
 
   const [keypressdown, setKeyPressDown] = useState(false);
 
-  const { t, lang } = useTranslation("thymely");
+  const { t } = useTranslation("thymely");
   const sidebar = useSidebar();
 
   if (!user) {

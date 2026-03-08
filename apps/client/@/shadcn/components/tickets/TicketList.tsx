@@ -17,11 +17,11 @@ interface TicketListProps {
 export default function TicketList({
   tickets,
   onStatusChange,
-  onAssigneeChange,
-  onPriorityChange,
-  onDelete,
-  users,
-  currentUser,
+  onAssigneeChange: _onAssigneeChange,
+  onPriorityChange: _onPriorityChange,
+  onDelete: _onDelete,
+  users: _users,
+  currentUser: _currentUser,
   uiSettings
 }: TicketListProps) {
   const high = "bg-red-100 text-red-800";
@@ -31,8 +31,8 @@ export default function TicketList({
   return (
     <div className="flex-1 overflow-y-auto">
       {tickets.map((ticket) => {
-        let p = ticket.priority;
-        let badge = p === "Low" ? low : p === "Normal" ? normal : high;
+        const p = ticket.priority;
+        const badge = p === "Low" ? low : p === "Normal" ? normal : high;
 
         return (
           <ContextMenu key={ticket.id}>

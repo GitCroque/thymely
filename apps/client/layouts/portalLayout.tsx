@@ -22,10 +22,10 @@ function classNames(...classes) {
 export default function PortalLayout({ children }: any) {
   const location = useRouter();
 
-  const { loading, user, fetchUserProfile } = useUser();
+  const { loading, user } = useUser();
   const locale = user ? user.language : "en";
 
-  const { t, lang } = useTranslation("thymely");
+  const { t } = useTranslation("thymely");
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 

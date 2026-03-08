@@ -545,15 +545,9 @@ export default function Ticket() {
   }, [debouncedValue]);
 
   async function loadFromStorage() {
-    const storageString = data.ticket.detail as PartialBlock[];
-    // if (storageString && isJsonString(storageString)) {
-    //   return JSON.parse(storageString) as PartialBlock[]
-    // } else {
-    //   return undefined;
-    // }
+    const storageString = data.ticket.detail;
     try {
-      // @ts-ignore
-      return JSON.parse(storageString) as PartialBlock[];
+      return JSON.parse(storageString as string) as PartialBlock[];
     } catch (e) {
       return undefined;
     }

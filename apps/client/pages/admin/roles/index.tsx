@@ -44,18 +44,18 @@ export default function Roles() {
     fetchRoles();
   };
 
-  const handleToggleRole = async (roleId: string, isActive: boolean) => {
-    await fetch(`/api/v1/role/${roleId}/toggle`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${getCookie("session")}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ isActive: !isActive }),
-    });
-
-    fetchRoles();
-  };
+  // TODO: Wire up individual role toggle in UI
+  // const handleToggleRole = async (roleId: string, isActive: boolean) => {
+  //   await fetch(`/api/v1/role/${roleId}/toggle`, {
+  //     method: "PATCH",
+  //     headers: {
+  //       Authorization: `Bearer ${getCookie("session")}`,
+  //       "Content-Type": "application/json",
+  //     },
+  //     body: JSON.stringify({ isActive: !isActive }),
+  //   });
+  //   fetchRoles();
+  // };
 
   const handleToggleAllRoles = async (isActive: boolean) => {
     await fetch(`/api/v1/config/toggle-roles`, {

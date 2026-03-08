@@ -17,11 +17,11 @@ export async function sendTicketCreate(ticket: any) {
         },
       });
 
-      var template = handlebars.compile(testhtml?.html);
-      var replacements = {
+      const template = handlebars.compile(testhtml?.html);
+      const replacements = {
         id: sanitizeTemplateValue(String(ticket.id)),
       };
-      var htmlToSend = template(replacements);
+      const htmlToSend = template(replacements);
 
       const to = sanitizeEmailAddress(ticket.email);
       const subject = sanitizeEmailHeader(`Issue #${ticket.id} has just been created & logged`);

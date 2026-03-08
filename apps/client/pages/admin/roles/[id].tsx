@@ -105,8 +105,7 @@ export default function UpdateRole() {
     } else {
       setSelectedPermissions(
         selectedPermissions.filter(
-          //@ts-ignore
-          (p: Permission) => !categoryPermissions.includes(p)
+          (p: Permission) => !(categoryPermissions as readonly Permission[]).includes(p)
         )
       );
     }

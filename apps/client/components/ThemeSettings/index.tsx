@@ -1,6 +1,4 @@
-import { getCookie } from "cookies-next";
 import { useEffect, useState } from "react";
-import { useUser } from "../../store/session";
 import {
   Select,
   SelectContent,
@@ -11,12 +9,9 @@ import {
   SelectValue,
 } from "@/shadcn/ui/select";
 import { useSidebar } from "@/shadcn/ui/sidebar";
-import { Sun } from "lucide-react";
 import { Moon } from "lucide-react";
 
 export default function ThemeSettings() {
-  const { user } = useUser();
-  const token = getCookie("session");
 
   const [theme, setTheme] = useState("");
 

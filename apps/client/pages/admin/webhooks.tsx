@@ -28,10 +28,10 @@ export default function Notifications() {
   const [enabled, setEnabled] = useState(true);
   const [url, setUrl] = useState("");
   const [type, setType] = useState("ticket_created");
-  const [secret, setSecret] = useState();
+  const [secret] = useState();
   const [name, setName] = useState("");
 
-  const { data, status, error, refetch } = useQuery({ queryKey: ["gethooks"], queryFn: getHooks });
+  const { data, status, refetch } = useQuery({ queryKey: ["gethooks"], queryFn: getHooks });
 
   async function addHook() {
     await fetch(`/api/v1/webhook/create`, {

@@ -8,7 +8,14 @@ import { prisma } from "../prisma";
 
 export function roleRoutes(fastify: FastifyInstance) {
   // Create a new role
-  fastify.post(
+  fastify.post<{
+    Body: {
+      name: string;
+      description: string | undefined;
+      permissions: string[] | undefined;
+      isDefault: boolean | undefined;
+    };
+  }>(
     "/api/v1/role/create",
     {
       preHandler: requirePermission(["role::create"]),
@@ -26,9 +33,9 @@ export function roleRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
+    async (request, reply) => {
       const user = await checkSession(request);
-      const { name, description, permissions, isDefault }: any = request.body;
+      const { name, description, permissions, isDefault } = request.body;
 
       const existingRole = await prisma.role.findUnique({
         where: { name },
@@ -93,13 +100,17 @@ export function roleRoutes(fastify: FastifyInstance) {
   );
 
   // Get role by ID
-  fastify.get(
+  fastify.get<{
+    Params: {
+      id: string;
+    };
+  }>(
     "/api/v1/role/:id",
     {
       preHandler: requirePermission(["role::read"]),
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { id }: any = request.params;
+    async (request, reply) => {
+      const { id } = request.params;
 
       const role = await prisma.role.findUnique({
         where: { id },
@@ -120,14 +131,25 @@ export function roleRoutes(fastify: FastifyInstance) {
   );
 
   // Update role
-  fastify.put(
+  fastify.put<{
+    Params: {
+      id: string;
+    };
+    Body: {
+      name: string | undefined;
+      description: string | undefined;
+      permissions: string[] | undefined;
+      isDefault: boolean | undefined;
+      users: string | string[];
+    };
+  }>(
     "/api/v1/role/:id/update",
     {
       preHandler: requirePermission(["role::update"]),
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { id }: any = request.params;
-      const { name, description, permissions, isDefault, users }: any =
+    async (request, reply) => {
+      const { id } = request.params;
+      const { name, description, permissions, isDefault, users } =
         request.body;
 
       try {
@@ -161,13 +183,17 @@ export function roleRoutes(fastify: FastifyInstance) {
   );
 
   // Delete role
-  fastify.delete(
+  fastify.delete<{
+    Params: {
+      id: string;
+    };
+  }>(
     "/api/v1/role/:id/delete",
     {
       preHandler: requirePermission(["role::delete"]),
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { id }: any = request.params;
+    async (request, reply) => {
+      const { id } = request.params;
 
       try {
         await prisma.role.delete({
@@ -190,13 +216,18 @@ export function roleRoutes(fastify: FastifyInstance) {
   );
 
   // Assign role to user
-  fastify.post(
+  fastify.post<{
+    Body: {
+      userId: string;
+      roleId: string;
+    };
+  }>(
     "/api/v1/role/assign",
     {
       preHandler: requirePermission(["role::update"]),
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { userId, roleId }: any = request.body;
+    async (request, reply) => {
+      const { userId, roleId } = request.body;
 
       try {
         const updatedUser = await prisma.user.update({
@@ -225,13 +256,18 @@ export function roleRoutes(fastify: FastifyInstance) {
   );
 
   // Remove role from user
-  fastify.post(
+  fastify.post<{
+    Body: {
+      userId: string;
+      roleId: string;
+    };
+  }>(
     "/api/v1/role/remove",
     {
       preHandler: requirePermission(["role::manage"]),
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { userId, roleId }: any = request.body;
+    async (request, reply) => {
+      const { userId, roleId } = request.body;
 
       try {
         const updatedUser = await prisma.user.update({

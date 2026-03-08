@@ -9,7 +9,6 @@ import {
   SelectValue,
 } from "@/shadcn/ui/select";
 import { getCookie } from "cookies-next";
-import useTranslation from "next-translate/useTranslation";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -80,12 +79,11 @@ async function fetchNotebooks(token) {
 }
 
 export default function NoteBooksIndex() {
-  const { t } = useTranslation("thymely");
   const [sortBy, setSortBy] = useState("updatedAt");
   const [searchQuery, setSearchQuery] = useState("");
 
   const token = getCookie("session");
-  const { data, status, error } = useQuery({ queryKey: ["getUsersNotebooks"], queryFn: () =>
+  const { data, status } = useQuery({ queryKey: ["getUsersNotebooks"], queryFn: () =>
     fetchNotebooks(token)
   });
 
@@ -115,7 +113,7 @@ export default function NoteBooksIndex() {
     if (!notebooks) return [];
 
     // First filter by search query
-    let filtered = notebooks.filter((notebook) =>
+    const filtered = notebooks.filter((notebook) =>
       notebook.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -123,8 +121,7 @@ export default function NoteBooksIndex() {
     return filtered.sort((a, b) => {
       const dateA = new Date(a[sortBy]);
       const dateB = new Date(b[sortBy]);
-      //@ts-ignore
-      return dateB - dateA;
+      return dateB.getTime() - dateA.getTime();
     });
   };
 

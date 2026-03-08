@@ -21,12 +21,12 @@ export async function sendComment(
       },
     });
 
-    var template = handlebars.compile(testhtml?.html);
-    var replacements = {
+    const template = handlebars.compile(testhtml?.html);
+    const replacements = {
       title: sanitizeTemplateValue(title),
       comment: sanitizeTemplateValue(comment),
     };
-    var htmlToSend = template(replacements);
+    const htmlToSend = template(replacements);
 
     const to = sanitizeEmailAddress(email);
     const subject = sanitizeEmailHeader(`New comment on Issue #${title} ref: #${id}`);

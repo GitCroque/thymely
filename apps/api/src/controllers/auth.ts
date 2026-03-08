@@ -102,7 +102,7 @@ export function authRoutes(fastify: FastifyInstance) {
       },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      let { email, password, admin, name } = request.body as {
+      const { email, password, admin, name } = request.body as {
         email: string;
         password: string;
         admin: boolean;
@@ -118,7 +118,7 @@ export function authRoutes(fastify: FastifyInstance) {
       }
 
       // Checks if email already exists
-      let record = await prisma.user.findUnique({
+      const record = await prisma.user.findUnique({
         where: { email },
       });
 
@@ -174,7 +174,7 @@ export function authRoutes(fastify: FastifyInstance) {
       },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      let { email, password, name, language } = request.body as {
+      const { email, password, name, language } = request.body as {
         email: string;
         password: string;
         name: string;
@@ -182,7 +182,7 @@ export function authRoutes(fastify: FastifyInstance) {
       };
 
       // Checks if email already exists
-      let record = await prisma.user.findUnique({
+      const record = await prisma.user.findUnique({
         where: { email },
       });
 
@@ -367,12 +367,12 @@ export function authRoutes(fastify: FastifyInstance) {
       },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      let { email, password } = request.body as {
+      const { email, password } = request.body as {
         email: string;
         password: string;
       };
 
-      let user = await prisma.user.findUnique({
+      const user = await prisma.user.findUnique({
         where: { email },
       });
 
@@ -585,7 +585,7 @@ export function authRoutes(fastify: FastifyInstance) {
           return reply.status(400).send("Invalid or expired session");
         }
 
-        let tokens = await oidcClient.callback(
+        const tokens = await oidcClient.callback(
           oidc.redirectUri,
           params,
           {
@@ -665,10 +665,15 @@ export function authRoutes(fastify: FastifyInstance) {
   );
 
   // oauth api callback route
-  fastify.get(
+  fastify.get<{
+    Querystring: {
+      code: string;
+      state: string;
+    };
+  }>(
     "/api/v1/auth/oauth/callback",
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { code, state }: any = request.query;
+    async (request, reply) => {
+      const { code, state } = request.query;
       const oauthProvider = await getOAuthProvider();
 
       if (!oauthProvider) {
@@ -729,7 +734,7 @@ export function authRoutes(fastify: FastifyInstance) {
             : userInfoResponse.email;
 
         // Issue JWT token
-        let user = await prisma.user.findUnique({
+        const user = await prisma.user.findUnique({
           where: { email: emails },
         });
 
@@ -880,7 +885,7 @@ export function authRoutes(fastify: FastifyInstance) {
   fastify.post(
     "/api/v1/auth/reset-password",
     async (request: FastifyRequest, reply: FastifyReply) => {
-      let { password } = request.body as {
+      const { password } = request.body as {
         password: string;
       };
 
@@ -927,7 +932,7 @@ export function authRoutes(fastify: FastifyInstance) {
       preHandler: requirePermission(["user::manage"]),
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      let { password, user } = request.body as {
+      const { password, user } = request.body as {
         password: string;
         user: string;
       };
@@ -980,7 +985,7 @@ export function authRoutes(fastify: FastifyInstance) {
         language: string;
       };
 
-      let user = await prisma.user.update({
+      const user = await prisma.user.update({
         where: { id: session?.id },
         data: {
           name: name,
@@ -1009,9 +1014,14 @@ export function authRoutes(fastify: FastifyInstance) {
         notify_ticket_assigned,
         notify_ticket_comments,
         notify_ticket_status_changed,
-      } = request.body as any;
+      } = request.body as {
+        notify_ticket_created: boolean;
+        notify_ticket_assigned: boolean;
+        notify_ticket_comments: boolean;
+        notify_ticket_status_changed: boolean;
+      };
 
-      let user = await prisma.user.update({
+      const user = await prisma.user.update({
         where: { id: session?.id },
         data: {
           notify_ticket_created: notify_ticket_created,

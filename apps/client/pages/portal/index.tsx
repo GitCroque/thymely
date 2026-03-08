@@ -12,12 +12,9 @@ export default function Home() {
   const router = useRouter();
   const { t } = useTranslation("thymely");
 
-  const { user } = useUser();
+  useUser();
   const token = getCookie("session");
 
-  const [openTickets, setOpenTickets] = useState(0);
-  const [completedTickets, setCompletedTickets] = useState(0);
-  const [unassigned, setUnassigned] = useState(0);
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<any>();
 

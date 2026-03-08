@@ -7,7 +7,14 @@ import { prisma } from "../prisma";
 
 export function clientRoutes(fastify: FastifyInstance) {
   // Register a new client
-  fastify.post(
+  fastify.post<{
+    Body: {
+      name: string;
+      email: string;
+      number: string | undefined;
+      contactName: string;
+    };
+  }>(
     "/api/v1/client/create",
     {
       preHandler: requirePermission(["client::create"]),
@@ -25,8 +32,8 @@ export function clientRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { name, email, number, contactName }: any = request.body;
+    async (request, reply) => {
+      const { name, email, number, contactName } = request.body;
 
       const client = await prisma.client.create({
         data: {
@@ -51,7 +58,15 @@ export function clientRoutes(fastify: FastifyInstance) {
   );
 
   // Update client
-  fastify.post(
+  fastify.post<{
+    Body: {
+      id: string;
+      name: string | undefined;
+      email: string | undefined;
+      number: string | undefined;
+      contactName: string | undefined;
+    };
+  }>(
     "/api/v1/client/update",
     {
       preHandler: requirePermission(["client::update"]),
@@ -70,8 +85,8 @@ export function clientRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { name, email, number, contactName, id }: any = request.body;
+    async (request, reply) => {
+      const { name, email, number, contactName, id } = request.body;
 
       await prisma.client.update({
         where: { id: id },
@@ -114,13 +129,17 @@ export function clientRoutes(fastify: FastifyInstance) {
   );
 
   // Delete client
-  fastify.delete(
+  fastify.delete<{
+    Params: {
+      id: string;
+    };
+  }>(
     "/api/v1/clients/:id/delete-client",
     {
       preHandler: requirePermission(["client::delete"]),
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { id }: any = request.params;
+    async (request, reply) => {
+      const { id } = request.params;
 
       await prisma.client.update({
         where: { id: id },

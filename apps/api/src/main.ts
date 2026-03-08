@@ -68,7 +68,7 @@ server.register(rateLimit, {
 
 server.register(multer.contentParser);
 
-server.setErrorHandler((error, request, reply) => {
+server.setErrorHandler((error: Error & { statusCode?: number }, request, reply) => {
   request.log.error(error);
   const statusCode = error.statusCode ?? 500;
   if (statusCode === 403 || statusCode === 429) {

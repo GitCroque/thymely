@@ -1,6 +1,5 @@
 import { getCookie } from "cookies-next";
 import dayjs from "dayjs";
-import { useRouter } from "next/router";
 import React, { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -66,34 +65,21 @@ function Table({ columns, data }: any) {
     getTableProps,
     getTableBodyProps,
     headerGroups,
-    //@ts-ignore
     page,
     prepareRow,
-    //@ts-ignore
     canPreviousPage,
-    //@ts-ignore
     canNextPage,
-    //@ts-ignore
-    pageCount,
-    //@ts-ignore
-    gotoPage,
-    //@ts-ignore
     nextPage,
-    //@ts-ignore
     previousPage,
-    //@ts-ignore
     setPageSize,
-    //@ts-ignore
-    state: { pageIndex, pageSize },
+    state: { pageSize },
   } = useTable(
     {
       columns,
       data,
-      //@ts-ignore
       defaultColumn, // Be sure to pass the defaultColumn option
       filterTypes,
       initialState: {
-        //@ts-ignore
         pageIndex: 0,
       },
     },
@@ -134,7 +120,7 @@ function Table({ columns, data }: any) {
               ))}
             </thead>
             <tbody {...getTableBodyProps()}>
-              {page.map((row: any, i: any) => {
+              {page.map((row: any) => {
                 prepareRow(row);
                 return (
                   <tr {...row.getRowProps()} className="bg-white">
@@ -206,12 +192,10 @@ function Table({ columns, data }: any) {
 }
 
 export default function Clients() {
-  const { data, status, refetch } = useQuery({
+  const { data, status } = useQuery({
     queryKey: ["fetchallTickets"],
     queryFn: fetchALLTIckets,
   });
-
-  const router = useRouter();
 
   const high = "bg-red-100 text-red-800";
   const low = "bg-blue-100 text-blue-800";
@@ -229,7 +213,7 @@ export default function Clients() {
         Header: "Summary",
         accessor: "title",
         id: "summary",
-        Cell: ({ row, value }: any) => {
+        Cell: ({ value }: any) => {
           return (
             <>
               <span className=" max-w-[240px] truncate">{value}</span>
@@ -241,7 +225,7 @@ export default function Clients() {
         Header: "Assignee",
         accessor: "assignedTo.name",
         id: "assignee",
-        Cell: ({ row, value }: any) => {
+        Cell: ({ value }: any) => {
           return (
             <>
               <span className="w-[80px] truncate">{value ? value : "n/a"}</span>
@@ -253,7 +237,7 @@ export default function Clients() {
         Header: "Client",
         accessor: "client.name",
         id: "client",
-        Cell: ({ row, value }: any) => {
+        Cell: ({ value }: any) => {
           return (
             <>
               <span className="w-[80px] truncate">{value ? value : "n/a"}</span>
@@ -265,8 +249,8 @@ export default function Clients() {
         Header: "Priority",
         accessor: "priority",
         id: "priority",
-        Cell: ({ row, value }) => {
-          let p = value;
+        Cell: ({ value }) => {
+          const p = value;
           let badge;
 
           if (p === "Low") {
@@ -294,10 +278,7 @@ export default function Clients() {
         Header: "Status",
         accessor: "status",
         id: "status",
-        Cell: ({ row, value }) => {
-          let p = value;
-          let badge;
-
+        Cell: ({ value }) => {
           return (
             <>
               <span className="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-700 ring-1 ring-inset ring-red-600/10">
@@ -314,7 +295,7 @@ export default function Clients() {
         Header: "Created",
         accessor: "createdAt",
         id: "created",
-        Cell: ({ row, value }) => {
+        Cell: ({ value }) => {
           const now = dayjs(value).format("DD/MM/YYYY");
           return (
             <>

@@ -8,8 +8,7 @@ export default function Login({}) {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [status, setStatus] = useState("idle");
-  const [auth, setAuth] = useState("oauth");
+  const [status] = useState("idle");
   const [url, setUrl] = useState("");
 
   async function postData() {

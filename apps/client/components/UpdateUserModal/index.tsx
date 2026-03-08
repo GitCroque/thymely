@@ -2,15 +2,12 @@ import { toast } from "@/shadcn/hooks/use-toast";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { getCookie } from "cookies-next";
-import { useRouter } from "next/router";
 import { Fragment, useState } from "react";
 
 export default function UpdateUserModal({ user }) {
   const [open, setOpen] = useState(false);
 
   const [admin, setAdmin] = useState(user.isAdmin);
-
-  const router = useRouter();
 
   async function updateUser() {
     await fetch(`/api/v1/auth/user/role`, {

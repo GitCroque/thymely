@@ -20,23 +20,20 @@ import {
   CardTitle,
 } from "@/shadcn/ui/card";
 import { getCookie } from "cookies-next";
-import { BellRing, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
 export default function Authentication() {
   const router = useRouter();
 
-  const [isloading, setIsLoading] = useState(true);
   const [enabled, setEnabled] = useState(false);
   const [provider, setProvider] = useState("");
   const [clientId, setClientId] = useState("");
-  const [clientSecret, setClientSecret] = useState("");
-  const [tenantId, setTenantId] = useState("");
+  const [clientSecret, _setClientSecret] = useState("");
   const [issuer, setIssuer] = useState("");
   const [redirectUri, setRedirectUri] = useState("");
   const [providerType, setProviderType] = useState("");
-  const [jwtSecret, setJwtSecret] = useState("");
 
   async function postData() {
     if (providerType === "oidc") {

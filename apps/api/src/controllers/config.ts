@@ -53,11 +53,19 @@ export function configRoutes(fastify: FastifyInstance) {
   );
 
   // Update OIDC Provider
-  fastify.post(
+  fastify.post<{
+    Body: {
+      clientId: string;
+      clientSecret: string;
+      redirectUri: string;
+      issuer: string;
+      jwtSecret: string | undefined;
+    };
+  }>(
     "/api/v1/config/authentication/oidc/update",
     { preHandler: requirePermission(["settings::manage"]) },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { clientId, clientSecret, redirectUri, issuer, jwtSecret }: any =
+    async (request, reply) => {
+      const { clientId, clientSecret, redirectUri, issuer, jwtSecret } =
         request.body;
       const encryptedClientSecret = await encryptSecret(clientSecret);
 
@@ -106,10 +114,20 @@ export function configRoutes(fastify: FastifyInstance) {
   );
 
   // Update Oauth Provider
-  fastify.post(
+  fastify.post<{
+    Body: {
+      name: string;
+      clientId: string;
+      clientSecret: string;
+      redirectUri: string;
+      tenantId: string | undefined;
+      issuer: string | undefined;
+      jwtSecret: string | undefined;
+    };
+  }>(
     "/api/v1/config/authentication/oauth/update",
     { preHandler: requirePermission(["settings::manage"]) },
-    async (request: FastifyRequest, reply: FastifyReply) => {
+    async (request, reply) => {
       const {
         name,
         clientId,
@@ -118,7 +136,7 @@ export function configRoutes(fastify: FastifyInstance) {
         tenantId,
         issuer,
         jwtSecret,
-      }: any = request.body;
+      } = request.body;
       const encryptedClientSecret = (await encryptSecret(clientSecret)) || "";
 
       const conf = await prisma.config.findFirst();
@@ -246,10 +264,23 @@ export function configRoutes(fastify: FastifyInstance) {
   );
 
   // Update Email Provider Settings
-  fastify.put(
+  fastify.put<{
+    Body: {
+      host: string;
+      active: boolean;
+      port: string;
+      reply: string;
+      username: string;
+      password: string;
+      serviceType: string;
+      clientId: string | undefined;
+      clientSecret: string | undefined;
+      redirectUri: string | undefined;
+    };
+  }>(
     "/api/v1/config/email",
     { preHandler: requirePermission(["settings::manage"]) },
-    async (request: FastifyRequest, reply: FastifyReply) => {
+    async (request, reply) => {
       const {
         host,
         active,
@@ -261,7 +292,7 @@ export function configRoutes(fastify: FastifyInstance) {
         clientId,
         clientSecret,
         redirectUri,
-      }: any = request.body;
+      } = request.body;
       const encryptedPassword = await encryptSecret(password);
       const encryptedClientSecret = await encryptSecret(clientSecret);
 
@@ -333,11 +364,15 @@ export function configRoutes(fastify: FastifyInstance) {
   );
 
   // Google oauth callback
-  fastify.get(
+  fastify.get<{
+    Querystring: {
+      code: string;
+    };
+  }>(
     "/api/v1/config/email/oauth/gmail",
     { preHandler: requirePermission(["settings::manage"]) },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { code }: any = request.query;
+    async (request, reply) => {
+      const { code } = request.query;
 
       const email = await prisma.email.findFirst();
       const decryptedClientSecret = await decryptSecret(email?.clientSecret);
@@ -383,13 +418,17 @@ export function configRoutes(fastify: FastifyInstance) {
   );
 
   // Toggle all roles
-  fastify.patch(
+  fastify.patch<{
+    Body: {
+      isActive: boolean;
+    };
+  }>(
     "/api/v1/config/toggle-roles",
     {
       preHandler: requirePermission(["settings::manage"]),
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { isActive }: any = request.body;
+    async (request, reply) => {
+      const { isActive } = request.body;
       const session = await checkSession(request);
 
       // Double-check that user is admin

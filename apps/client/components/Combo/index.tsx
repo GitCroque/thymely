@@ -1,4 +1,4 @@
-import { Coffee, LucideIcon } from "lucide-react";
+import { Coffee } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "@/shadcn/lib/utils";
@@ -13,18 +13,11 @@ import {
 } from "@/shadcn/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
 
-type Status = {
-  value: string;
-  label: string;
-  icon: LucideIcon;
-};
-
 export function UserCombo({
   value,
   update,
   defaultName,
   hideInitial,
-  showIcon,
   disabled,
   placeholder,
 }) {
@@ -221,8 +214,6 @@ export function ClientCombo({
   value,
   update,
   defaultName,
-  hideInitial,
-  showIcon,
   disabled,
 }) {
   const [open, setOpen] = React.useState(false);

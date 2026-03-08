@@ -18,13 +18,18 @@ async function tracking(event: string, properties: any) {
 
 export function notebookRoutes(fastify: FastifyInstance) {
   // Create a new entry
-  fastify.post(
+  fastify.post<{
+    Body: {
+      content: string;
+      title: string;
+    };
+  }>(
     "/api/v1/notebook/note/create",
     {
       preHandler: requirePermission(["document::create"]),
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { content, title }: any = request.body;
+    async (request, reply) => {
+      const { content, title } = request.body;
       const user = await checkSession(request);
 
       const data = await prisma.notes.create({
@@ -61,15 +66,19 @@ export function notebookRoutes(fastify: FastifyInstance) {
   );
 
   // Get a single entry
-  fastify.get(
+  fastify.get<{
+    Params: {
+      id: string;
+    };
+  }>(
     "/api/v1/notebooks/note/:id",
     {
       preHandler: requirePermission(["document::read"]),
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
+    async (request, reply) => {
       const user = await checkSession(request);
 
-      const { id }: any = request.params;
+      const { id } = request.params;
 
       const note = await prisma.notes.findUnique({
         where: { userId: user!.id, id: id },
@@ -80,14 +89,18 @@ export function notebookRoutes(fastify: FastifyInstance) {
   );
 
   // Delete an entry
-  fastify.delete(
+  fastify.delete<{
+    Params: {
+      id: string;
+    };
+  }>(
     "/api/v1/notebooks/note/:id",
     {
       preHandler: requirePermission(["document::delete"]),
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
+    async (request, reply) => {
       const user = await checkSession(request);
-      const { id }: any = request.params;
+      const { id } = request.params;
 
       await prisma.notes.delete({
         where: {
@@ -103,15 +116,23 @@ export function notebookRoutes(fastify: FastifyInstance) {
   );
 
   // Update an entry
-  fastify.put(
+  fastify.put<{
+    Params: {
+      id: string;
+    };
+    Body: {
+      content: string;
+      title: string;
+    };
+  }>(
     "/api/v1/notebooks/note/:id/update",
     {
       preHandler: requirePermission(["document::update"]),
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
+    async (request, reply) => {
       const user = await checkSession(request);
-      const { id }: any = request.params;
-      const { content, title }: any = request.body;
+      const { id } = request.params;
+      const { content, title } = request.body;
 
       await prisma.notes.update({
         where: {

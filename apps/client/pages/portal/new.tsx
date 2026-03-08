@@ -11,7 +11,7 @@ import {
   CheckIcon,
   ChevronUpDownIcon,
 } from "@heroicons/react/20/solid";
-import { useRouter } from "next/router";
+
 import { Fragment, useState } from "react";
 import { useUser } from "../../store/session";
 import { toast } from "@/shadcn/hooks/use-toast";
@@ -39,10 +39,9 @@ export default function ClientTicketNew() {
 
   const { user } = useUser();
 
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [view, setView] = useState("new");
-  const [ticketID, setTicketID] = useState("");
+  const [, setTicketID] = useState("");
 
   const [selected, setSelected] = useState(type[2]);
   const [subject, setSubject] = useState("");
