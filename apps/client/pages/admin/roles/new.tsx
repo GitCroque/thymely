@@ -1,6 +1,7 @@
 import { Permission, PERMISSIONS_CONFIG } from "@/shadcn/lib/types/permissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shadcn/ui/card";
 import { Input } from "@/shadcn/ui/input";
+import { toast } from "@/shadcn/hooks/use-toast";
 import { getCookie } from "cookies-next";
 import { Search } from "lucide-react";
 import { useRouter } from "next/router";
@@ -84,6 +85,11 @@ export default function Roles() {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load users",
+      });
     }
     setIsLoading(false);
   };

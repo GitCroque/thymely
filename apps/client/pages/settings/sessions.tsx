@@ -73,6 +73,11 @@ export default function Sessions() {
       fetchSessions();
     } catch (error) {
       console.error("Error revoking session:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to revoke session",
+      });
     }
   };
 

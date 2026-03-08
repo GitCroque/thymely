@@ -61,13 +61,13 @@ export default function TransferTicket({ id }) {
   return (
     <>
       <div
-        className="flex flex-row px-4 py-2 w-full group text-gray-400 hover:text-gray-500 hover:bg-gray-100 hover:cursor-pointer"
+        className="flex flex-row px-4 py-2 w-full group text-gray-500 hover:text-gray-600 hover:bg-gray-100 hover:cursor-pointer"
         onClick={() => {
           setOpen(true);
         }}
       >
         <DocumentDuplicateIcon
-          className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
+          className="mr-3 h-5 w-5 text-gray-500 group-hover:text-gray-600"
           aria-hidden="true"
         />
         <span className="text-sm font-medium text-gray-700">Transfer</span>
@@ -112,7 +112,7 @@ export default function TransferTicket({ id }) {
                 <div className="hidden sm:block absolute top-0 right-0 pt-4 pr-4">
                   <button
                     type="button"
-                    className="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="bg-white rounded-md text-gray-500 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     onClick={() => setOpen(false)}
                   >
                     <span className="sr-only">Close</span>

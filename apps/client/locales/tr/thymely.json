@@ -82,5 +82,11 @@
   "select_a_client": "Bir müşteri seç",
   "select_an_engineer": "Bir mühendis seç",
   "ticket_create": "Destek Bileti Oluştur",
-  "internallycommented_at": "Dahili Yorum Yapan"
+  "internallycommented_at": "Dahili Yorum Yapan",
+  "reopen_issue": "Bileti Yeniden Aç",
+  "needs_support": "Destek Gerekiyor",
+  "in_progress": "Devam Ediyor",
+  "in_review": "İncelemede",
+  "done": "Tamamlandı",
+  "select_new_user": "Yeni kullanıcı seç"
 }

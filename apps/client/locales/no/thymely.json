@@ -82,5 +82,11 @@
   "select_a_client": "Velg en Kunde",
   "select_an_engineer": "Velg en Ingeniør",
   "ticket_create": "Opprett Sak",
-  "internallycommented_at": "Kommentert Internt kl."
+  "internallycommented_at": "Kommentert Internt kl.",
+  "reopen_issue": "Gjenåpne Sak",
+  "needs_support": "Trenger Støtte",
+  "in_progress": "Pågår",
+  "in_review": "Til Gjennomgang",
+  "done": "Ferdig",
+  "select_new_user": "Velg ny bruker"
 }

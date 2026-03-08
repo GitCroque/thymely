@@ -115,6 +115,14 @@ export default function Tickets() {
     return <Loader className="animate-spin" />;
   }
 
+  if (status === "error") {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <p className="text-sm text-red-500">Error loading tickets. Please try again.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen">
       <div className="py-2 px-3 bg-background border-b-[1px] flex flex-row items-center justify-between">

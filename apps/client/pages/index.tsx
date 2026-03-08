@@ -96,6 +96,10 @@ export default function Home() {
     },
   ];
 
+  const adminCard = user?.isAdmin
+    ? { name: "Administration", label: "Settings & Users", href: "/admin" }
+    : null;
+
   async function datafetch() {
     await Promise.all([
       fetchTickets(),
@@ -126,11 +130,10 @@ export default function Home() {
         {!loading && (
           <>
             <div>
-              <dl className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+              <dl className={`grid grid-cols-1 gap-5 sm:grid-cols-3 ${adminCard ? "lg:grid-cols-4" : ""}`}>
                 {stats.map((item) => (
-                  <Link href={item.href}>
+                  <Link href={item.href} key={item.name}>
                     <div
-                      key={item.name}
                       className="px-4 py-5 bg-gray-900 shadow rounded-lg overflow-hidden sm:p-6"
                     >
                       <dt className="text-sm font-medium text-white truncate">
@@ -142,6 +145,18 @@ export default function Home() {
                     </div>
                   </Link>
                 ))}
+                {adminCard && (
+                  <Link href={adminCard.href} key={adminCard.name}>
+                    <div className="px-4 py-5 bg-green-900 shadow rounded-lg overflow-hidden sm:p-6 ring-1 ring-green-500/20">
+                      <dt className="text-sm font-medium text-white truncate">
+                        {adminCard.name}
+                      </dt>
+                      <dd className="mt-1 text-sm font-medium text-green-300">
+                        {adminCard.label}
+                      </dd>
+                    </div>
+                  </Link>
+                )}
               </dl>
             </div>
 
@@ -153,7 +168,7 @@ export default function Home() {
                     className="relative block w-full rounded-lg border-2 border-dashed border-gray-300 p-12 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                   >
                     <svg
-                      className="mx-auto h-12 w-12 text-gray-400 dark:text-white"
+                      className="mx-auto h-12 w-12 text-gray-500 dark:text-white"
                       stroke="currentColor"
                       fill="none"
                       viewBox="0 0 48 48"

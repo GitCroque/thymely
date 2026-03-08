@@ -310,6 +310,11 @@ export default function AdminTicketLayout() {
 
   return (
     <>
+      {status === "error" && (
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <p className="text-sm text-red-500">Error loading tickets. Please try again.</p>
+        </div>
+      )}
       {status === "success" && (
         <>
           {data.tickets && data.tickets.length > 0 && (
@@ -329,7 +334,7 @@ export default function AdminTicketLayout() {
               <div className="text-center mt-72">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="mx-auto h-12 w-12 text-gray-400"
+                  className="mx-auto h-12 w-12 text-gray-500"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"

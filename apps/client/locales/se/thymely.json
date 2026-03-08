@@ -82,5 +82,11 @@
   "select_a_client": "Välj en kund",
   "select_an_engineer": "Välj en tekniker",
   "ticket_create": "Skapa ett ärende",
-  "internallycommented_at": "Kommenterat Internt kl."
+  "internallycommented_at": "Kommenterat Internt kl.",
+  "reopen_issue": "Återöppna Ärende",
+  "needs_support": "Behöver Support",
+  "in_progress": "Pågående",
+  "in_review": "Under Granskning",
+  "done": "Klart",
+  "select_new_user": "Välj ny användare"
 }

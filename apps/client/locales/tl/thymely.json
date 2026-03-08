@@ -82,5 +82,11 @@
   "select_a_client": "Pumili ng isang Kliyente",
   "select_an_engineer": "Pumili ng isang Inhinyero",
   "ticket_create": "Gumawa ng Tiket",
-  "internallycommented_at": "Internallyo Nag-komento sa"
+  "internallycommented_at": "Internallyo Nag-komento sa",
+  "reopen_issue": "Muling Buksan ang Isyu",
+  "needs_support": "Kailangan ng Suporta",
+  "in_progress": "Kasalukuyang Ginagawa",
+  "in_review": "Sinusuri",
+  "done": "Tapos Na",
+  "select_new_user": "Pumili ng bagong gumagamit"
 }

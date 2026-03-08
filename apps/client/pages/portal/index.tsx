@@ -54,7 +54,7 @@ export default function Home() {
                     onClick={() => router.push("/portal/new")}
                   >
                     <svg
-                      className="mx-auto h-12 w-12 text-gray-400 dark:text-white"
+                      className="mx-auto h-12 w-12 text-gray-500 dark:text-white"
                       stroke="currentColor"
                       fill="none"
                       viewBox="0 0 48 48"

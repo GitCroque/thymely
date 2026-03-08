@@ -88,7 +88,7 @@ export default function UpdateUserModal({ user }: { user: { id: string; isAdmin:
                 <div className="hidden sm:block absolute top-0 right-0 pt-4 pr-4">
                   <button
                     type="button"
-                    className="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="bg-white rounded-md text-gray-500 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     onClick={() => setOpen(false)}
                   >
                     <span className="sr-only">Close</span>

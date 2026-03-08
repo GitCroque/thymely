@@ -154,7 +154,7 @@ export default function Ticket() {
                     )}
                     <div className="flex items-center space-x-2">
                       <ChatBubbleLeftEllipsisIcon
-                        className="h-5 w-5 text-gray-400"
+                        className="h-5 w-5 text-gray-500"
                         aria-hidden="true"
                       />
                       <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -163,7 +163,7 @@ export default function Ticket() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <CalendarIcon
-                        className="h-5 w-5 text-gray-400"
+                        className="h-5 w-5 text-gray-500"
                         aria-hidden="true"
                       />
                       <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -516,7 +516,7 @@ export default function Ticket() {
                 )}
                 <div className="flex items-center space-x-2">
                   <ChatBubbleLeftEllipsisIcon
-                    className="h-5 w-5 text-gray-400 dark:text-white"
+                    className="h-5 w-5 text-gray-500 dark:text-white"
                     aria-hidden="true"
                   />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -525,7 +525,7 @@ export default function Ticket() {
                 </div>
                 <div className="flex flex-row items-center space-x-2">
                   <CalendarIcon
-                    className="h-5 w-5 text-gray-400 dark:text-white"
+                    className="h-5 w-5 text-gray-500 dark:text-white"
                     aria-hidden="true"
                   />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">

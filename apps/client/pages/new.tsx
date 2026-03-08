@@ -73,7 +73,12 @@ export default function CreateTicket() {
           }
         });
     } catch (error) {
-      console.log(error);
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to create ticket",
+      });
     }
   }
 
@@ -143,7 +148,7 @@ export default function CreateTicket() {
                     </span>
                     <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                       <ChevronUpDownIcon
-                        className="h-5 w-5 text-gray-400"
+                        className="h-5 w-5 text-gray-500"
                         aria-hidden="true"
                       />
                     </span>
@@ -255,7 +260,7 @@ export default function CreateTicket() {
                     </span>
                     <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                       <ChevronUpDownIcon
-                        className="h-5 w-5 text-gray-400"
+                        className="h-5 w-5 text-gray-500"
                         aria-hidden="true"
                       />
                     </span>
@@ -363,7 +368,7 @@ export default function CreateTicket() {
                     <span className="block truncate">{selected.name}</span>
                     <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                       <ChevronUpDownIcon
-                        className="h-5 w-5 text-gray-400"
+                        className="h-5 w-5 text-gray-500"
                         aria-hidden="true"
                       />
                     </span>
@@ -444,6 +449,7 @@ export default function CreateTicket() {
               placeholder={t("ticket_details")}
               maxLength={64}
               autoComplete="off"
+              aria-label="Ticket title"
               onChange={(e) => setTitle(e.target.value)}
               className="w-full pl-0 pr-0 sm:text-xl border-none dark:bg-[#0A090C] dark:text-white focus:outline-none focus:shadow-none focus:ring-0 focus:border-none"
             />
@@ -453,7 +459,7 @@ export default function CreateTicket() {
         <div className="w-full xl:w-1/6 p-3 flex flex-col dark:bg-[#0A090C] dark:text-white border-b-[1px] xl:border-b-0 xl:border-r-[1px] order-1 xl:order-1">
           <div className="flex flex-col">
             <div>
-              <label>
+              <label htmlFor="name">
                 <span className="block text-sm font-medium text-gray-700 dark:text-white">
                   Contact Name
                 </span>
@@ -470,13 +476,14 @@ export default function CreateTicket() {
             </div>
 
             <div>
-              <label>
+              <label htmlFor="contact-email">
                 <span className="block text-sm font-medium text-gray-700 dark:text-white">
                   Contact Email
                 </span>
               </label>
               <input
                 type="text"
+                id="contact-email"
                 name="email"
                 placeholder={t("ticket_email_here")}
                 onChange={(e) => setEmail(e.target.value)}

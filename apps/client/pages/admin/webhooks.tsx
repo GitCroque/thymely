@@ -95,6 +95,11 @@ export default function Notifications() {
             <div className="py-6">
               <div className="mt-4">
                 <div className={show === "main" ? "" : "hidden"}>
+                  {status === "error" && (
+                    <div className="flex min-h-[50vh] items-center justify-center">
+                      <p className="text-sm text-red-500">Error loading webhooks. Please try again.</p>
+                    </div>
+                  )}
                   {status === "success" && (
                      <>
                      <div className="px-4 sm:px-6 md:px-0">

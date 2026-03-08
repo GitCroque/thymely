@@ -54,7 +54,7 @@ export function CommandMenu() {
     };
   }, [router]);
 
-  const { data: ticketsData, refetch } = useQuery({
+  const { data: ticketsData, status: ticketsStatus, refetch } = useQuery({
     queryKey: ["tickets"],
     queryFn: async () => {
       const response = await fetch("/api/v1/tickets/all", {
@@ -181,7 +181,7 @@ export function CommandMenu() {
           <CommandSeparator />
 
           {/* Enhanced Ticket Search */}
-          {filteredAndGroupedTickets && (
+          {ticketsStatus !== "error" && filteredAndGroupedTickets && (
             <>
               {/* Open Tickets */}
               {filteredAndGroupedTickets.open.length > 0 && (

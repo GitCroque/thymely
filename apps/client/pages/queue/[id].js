@@ -290,7 +290,7 @@ export default function AssignedTickets() {
               <div className="text-center mt-72">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="mx-auto h-12 w-12 text-gray-400"
+                  className="mx-auto h-12 w-12 text-gray-500"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"

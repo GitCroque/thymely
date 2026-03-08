@@ -304,6 +304,12 @@ export default function Tickets() {
         </div>
       )}
 
+      {status === "error" && (
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <p className="text-sm text-red-500">Error loading tickets. Please try again.</p>
+        </div>
+      )}
+
       {status === "success" && (
         <div>
           <div className="flex flex-col">
@@ -315,6 +321,7 @@ export default function Tickets() {
                       variant="ghost"
                       size="sm"
                       className="h-6 bg-transparent"
+                      aria-label="Filter tickets"
                     >
                       <Filter className="mr-2 h-4 w-4" />
                       <span className="hidden sm:block">Filters</span>
@@ -769,7 +776,7 @@ export default function Tickets() {
                   }}
                 >
                   <svg
-                    className="mx-auto h-12 w-12 text-gray-400"
+                    className="mx-auto h-12 w-12 text-gray-500"
                     stroke="currentColor"
                     fill="none"
                     viewBox="0 0 48 48"

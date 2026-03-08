@@ -169,7 +169,7 @@ export default function ClientTicketNew() {
                       <span className="block truncate">{selected.name}</span>
                       <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                         <ChevronUpDownIcon
-                          className="h-5 w-5 text-gray-400"
+                          className="h-5 w-5 text-gray-500"
                           aria-hidden="true"
                         />
                       </span>
@@ -242,7 +242,7 @@ export default function ClientTicketNew() {
                       <span className="block truncate">{priority.name}</span>
                       <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                         <ChevronUpDownIcon
-                          className="h-5 w-5 text-gray-400"
+                          className="h-5 w-5 text-gray-500"
                           aria-hidden="true"
                         />
                       </span>

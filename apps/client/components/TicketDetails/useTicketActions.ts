@@ -415,6 +415,11 @@ export function useTicketActions({ id, refetch, userId }: UseTicketActionsOption
       }
     } catch (error) {
       console.error(error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to upload file",
+      });
     }
   }
 

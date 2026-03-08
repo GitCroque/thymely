@@ -483,7 +483,7 @@ export default function NewLayout({ children }: any) {
               <div className="flex w-full justify-end items-center gap-x-2 lg:gap-x-2 ">
                 <Button
                   variant="outline"
-                  className="relative rounded-md p-2 text-gray-400 hover:text-gray-500 hover:cursor-pointer focus:outline-none"
+                  className="relative rounded-md p-2 text-gray-500 hover:text-gray-600 hover:cursor-pointer focus:outline-none"
                 >
                   <Link href="/notifications">
                     <Bell className="h-4 w-4 text-foreground" />

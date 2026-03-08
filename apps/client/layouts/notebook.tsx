@@ -45,6 +45,12 @@ export default function NoteBookLayout({ children }: { children: React.ReactNode
         </div>
       )}
 
+      {status === "error" && (
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <p className="text-sm text-red-500">Error loading notebooks. Please try again.</p>
+        </div>
+      )}
+
       {status === "success" && (
         <div className="">
           <div className="flex flex-row">

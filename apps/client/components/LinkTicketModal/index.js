@@ -96,7 +96,7 @@ export default function LinkTicket({ id }) {
                 <div className="hidden sm:block absolute top-0 right-0 pt-4 pr-4">
                   <button
                     type="button"
-                    className="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="bg-white rounded-md text-gray-500 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     onClick={() => setOpen(false)}
                   >
                     <span className="sr-only">Close</span>
@@ -128,7 +128,7 @@ export default function LinkTicket({ id }) {
                                 </span>
                                 <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                                   <ChevronUpDownIcon
-                                    className="h-5 w-5 text-gray-400"
+                                    className="h-5 w-5 text-gray-500"
                                     aria-hidden="true"
                                   />
                                 </span>

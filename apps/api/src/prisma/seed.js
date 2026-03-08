@@ -41,8 +41,8 @@ async function main() {
 
     const conf = await prisma.config.create({
       data: {
-        gh_version: "0.5.5",
-        client_version: "0.5.5",
+        gh_version: "0.8.1",
+        client_version: "0.8.1",
         encryption_key: encryptionKey,
       },
     });
@@ -56,14 +56,18 @@ async function main() {
       },
     });
 
-    console.log("[SECURITY] Initial admin account created.");
-    console.log("[SECURITY] Email: admin@admin.com");
-    console.log(
-      "[SECURITY] Password:",
-      process.env.THYMELY_BOOTSTRAP_PASSWORD
-        ? "(provided by THYMELY_BOOTSTRAP_PASSWORD)"
-        : bootstrapPassword
-    );
+    const displayPassword = process.env.THYMELY_BOOTSTRAP_PASSWORD
+      ? "(provided by THYMELY_BOOTSTRAP_PASSWORD)"
+      : bootstrapPassword;
+
+    console.log("");
+    console.log("┌────────────────────────────────────────────┐");
+    console.log("│  Admin credentials (first login only)      │");
+    console.log("│  Email: admin@admin.com                    │");
+    console.log(`│  Password: ${displayPassword.padEnd(31)}│`);
+    console.log("│  ⚠ Change this password immediately!       │");
+    console.log("└────────────────────────────────────────────┘");
+    console.log("");
   } else {
     console.log("No need to seed, already seeded");
   }

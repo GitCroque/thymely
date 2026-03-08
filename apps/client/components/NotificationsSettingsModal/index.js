@@ -108,7 +108,7 @@ export default function NotificationsSettingsModal() {
 
                   <button
                     type="button"
-                    className="ml-auto mb-1.5 bg-white text-xs rounded-md text-gray-400 hover:text-gray-500 "
+                    className="ml-auto mb-1.5 bg-white text-xs rounded-md text-gray-500 hover:text-gray-600 "
                     onClick={() => setOpen(false)}
                   >
                     <span className="sr-only">Close</span>
