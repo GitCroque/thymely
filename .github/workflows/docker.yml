@@ -11,9 +11,6 @@ permissions:
   contents: read
   packages: write
 
-env:
-  REGISTRY_IMAGE: ghcr.io/${{ github.repository }}
-
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -47,9 +44,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set repo name lowercase
+      - name: Set image name lowercase
         id: repo
-        run: echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -77,9 +74,9 @@ jobs:
           context: .
           platforms: ${{ matrix.platform }}
           build-args: APP_VERSION=${{ steps.version.outputs.value }}
-          cache-from: type=registry,ref=ghcr.io/${{ steps.repo.outputs.name }}:buildcache-${{ matrix.runner }}
-          cache-to: type=registry,ref=ghcr.io/${{ steps.repo.outputs.name }}:buildcache-${{ matrix.runner }},mode=max
-          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=registry,ref=${{ steps.repo.outputs.image }}:buildcache-${{ matrix.runner }}
+          cache-to: type=registry,ref=${{ steps.repo.outputs.image }}:buildcache-${{ matrix.runner }},mode=max
+          outputs: type=image,name=${{ steps.repo.outputs.image }},push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
         run: |
@@ -99,6 +96,10 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Set image name lowercase
+        id: repo
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
       - name: Download digests
         uses: actions/download-artifact@v4
         with:
@@ -120,7 +121,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY_IMAGE }}
+          images: ${{ steps.repo.outputs.image }}
           tags: |
             type=raw,value=nightly,enable={{is_default_branch}}
             type=sha,prefix=sha-,enable={{is_default_branch}}
@@ -132,7 +133,7 @@ jobs:
         run: |
           docker buildx imagetools create \
             $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
+            $(printf '${{ steps.repo.outputs.image }}@sha256:%s ' *)
 
       - name: Inspect image
-        run: docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}
+        run: docker buildx imagetools inspect ${{ steps.repo.outputs.image }}:${{ steps.meta.outputs.version }}
