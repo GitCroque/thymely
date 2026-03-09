@@ -1,73 +1,115 @@
-# Project Setup Guide
+# Development
 
-Welcome to the project! This guide will help you set up the project on your local machine for development purposes.
+This guide explains how to set up Thymely locally for development.
 
 ## Prerequisites
 
-Before you begin, ensure you have met the following requirements:
+- **Node.js** 22 or higher
+- **Yarn** 4 (Corepack-managed, included with Node.js)
+- **PostgreSQL** 15+ (running locally or in Docker)
+- **Git**
 
-- **Operating System**: Windows, macOS, or Linux
-- **Node.js**: Version 14.x or higher
-- **npm**: Version 6.x or higher
-- **Git**: Version control system
-- **Database**: (e.g., PostgreSQL, MySQL) - Ensure it's installed and running
+## Clone and install
 
-## Installation
+```bash
+git clone https://github.com/GitCroque/thymely.git
+cd thymely
+corepack enable
+yarn install
+```
 
-Follow these steps to set up the project:
+## Environment setup
 
-1. **Clone the Repository**
+Copy the example environment file and fill in your local database credentials:
 
-   Open your terminal and run the following command to clone the project repository:
+```bash
+cp .env.example .env
+```
 
-   ```bash
-   git clone https://github.com/your-username/your-project.git
-   ```
+At minimum, set:
 
-2. **Navigate to the Project Directory**
+```ini
+DATABASE_URL=postgresql://<user>:<password>@localhost:5432/thymely
+SECRET=dev-secret-at-least-32-characters-long
+DATA_ENCRYPTION_KEY=<openssl rand -hex 32>
+```
 
-   Change into the project directory:
+Run the database migrations:
 
-   ```bash
-   cd your-project
-   ```
+```bash
+cd apps/api
+npx prisma migrate deploy
+cd ../..
+```
 
-3. **Install Dependencies**
+## Start the development server
 
-   Run the following command to install the necessary dependencies:
+```bash
+yarn dev
+```
 
-   ```bash
-   npm install
-   ```
+This starts all apps in parallel via [Turborepo](https://turbo.build/):
 
-4. **Set Up Environment Variables**
+| App | URL | Description |
+| --- | --- | --- |
+| `apps/client` | `http://localhost:3000` | Frontend (Next.js) |
+| `apps/api` | `http://localhost:5003` | Backend API (Fastify) |
+| `apps/landing` | `http://localhost:3001` | Landing page |
+| `apps/docs` | `http://localhost:3002` | Documentation (Nextra) |
 
-   Create a `.env` file in the root directory and add the necessary environment variables. You can use the `.env.example` file as a reference.
+## Project structure
 
-   ```plaintext
-   DATABASE_URL=your-database-url
-   API_KEY=your-api-key
-   ```
+```
+thymely/
+  apps/
+    api/          Fastify backend + Prisma
+    client/       Next.js frontend (pages router)
+    landing/      Landing page (Next.js)
+    docs/         Documentation (Nextra 4)
+  packages/
+    config/       Shared ESLint configuration
+    tsconfig/     Shared TypeScript configuration
+```
 
-5. **Database Setup**
+## Common commands
 
-   If your project requires a database, run the following command to set up the database:
+| Command | Description |
+| --- | --- |
+| `yarn dev` | Start all apps in dev mode |
+| `yarn build` | Build all apps |
+| `yarn lint` | Lint all apps (ESLint 9) |
+| `yarn format` | Format code with Prettier |
+| `yarn test` | Run unit tests (Vitest, API) |
+| `yarn test:e2e` | Run end-to-end tests (Playwright) |
 
-   ```bash
-   npm run db:setup
-   ```
+## Type checking
 
-6. **Start the Development Server**
+Before committing, verify TypeScript compilation:
 
-   Start the development server using the following command:
+```bash
+cd apps/api && npx tsc --noEmit
+cd apps/client && npx tsc --noEmit
+```
 
-   ```bash
-   npm start
-   ```
+## Database
 
-   The application should now be running on `http://localhost:3000`.
+The Prisma schema is at `apps/api/src/prisma/schema.prisma`.
 
-## Running Tests
+To create a new migration after modifying the schema:
 
-To run tests, use the following command:
+```bash
+cd apps/api
+npx prisma migrate dev --name <migration-name>
+```
 
+To explore the database visually:
+
+```bash
+cd apps/api
+npx prisma studio
+```
+
+## Testing
+
+- **Unit tests** (API): uses [Vitest](https://vitest.dev/). Run with `yarn test`.
+- **E2E tests**: uses [Playwright](https://playwright.dev/). Run with `yarn test:e2e`.

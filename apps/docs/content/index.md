@@ -1,7 +1,28 @@
-# Welcome to Thymely
+# Thymely
 
-Introducing Thymely, a fully open-source helpdesk solution designed to enhance the user experience for teams currently utilizing costly software alternatives. Our goal is to develop intuitive software that encompasses all the feature-rich components in premium solutions yet remains user-friendly.
+Thymely is a free, open-source, self-hosted helpdesk and ticket management system built for small businesses and internal teams.
 
-Welcome to the documentation for Thymely, an open-source ticket management platform that empowers you to manage your data effectively and deliver top-tier client support. Explore this documentation to understand how to leverage Thymely efficiently and develop extensions for its functionality.
+It provides a straightforward way to track support requests, manage client communication, and organize your team's workflow -- without recurring subscription fees or vendor lock-in.
 
-This comprehensive guide covers initial setup, practical usage, and advanced development techniques, equipping you to maximize Thymely's potential.
+## Key features
+
+- **Ticket management** -- create, assign, track, and close tickets with priorities, labels, and time tracking.
+- **Email integration** -- receive tickets via IMAP and send notifications via SMTP.
+- **Roles and permissions** -- granular RBAC to control who can do what.
+- **Client portal** -- let external users submit and follow their tickets.
+- **Webhooks** -- notify external systems (Slack, Discord, custom) on ticket events.
+- **16 languages** -- localized interface with community translations.
+- **Self-hosted** -- your data stays on your infrastructure. Deploy with Docker in minutes.
+
+## Tech stack
+
+| Layer    | Technology                        |
+| -------- | --------------------------------- |
+| API      | Fastify 5, Prisma 5, PostgreSQL   |
+| Frontend | Next.js 16, React 19, TailwindCSS |
+| Auth     | JWT, OAuth2, OIDC                 |
+| Deploy   | Docker, Docker Compose            |
+
+## Get started
+
+Head to the [Installation](/installation) page to deploy Thymely with Docker Compose.

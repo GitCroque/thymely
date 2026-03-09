@@ -1,84 +1,162 @@
-<h1 align="center">Welcome to Thymely Ticket Management</h1>
+<h1 align="center">Thymely</h1>
+
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-0.2-blue.svg?cacheSeconds=2592000" />
-  <a target="_blank">
-    <img alt="Github Stars: " src="https://img.shields.io/github/stars/GitCroque/thymely?style=social" />
-  </a>
-  <img src="https://img.shields.io/docker/pulls/gitcroque/thymely" />
-</p>
-<p align="center">
-    <img src="./static/logo.svg" alt="Logo" height="80px" >
+  Free, open-source, self-hosted helpdesk for small businesses and internal teams.
 </p>
 
-> Ticket Management System in order to help helpdesks & service desks manage internal staff & customer requests
+<p align="center">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.8.2-blue.svg" />
+  <img alt="License" src="https://img.shields.io/badge/license-AGPL--3.0-green.svg" />
+  <a href="https://ghcr.io/gitcroque/thymely">
+    <img alt="Docker" src="https://img.shields.io/badge/docker-ghcr.io%2Fgitcroque%2Fthymely-blue?logo=docker" />
+  </a>
+</p>
+
+<p align="center">
+  <img src="apps/landing/public/screenshots/dashboard.png" alt="Thymely Dashboard" width="800" />
+</p>
 
 ## Features
 
-- **Ticket Creation**: Bog standard ticket creation with a markdown editor and file uploads
-- **A log of client history**
-- **Markdown based Notebook with todo lists**
-- **Responsive**: Designed for variable screen sizes from mobile up to 4k
-- **Multi-deployment**: Quickly deploy using docker & pm2
-- **Simple to Use**: Designed to be easy to use with a simple logical workflow
+- **Ticket management** -- create, assign, track, and close tickets with a rich text editor
+- **Role-based access control (RBAC)** -- granular permissions per role
+- **Email integration** -- inbound (IMAP) and outbound (SMTP) email-to-ticket
+- **Client portal** -- external clients can submit and follow their tickets
+- **Time tracking** -- log time spent on tickets
+- **File attachments** -- upload files to tickets (10 MB limit, MIME whitelist)
+- **Webhooks and notifications** -- Discord, Slack, and custom webhooks
+- **Audit logging** -- structured logs for security and compliance
+- **Multi-language** -- 18 languages supported
+- **Authentication** -- local (email/password), OAuth2, OIDC
+- **Self-hosted** -- your data stays on your infrastructure
+- **Multi-arch Docker image** -- linux/amd64 and linux/arm64
 
-## Installation with Docker
+## Quick Start
 
+### 1. Create a `.env` file
+
+Copy `.env.example` and fill in the required values:
+
+```bash
+cp .env.example .env
 ```
-version: "3.1"
 
+At minimum, set these:
+
+```env
+POSTGRES_USER=thymely
+POSTGRES_PASSWORD=<strong-db-password>
+POSTGRES_DB=thymely
+DATABASE_URL=postgresql://thymely:<strong-db-password>@thymely_postgres:5432/thymely
+
+SECRET=<base64-encoded-string-min-32-chars>
+THYMELY_BOOTSTRAP_PASSWORD=<strong-admin-password>
+```
+
+### 2. Start with Docker Compose
+
+Create a `docker-compose.yml`:
+
+```yaml
 services:
   thymely_postgres:
-    container_name: thymely_postgres
-    image: postgres:latest
+    image: postgres:17
     restart: always
-    ports:
-      - 5432:5432
     volumes:
       - pgdata:/var/lib/postgresql/data
-    environment:
-      POSTGRES_USER: thymely
-      POSTGRES_PASSWORD: 1234
-      POSTGRES_DB: thymely
+    env_file: .env
 
   thymely:
-    container_name: thymely
-    image: gitcroque/thymely:latest
+    image: ghcr.io/gitcroque/thymely:latest
     ports:
       - 3000:3000
       - 5003:5003
     restart: always
     depends_on:
       - thymely_postgres
-    environment:
-      DB_USERNAME: "thymely"
-      DB_PASSWORD: "change_me"
-      DB_HOST: "thymely_postgres"
-      SECRET: "<base64-32-bytes-secret>"
-      THYMELY_BOOTSTRAP_PASSWORD: "<strong-admin-password>"
+    env_file: .env
 
 volumes:
- pgdata:
-
+  pgdata:
 ```
 
-Once this is completed then you can go to your server-ip:3000 which was added to the compose file and login.
+```bash
+docker compose up -d
+```
 
-On first start, an admin account is created with email `admin@admin.com`.
-Use `THYMELY_BOOTSTRAP_PASSWORD` to define its password explicitly.
+### 3. Log in
+
+Open `http://localhost:3000` and log in with:
+
+- **Email:** `admin@admin.com`
+- **Password:** the value you set in `THYMELY_BOOTSTRAP_PASSWORD`
+
+## Configuration
+
+All configuration is done through environment variables. See [`.env.example`](.env.example) for the full list.
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `SECRET` | Yes | JWT signing key (base64, min 32 characters) |
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `THYMELY_BOOTSTRAP_PASSWORD` | Yes | Initial admin account password |
+| `POSTGRES_USER` | Yes | PostgreSQL user |
+| `POSTGRES_PASSWORD` | Yes | PostgreSQL password |
+| `POSTGRES_DB` | Yes | PostgreSQL database name (default: `thymely`) |
+| `CORS_ORIGIN` | No | Allowed origins, comma-separated |
+| `TRUST_PROXY` | No | Set to `true` behind a reverse proxy |
+| `COOKIE_SECURE` | No | Set to `true` when using HTTPS |
+
+## Development
+
+**Requirements:** Node.js 22+, Yarn 4, PostgreSQL 17
+
+```bash
+# Install dependencies
+yarn install
+
+# Start all apps in dev mode
+yarn dev
+
+# Build
+yarn build
+
+# Lint
+yarn lint
+
+# Run unit tests (API)
+yarn test
+
+# Run E2E tests (Playwright)
+yarn test:e2e
+```
+
+### Project structure
+
+```
+apps/
+  api/        Fastify 5 + Prisma 5 backend (port 5003)
+  client/     Next.js 16 frontend (port 3000)
+  landing/    Landing page (Next.js)
+  docs/       Documentation (Nextra 4)
+packages/
+  config/     Shared ESLint config
+  tsconfig/   Shared TypeScript config
+```
 
 ## Documentation
 
-Check out the documentation for Thymely which covers development to general usage on [GitHub](https://github.com/GitCroque/thymely).
+Documentation is available in `apps/docs/`. A hosted version is planned.
 
-## Motivation
+## Contributing
 
-- Build a fully fledged helpdesk product which offers what the big players offer, but at a much better ROI than signing up for Zendesk etc.
-- Designed to be easy to use with a simple logical workflow
-- Self-hosted and open source
+Contributions are welcome. Open an issue to discuss larger changes before submitting a pull request.
 
-Give a star if this project helped you!
+## License
 
-## Activity
-![Alt](https://repobeats.axiom.co/api/embed/9b568eb9e41b60f60fe155836b1ef0fb2a7b93b9.svg "Repobeats analytics image")
+[AGPL-3.0](LICENSE)
 
-- Github: [@GitCroque](https://github.com/GitCroque)
+## Links
+
+- **GitHub:** [github.com/GitCroque/thymely](https://github.com/GitCroque/thymely)
+- **Mastodon:** [@jugue@mastodon.social](https://mastodon.social/@jugue)

@@ -3,9 +3,9 @@ import "./globals.css";
 import Fathom from "@/component/Fathom";
 
 export const metadata: Metadata = {
-  title: "Thymely",
+  title: "Thymely — Open-source helpdesk for small teams",
   description:
-    "Thymely is a self-hosted issue tracker for your projects or help desk.",
+    "Free, self-hosted ticket management system. A simple alternative to Zammad, osTicket, and FreeScout. Deploy in minutes with Docker.",
 };
 
 export default function RootLayout({

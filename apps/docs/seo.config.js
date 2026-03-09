@@ -19,9 +19,8 @@ const seoConfig = {
     { rel: "mask-icon", url: "/favicon.ico" },
     { rel: "image/x-icon", url: "/favicon.ico" },
   ],
-  twitter: {
-    site: "@potts_dev",
-    creator: "@potts_dev",
+  other: {
+    "fediverse:creator": "https://mastodon.social/@jugue",
   },
 };
 

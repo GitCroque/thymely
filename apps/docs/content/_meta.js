@@ -1,35 +1,27 @@
 export default {
-  index: {
-    title: "Welcome",
-  },
-  "-- getting-started": {
+  index: "Introduction",
+  "-- Getting Started": {
     type: "separator",
     title: "Getting Started",
   },
-  docker: "Install with Docker",
-  "--- Guides": {
+  installation: "Installation",
+  configuration: "Configuration",
+  "first-launch": "First Launch",
+  "-- Usage": {
     type: "separator",
-    title: "Guides",
+    title: "Usage",
   },
-  installer: "Easy Installer with Spearmint",
-  "--- Guides": {
+  tickets: "Tickets",
+  users: "Users & Clients",
+  email: "Email Integration",
+  authentication: "Authentication",
+  webhooks: "Webhooks",
+  "-- Advanced": {
     type: "separator",
-    title: "Guides",
+    title: "Advanced",
   },
-  proxy: "Proxy",
-  "--- Configuration": {
-    type: "separator",
-    title: "Configuration",
-  },
-  oidc: "OpenID Connect (OIDC)",
-  "--- Development": {
-    type: "separator",
-    title: "Development",
-  },
-  development: "Project Setup Guide",
-  translation: "Adding a New Language to the Project",
-  // "--- Reference": {
-  //   type: "separator",
-  //   title: "Reference",
-  // },
+  proxy: "Reverse Proxy",
+  development: "Development",
+  translation: "Translations",
+  faq: "FAQ",
 };

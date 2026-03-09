@@ -6,9 +6,7 @@ const config = {
     defaultMenuCollapseLevel: 2,
     toggleButton: false,
   },
-  chat: {
-    link: "https://discord.gg/X9yFbcV2rF",
-  },
+  // No chat link — Discord inactive
   footer: {
     content: "",
   },
