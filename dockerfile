@@ -45,7 +45,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl libstdc
     addgroup --system app && adduser --system --home /home/app --ingroup app app
 
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/apps/api/ ./apps/api/
+COPY --from=builder /app/apps/api/dist ./apps/api/dist
+COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
+COPY --from=builder /app/apps/api/src/prisma ./apps/api/src/prisma
 COPY --from=builder /app/apps/client/.next/standalone/apps/client ./apps/client
 COPY --from=builder /app/apps/client/.next/standalone/node_modules ./apps/client/node_modules
 COPY --from=builder /app/apps/client/.next/static ./apps/client/.next/static
