@@ -90,7 +90,7 @@ export default function ClientTicketNew() {
   return (
     <div className="flex justify-center items-center content-center h-screen bg-gray-900">
       {view === "new" ? (
-        <div className="max-w-2xl bg-white p-12 rounded-md">
+        <div className="w-full max-w-2xl bg-white p-6 sm:p-12 rounded-md mx-4 sm:mx-0">
           <h1 className="font-bold text-2xl">Submit a Ticket</h1>
           <span>
             Need help? Submit a ticket and our support team will get back to you
@@ -337,7 +337,7 @@ export default function ClientTicketNew() {
         </div>
       ) : (
         <>
-          <div className="rounded-md bg-green-600 shadow-md p-12">
+          <div className="rounded-md bg-green-600 shadow-md p-6 sm:p-12 mx-4 sm:mx-0">
             <div className="flex">
               <div className="flex-shrink-0">
                 <CheckCircleIcon
@@ -346,7 +346,7 @@ export default function ClientTicketNew() {
                 />
               </div>
               <div className="ml-3">
-                <h3 className="text-4xl font-medium text-white">
+                <h3 className="text-2xl sm:text-4xl font-medium text-white">
                   Ticket Submitted
                 </h3>
                 <div className="mt-2 text-sm text-white">

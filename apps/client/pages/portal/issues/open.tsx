@@ -105,7 +105,7 @@ export default function Tickets() {
               <div className="min-h-screen flex items-center justify-center">
                 <button
                   type="button"
-                  className="relative block w-[400px] rounded-lg border-2 border-dashed border-gray-300 p-12 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  className="relative block w-full max-w-sm rounded-lg border-2 border-dashed border-gray-300 p-12 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                   onClick={() => {
                     router.push("/portal/new");
                   }}
