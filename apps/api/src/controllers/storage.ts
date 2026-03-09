@@ -1,5 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import multer from "fastify-multer";
+import fs from "fs";
+import path from "path";
+import { pipeline } from "stream/promises";
 import { requirePermission } from "../lib/roles";
 import { checkSession } from "../lib/session";
 import { prisma } from "../prisma";
@@ -21,32 +23,15 @@ const ALLOWED_MIME_TYPES = [
   "text/csv",
 ];
 
-const upload = multer({
-  dest: "uploads/",
-  limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: (
-    _req: any,
-    file: { mimetype: string },
-    cb: (error: Error | null, acceptFile?: boolean) => void
-  ) => {
-    if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error("File type not allowed"));
-    }
-  },
-});
+const UPLOADS_DIR = "uploads";
 
 export function objectStoreRoutes(fastify: FastifyInstance) {
-  fastify.post(
+  fastify.post<{ Params: { id: string } }>(
     "/api/v1/storage/ticket/:id/upload/single",
     {
-      preHandler: [
-        requirePermission(["issue::update"]),
-        upload.single("file"),
-      ],
+      preHandler: [requirePermission(["issue::update"])],
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
+    async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
       const session = await checkSession(request);
       if (!session) {
         return reply.code(401).send({
@@ -55,7 +40,7 @@ export function objectStoreRoutes(fastify: FastifyInstance) {
         });
       }
 
-      const { id } = request.params as { id: string };
+      const { id } = request.params;
 
       const ticket = await prisma.ticket.findUnique({ where: { id } });
       if (!ticket) {
@@ -65,23 +50,50 @@ export function objectStoreRoutes(fastify: FastifyInstance) {
         });
       }
 
-      const file = (request as any).file;
+      const data = await request.file();
 
-      if (!file) {
+      if (!data) {
         return reply.code(400).send({
           message: "No file uploaded",
           success: false,
         });
       }
 
+      if (!ALLOWED_MIME_TYPES.includes(data.mimetype)) {
+        return reply.code(400).send({
+          message: "File type not allowed",
+          success: false,
+        });
+      }
+
+      // Ensure uploads directory exists
+      if (!fs.existsSync(UPLOADS_DIR)) {
+        fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+      }
+
+      const filename = `${Date.now()}-${data.filename}`;
+      const filepath = path.join(UPLOADS_DIR, filename);
+      await pipeline(data.file, fs.createWriteStream(filepath));
+
+      // Check if the stream was truncated (file too large)
+      if (data.file.truncated) {
+        fs.unlinkSync(filepath);
+        return reply.code(400).send({
+          message: "File too large (max 10MB)",
+          success: false,
+        });
+      }
+
+      const stat = fs.statSync(filepath);
+
       await prisma.ticketFile.create({
         data: {
           ticketId: id,
-          filename: file.originalname,
-          path: file.path,
-          mime: file.mimetype,
-          size: file.size,
-          encoding: file.encoding,
+          filename: data.filename,
+          path: filepath,
+          mime: data.mimetype,
+          size: stat.size,
+          encoding: data.encoding,
           userId: session.id,
         },
       });

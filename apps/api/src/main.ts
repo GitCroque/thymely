@@ -5,7 +5,7 @@ import rateLimit from "@fastify/rate-limit";
 import { exec } from "child_process";
 import "dotenv/config";
 import Fastify, { FastifyInstance } from "fastify";
-import multer from "fastify-multer";
+import multipart from "@fastify/multipart";
 import fs from "fs";
 import util from "util";
 
@@ -66,7 +66,9 @@ server.register(rateLimit, {
   keyGenerator: (request) => request.ip,
 });
 
-server.register(multer.contentParser);
+server.register(multipart, {
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
 
 server.setErrorHandler((error: Error & { statusCode?: number }, request, reply) => {
   request.log.error(error);
