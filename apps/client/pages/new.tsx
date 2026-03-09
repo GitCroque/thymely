@@ -54,6 +54,13 @@ export default function CreateTicket() {
         if (res) {
           setOptions(res.clients);
         }
+      })
+      .catch(() => {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load clients",
+        });
       });
   };
 
@@ -77,7 +84,7 @@ export default function CreateTicket() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to create ticket",
+        description: "Failed to load users",
       });
     }
   }

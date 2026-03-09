@@ -65,7 +65,7 @@ export function configRoutes(fastify: FastifyInstance) {
     "/api/v1/config/authentication/oidc/update",
     { preHandler: requirePermission(["settings::manage"]) },
     async (request, reply) => {
-      const { clientId, clientSecret, redirectUri, issuer, jwtSecret } =
+      const { clientId, clientSecret, redirectUri, issuer, jwtSecret: _jwtSecret } =
         request.body;
       const encryptedClientSecret = await encryptSecret(clientSecret);
 
@@ -133,9 +133,9 @@ export function configRoutes(fastify: FastifyInstance) {
         clientId,
         clientSecret,
         redirectUri,
-        tenantId,
-        issuer,
-        jwtSecret,
+        tenantId: _tenantId,
+        issuer: _issuer,
+        jwtSecret: _jwtSecret,
       } = request.body;
       const encryptedClientSecret = (await encryptSecret(clientSecret)) || "";
 

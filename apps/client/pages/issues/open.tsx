@@ -200,6 +200,13 @@ export default function Tickets() {
         if (res) {
           setUsers(res.users);
         }
+      })
+      .catch(() => {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load users",
+        });
       });
   }
 
@@ -246,7 +253,7 @@ export default function Tickets() {
         duration: 3000,
       });
       refetch();
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to update assignee",
@@ -282,7 +289,7 @@ export default function Tickets() {
         duration: 3000,
       });
       refetch();
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to update priority",
@@ -751,9 +758,26 @@ export default function Tickets() {
                                     "Content-Type": "application/json",
                                   },
                                   body: JSON.stringify({ id: ticket.id }),
-                                }).then(() => {
-                                  refetch();
-                                });
+                                })
+                                  .then((res) => res.json())
+                                  .then((res) => {
+                                    if (res.success) {
+                                      refetch();
+                                    } else {
+                                      toast({
+                                        variant: "destructive",
+                                        title: "Error",
+                                        description: res.message || "Failed to delete ticket",
+                                      });
+                                    }
+                                  })
+                                  .catch(() => {
+                                    toast({
+                                      variant: "destructive",
+                                      title: "Error",
+                                      description: "Connection error. Please try again.",
+                                    });
+                                  });
                               }
                             }}
                           >

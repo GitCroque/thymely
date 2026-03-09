@@ -99,7 +99,7 @@ export default function NotebookEditor() {
     }
   }
 
-  async function deleteNotebook(id) {
+  async function deleteNotebook(_id) {
     if (window.confirm("Do you really want to delete this notebook?")) {
       await fetch(`/api/v1/notebooks/note/${router.query.id}`, {
         method: "DELETE",

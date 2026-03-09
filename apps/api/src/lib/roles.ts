@@ -126,7 +126,7 @@ export function requirePermission(
 
       // When roles are inactive: authenticated = authorized
       return;
-    } catch (error) {
+    } catch (_error) {
       return res.status(500).send({
         message: "Internal server error",
         success: false,

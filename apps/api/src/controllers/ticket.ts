@@ -498,7 +498,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
       },
     },
     async (request: FastifyRequest<{ Body: { id: string; note?: string; detail?: string; title?: string; priority?: string; status?: "hold" | "needs_support" | "in_progress" | "in_review" | "done"; client?: unknown } }>, reply: FastifyReply) => {
-      const { id, note, detail, title, priority, status, client } =
+      const { id, note, detail, title, priority, status, client: _client } =
         request.body;
 
       const user = await checkSession(request);
@@ -844,7 +844,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
         webhooks.map(async (webhook) => {
           try {
             await assertSafeWebhookUrl(webhook.url);
-          } catch (error) {
+          } catch (_error) {
             request.log.error({ url: webhook.url }, "Unsafe webhook URL blocked");
             return;
           }
@@ -992,7 +992,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/api/v1/tickets/imap/all",
 
-    async (request: FastifyRequest, reply: FastifyReply) => {}
+    async (_request: FastifyRequest, _reply: FastifyReply) => {}
   );
 
   // GET all ticket templates

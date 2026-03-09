@@ -22,7 +22,7 @@ export function useTicketActions(token: string, refetch: () => void) {
       });
       
       refetch();
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to update status",
@@ -54,7 +54,7 @@ export function useTicketActions(token: string, refetch: () => void) {
         duration: 3000,
       });
       refetch();
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to update assignee",
@@ -90,7 +90,7 @@ export function useTicketActions(token: string, refetch: () => void) {
         duration: 3000,
       });
       refetch();
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to update priority",
@@ -119,7 +119,7 @@ export function useTicketActions(token: string, refetch: () => void) {
         duration: 3000,
       });
       refetch();
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to delete ticket",

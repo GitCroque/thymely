@@ -86,7 +86,7 @@ export default function CreateTicketModal({ keypress, setKeyPressDown }: { keypr
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to create ticket",
+        description: "Failed to load users",
       });
     }
   }

@@ -183,7 +183,7 @@ export function useTicketActions({ id, refetch, userId }: UseTicketActionsOption
           toast({
             variant: "destructive",
             title: "Error",
-            description: "Failed to delete comment",
+            description: res.message || "Failed to delete comment",
           });
         }
       });
@@ -213,6 +213,12 @@ export function useTicketActions({ id, refetch, userId }: UseTicketActionsOption
             variant: "default",
             title: "Time Added",
             description: "Time has been added to the ticket",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: res.message || "Failed to add time",
           });
         }
       });
@@ -315,13 +321,21 @@ export function useTicketActions({ id, refetch, userId }: UseTicketActionsOption
       body: JSON.stringify({ id: ticket.id, status: !ticket.isComplete }),
     })
       .then((res) => res.json())
-      .then(() => {
-        toast({
-          title: ticket.isComplete ? "Issue re-opened" : "Issue closed",
-          description: "The status of the issue has been updated.",
-          duration: 3000,
-        });
-        refetch();
+      .then((res) => {
+        if (res.success) {
+          toast({
+            title: ticket.isComplete ? "Issue re-opened" : "Issue closed",
+            description: "The status of the issue has been updated.",
+            duration: 3000,
+          });
+          refetch();
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: res.message || "Failed to update ticket status",
+          });
+        }
       });
   }
 
@@ -411,6 +425,12 @@ export function useTicketActions({ id, refetch, userId }: UseTicketActionsOption
 
       if (data.success) {
         refetch();
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: data.message || "Failed to upload file",
+        });
       }
     } catch (error) {
       console.error(error);

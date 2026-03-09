@@ -19,7 +19,7 @@ import {
 } from "@/shadcn/ui/tooltip"
 
 const SIDEBAR_STORAGE_KEY = "sidebar:state"
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
+const _SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 const SIDEBAR_WIDTH = "16rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
@@ -74,7 +74,7 @@ const SidebarProvider = React.forwardRef<
       try {
         const storedValue = localStorage.getItem(SIDEBAR_STORAGE_KEY)
         return storedValue ? JSON.parse(storedValue) : defaultOpen
-      } catch (e) {
+      } catch (_e) {
         return defaultOpen
       }
     })

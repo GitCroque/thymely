@@ -135,13 +135,19 @@ server.get(
           type: "object",
           properties: {
             healthy: { type: "boolean" },
+            version: { type: "string" },
+            uptime: { type: "integer" },
           },
         },
       },
     },
   },
   async function (_request, response) {
-    response.send({ healthy: true });
+    response.send({
+      healthy: true,
+      version: process.env.APP_VERSION || "dev",
+      uptime: Math.floor(process.uptime()),
+    });
   }
 );
 

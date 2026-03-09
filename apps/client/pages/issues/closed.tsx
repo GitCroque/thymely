@@ -237,7 +237,7 @@ export default function Tickets() {
         duration: 3000,
       });
       refetch();
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to update assignee",
@@ -273,7 +273,7 @@ export default function Tickets() {
         duration: 3000,
       });
       refetch();
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to update priority",

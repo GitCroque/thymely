@@ -367,7 +367,7 @@ export class ImapService {
 
           imap.connect();
         });
-      } catch (error) {
+      } catch (_error) {
         logger.error({ queueId: queue.id }, "Error processing IMAP queue");
       }
     }

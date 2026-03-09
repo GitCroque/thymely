@@ -28,8 +28,7 @@ export default function Login({}) {
           toast({
             variant: "destructive",
             title: "Error", 
-            description:
-              "There was an error with this request, please try again. If this issue persists, please contact support via the discord.",
+            description: res.message || "Failed to send password reset email",
           });
         }
       });

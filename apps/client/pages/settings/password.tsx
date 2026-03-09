@@ -33,7 +33,7 @@ export default function PasswordChange({ children: _children }: { children?: Rea
             toast({
               variant: "destructive",
               title: "Error",
-              description: "Error: Failed to update password",
+              description: res.message || "Failed to update password",
             });
           }
         });

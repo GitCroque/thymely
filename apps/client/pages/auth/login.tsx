@@ -35,8 +35,7 @@ export default function Login({}) {
             toast({
               variant: "destructive",
               title: "Error",
-              description:
-                "There was an error logging in, please try again. If this issue persists, please contact support via the discord.",
+              description: res.message || "Invalid credentials",
             });
           }
         });
@@ -44,9 +43,8 @@ export default function Login({}) {
       console.error(error);
       toast({
         variant: "destructive",
-        title: "Database Error",
-        description:
-          "This is an issue with the database, please check the docker logs or contact support via discord.",
+        title: "Error",
+        description: "Connection error. Please try again.",
       });
     }
   }
