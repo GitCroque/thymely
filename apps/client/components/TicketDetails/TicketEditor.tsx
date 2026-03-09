@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { BlockNoteEditor, PartialBlock } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/mantine";
 import { useEffect, useMemo, useState } from "react";
@@ -73,9 +72,9 @@ export default function TicketEditor({
     );
   }
 
-  const handleInputChange = (editorInstance: BlockNoteEditor) => {
+  const handleInputChange = () => {
     if (ticket.locked) return;
-    onContentChange(editorInstance.document);
+    onContentChange(editor.document as PartialBlock[]);
   };
 
   if (ticket.fromImap) {
@@ -87,7 +86,9 @@ export default function TicketEditor({
               <Frame
                 className="min-h-[60vh] h-full max-h-[80vh] overflow-y-auto w-full"
                 initialContent={ticket.detail}
-              />
+              >
+                <></>
+              </Frame>
             </div>
           </div>
         </div>

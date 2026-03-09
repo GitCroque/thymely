@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { getCookie } from "cookies-next";
 import { useRouter } from "next/router";
 import { toast } from "@/shadcn/hooks/use-toast";
@@ -306,7 +305,7 @@ export function useTicketActions({ id, refetch, userId }: UseTicketActionsOption
     refetch();
   }
 
-  async function updateTicketStatus(e: React.MouseEvent, ticket: { id: string; isComplete: boolean }) {
+  async function updateTicketStatus(_e: React.MouseEvent, ticket: { id: string; isComplete: boolean }) {
     await fetch(`/api/v1/ticket/status/update`, {
       method: "PUT",
       headers: {

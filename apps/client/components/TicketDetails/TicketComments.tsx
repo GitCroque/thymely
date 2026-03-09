@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { CheckCircleIcon } from "@heroicons/react/20/solid";
 import dayjs from "dayjs";
 import localizedFormat from "dayjs/plugin/localizedFormat";
@@ -14,10 +13,10 @@ interface TicketCommentsProps {
   ticket: any;
   user: any;
   users: any;
-  comment: any;
-  setComment: (value: any) => void;
-  publicComment: any;
-  setPublicComment: (value: any) => void;
+  comment: string | undefined;
+  setComment: (value: string) => void;
+  publicComment: boolean;
+  setPublicComment: (value: boolean) => void;
   onAddComment: () => void;
   onDeleteComment: (id: string) => void;
   onUpdateStatus: () => void;
@@ -28,7 +27,7 @@ export default function TicketComments({
   ticket,
   user,
   users,
-  comment,
+  comment: _comment,
   setComment,
   publicComment,
   setPublicComment,
@@ -91,12 +90,11 @@ export default function TicketComments({
                         {ticket.following.map(
                           (follower: any) => {
                             const userMatch = users.find(
-                              (user) =>
-                                user.id === follower &&
-                                user.id !==
+                              (u: { id: string }) =>
+                                u.id === follower &&
+                                u.id !==
                                   ticket.assignedTo.id
                             );
-                            console.log(userMatch);
                             return userMatch ? (
                               <div key={follower.id}>
                                 <span>{userMatch.name}</span>

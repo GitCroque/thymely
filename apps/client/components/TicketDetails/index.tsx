@@ -1,10 +1,8 @@
-// @ts-nocheck
 import {
   ContextMenu,
   ContextMenuTrigger,
 } from "@/shadcn/ui/context-menu";
-import useTranslation from "next-translate/useTranslation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDebounce } from "use-debounce";
 
 import {
@@ -37,13 +35,12 @@ const ticketStatusMap = [
 const priorityOptions = [
   { id: "1", name: "Low", value: "low", icon: SignalLow },
   { id: "2", name: "Medium", value: "medium", icon: SignalMedium },
-  { id: "1", name: "High", value: "high", icon: SignalHigh },
+  { id: "3", name: "High", value: "high", icon: SignalHigh },
 ];
 
 const priorities = ["low", "medium", "high"];
 
 export default function Ticket() {
-  const { t } = useTranslation("thymely");
   const { user } = useUser();
 
   const { id, data, status, refetch, users, clients } = useTicketData();
@@ -59,10 +56,6 @@ export default function Ticket() {
   const [publicComment, setPublicComment] = useState(false);
   const [n, setN] = useState<{ id: string }>();
   const [assignedClient, setAssignedClient] = useState<{ id: string }>();
-  const [file, setFile] = useState<File | null>(null);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   // Debounced values for auto-save
   const [debouncedValue] = useDebounce(issue, 500);
   const [debounceTitle] = useDebounce(title, 500);
@@ -99,23 +92,6 @@ export default function Ticket() {
     if (!data?.ticket || assignedClient === undefined) return;
     actions.transferClient(assignedClient, data.ticket.locked);
   }, [assignedClient]);
-
-  // Upload file on selection
-  useEffect(() => {
-    if (file && id) {
-      actions.uploadFile(file, id as string).then(() => setFile(null));
-    }
-  }, [file]);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFile(e.target.files[0]);
-    }
-  };
-
-  const handleButtonClick = () => {
-    fileInputRef.current?.click();
-  };
 
   return (
     <div>
@@ -171,7 +147,7 @@ export default function Ticket() {
                     setComment={setComment}
                     publicComment={publicComment}
                     setPublicComment={setPublicComment}
-                    onAddComment={() => actions.addComment(comment, publicComment, data.ticket.locked)}
+                    onAddComment={() => actions.addComment(comment ?? "", publicComment, data.ticket.locked)}
                     onDeleteComment={actions.deleteComment}
                     onUpdateStatus={() => actions.updateStatus(data.ticket.isComplete, data.ticket.locked)}
                     onSubscribe={() => actions.subscribe(data.ticket.following, data.ticket.locked)}

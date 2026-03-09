@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
   Command,
   CommandGroup,
@@ -70,7 +69,7 @@ export default function TicketContextMenu({
                   </div>
                   <span>Unassigned</span>
                 </CommandItem>
-                {users?.map((user) => (
+                {users?.map((user: { id: string; name: string }) => (
                   <CommandItem
                     key={user.id}
                     onSelect={() =>
@@ -151,7 +150,7 @@ export default function TicketContextMenu({
       {user.isAdmin && (
         <ContextMenuItem
           className="text-red-600"
-          onClick={(e) => onDeleteIssue()}
+          onClick={() => onDeleteIssue()}
         >
           Delete Ticket
         </ContextMenuItem>
