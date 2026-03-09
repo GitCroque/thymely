@@ -127,6 +127,9 @@ export default function NewLayout({ children }: any) {
     !loading &&
     user && (
       <div className="min-h-screen overflow-hidden bg-background">
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-md focus:m-2">
+          Skip to content
+        </a>
         <Transition.Root show={sidebarOpen} as={Fragment}>
           <Dialog
             as="div"
@@ -523,7 +526,7 @@ export default function NewLayout({ children }: any) {
           </div>
 
           {!loading && !user.external_user && (
-            <main className="bg-background min-h-screen">{children}</main>
+            <main id="main-content" className="bg-background min-h-screen">{children}</main>
           )}
         </div>
       </div>

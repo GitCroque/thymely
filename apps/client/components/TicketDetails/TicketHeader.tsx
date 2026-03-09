@@ -103,7 +103,7 @@ export default function TicketHeader({
           </div>
           {isAdmin && (
             <DropdownMenu>
-              <DropdownMenuTrigger className="inline-flex items-center px-2 py-1 text-xs font-medium text-foreground ring-none outline-none ">
+              <DropdownMenuTrigger className="inline-flex items-center px-2 py-1 text-xs font-medium text-foreground ring-none outline-none" aria-label="Ticket actions">
                 <Ellipsis className="h-4 w-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent

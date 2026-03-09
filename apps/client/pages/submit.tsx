@@ -100,21 +100,21 @@ export default function ClientTicketNew() {
           <div className="my-4 flex flex-col space-y-4">
             <div>
               <label
-                htmlFor="email"
+                htmlFor="name"
                 className="block text-sm font-medium leading-6 text-gray-900"
               >
                 Name
               </label>
               <div className="mt-2">
                 <input
-                  type="email"
-                  name="email"
-                  id="email"
+                  type="text"
+                  name="name"
+                  id="name"
                   className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6"
                   placeholder="John Doe"
                   onChange={(e) => setName(e.target.value)}
                   value={name}
-                  autoComplete="off"
+                  autoComplete="name"
                 />
               </div>
             </div>
@@ -134,22 +134,22 @@ export default function ClientTicketNew() {
                   placeholder="johnD@meta.com"
                   onChange={(e) => setEmail(e.target.value)}
                   value={email}
-                  autoComplete="off"
+                  autoComplete="email"
                 />
               </div>
             </div>
             <div>
               <label
-                htmlFor="email"
+                htmlFor="subject"
                 className="block text-sm font-medium leading-6 text-gray-900"
               >
                 Subject
               </label>
               <div className="mt-2">
                 <input
-                  type="email"
-                  name="email"
-                  id="email"
+                  type="text"
+                  name="subject"
+                  id="subject"
                   className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6"
                   placeholder="I can't login to my account"
                   onChange={(e) => setSubject(e.target.value)}

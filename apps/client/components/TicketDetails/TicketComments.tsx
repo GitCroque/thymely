@@ -81,7 +81,7 @@ export default function TicketComments({
               ticket.following.length > 0 && (
                 <div className="flex space-x-2">
                   <Popover>
-                    <PopoverTrigger>
+                    <PopoverTrigger aria-label="View followers">
                       <PanelTopClose className="h-4 w-4" />
                     </PopoverTrigger>
                     <PopoverContent>
