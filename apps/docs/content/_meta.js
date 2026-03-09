@@ -21,6 +21,7 @@ export default {
     title: "Advanced",
   },
   proxy: "Reverse Proxy",
+  upgrading: "Upgrading",
   development: "Development",
   translation: "Translations",
   faq: "FAQ",
