@@ -197,25 +197,15 @@ const start = async () => {
 
     const port = 5003;
 
-    server.listen(
-      { port: Number(port), host: "0.0.0.0" },
-      async (err, address) => {
-        if (err) {
-          console.error(err);
-          process.exit(1);
-        }
+    const address = await server.listen({ port: Number(port), host: "0.0.0.0" });
 
-        const client = track();
-
-        client.capture({
-          event: "server_started",
-          distinctId: "uuid",
-        });
-
-        client.shutdownAsync();
-        console.info(`Server listening on ${address}`);
-      }
-    );
+    const client = track();
+    client.capture({
+      event: "server_started",
+      distinctId: "uuid",
+    });
+    client.shutdownAsync();
+    console.info(`Server listening on ${address}`);
 
     const BASE_IMAP_INTERVAL = 60000;
     const MAX_IMAP_INTERVAL = 300000;
