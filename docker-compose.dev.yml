@@ -34,6 +34,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@thymely_postgres:5432/${POSTGRES_DB:-thymely}
       SECRET: ${SECRET}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      HOSTNAME: "0.0.0.0"
     networks:
       - frontend
       - backend
