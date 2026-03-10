@@ -3,7 +3,7 @@ export function parsePagination(query: { page?: string; limit?: string }) {
   const rawPage = Number(query.page);
   const limit = Math.min(
     Math.max(Number.isFinite(rawLimit) && query.limit !== "" ? rawLimit : 50, 1),
-    200
+    100
   );
   const page = Math.max(
     Number.isFinite(rawPage) && query.page !== "" ? rawPage : 1,

@@ -389,10 +389,9 @@ export function authRoutes(fastify: FastifyInstance) {
       if (!isPasswordValid) {
         request.log.warn({ security: true, event: "login_failed", email, ip: request.ip }, "Failed login attempt");
         await auditLog(request, { action: "auth.login_failed", metadata: { email } });
-        reply.code(401).send({
+        return reply.code(401).send({
           message: "Invalid email or password",
         });
-        throw new Error("Password is not valid");
       }
 
       const token = buildSessionToken(user!.id);

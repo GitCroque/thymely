@@ -64,8 +64,6 @@ export default function GlobalShortcut() {
       body: JSON.stringify({ query }),
     }).then((res) => res.json());
 
-    console.log(res);
-
     if (res.success) {
       setTickets(res.tickets);
     }

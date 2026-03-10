@@ -72,7 +72,6 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
 
   function handleKeyPress(event: KeyboardEvent) {
     const pathname = location.pathname;
-    console.log(pathname);
     if (
       document.activeElement!.tagName !== "INPUT" &&
       document.activeElement!.tagName !== "TEXTAREA" &&

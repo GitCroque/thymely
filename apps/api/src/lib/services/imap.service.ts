@@ -159,6 +159,7 @@ export class ImapService {
 
         return {
           user: queue.username,
+          password: "",
           host: queue.hostname,
           port: 993,
           tls: true,
@@ -172,7 +173,7 @@ export class ImapService {
       case "other":
         return {
           user: queue.username,
-          password: decryptedPassword || undefined,
+          password: decryptedPassword || "",
           host: queue.hostname,
           port: queue.tls ? 993 : 143,
           tls: queue.tls || false,
@@ -311,7 +312,6 @@ export class ImapService {
           throw new Error("IMAP configuration is missing a password");
         }
 
-        // @ts-ignore
         const imap = new Imap(imapConfig);
 
         await new Promise((resolve, reject) => {

@@ -98,6 +98,8 @@ export function clientRoutes(fastify: FastifyInstance) {
         },
       });
 
+      await auditLog(request, { action: "client.update", metadata: { clientId: id } });
+
       reply.send({
         success: true,
       });

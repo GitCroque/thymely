@@ -25,7 +25,6 @@ export default function EmailTemplates() {
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          console.log(data);
           setTemplate(data.template[0].html);
         }
       });

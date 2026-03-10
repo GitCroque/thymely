@@ -126,10 +126,9 @@ export function emailQueueRoutes(fastify: FastifyInstance) {
       const decryptedClientSecret = await decryptSecret(mailbox?.clientSecret);
 
       const google = new OAuth2Client(
-        //@ts-expect-error
-        mailbox?.clientId,
-        decryptedClientSecret,
-        mailbox?.redirectUri
+        mailbox?.clientId ?? undefined,
+        decryptedClientSecret ?? undefined,
+        mailbox?.redirectUri ?? undefined
       );
 
       logger.debug("Google OAuth client initialized");

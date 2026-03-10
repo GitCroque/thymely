@@ -71,7 +71,7 @@ export function objectStoreRoutes(fastify: FastifyInstance) {
         fs.mkdirSync(UPLOADS_DIR, { recursive: true });
       }
 
-      const filename = `${Date.now()}-${data.filename}`;
+      const filename = `${Date.now()}-${path.basename(data.filename)}`;
       const filepath = path.join(UPLOADS_DIR, filename);
       await pipeline(data.file, fs.createWriteStream(filepath));
 

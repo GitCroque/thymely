@@ -23,7 +23,7 @@ export type Ticket = {
   status: string;
   createdAt: string;
   team?: Team;
-  assignedTo?: User;
+  assignedTo?: User | null;
   isComplete: boolean;
 };
 

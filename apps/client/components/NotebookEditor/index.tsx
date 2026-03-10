@@ -1,4 +1,3 @@
-//@ts-nocheck
 import { toast } from "@/shadcn/hooks/use-toast";
 import {
   DropdownMenu,
@@ -19,7 +18,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useDebounce } from "use-debounce";
 import { useUser } from "../../store/session";
 
-function isHTML(str) {
+function isHTML(str: string) {
   const doc = new DOMParser().parseFromString(str, "text/html");
   return Array.from(doc.body.childNodes).some(
     (node) => node.nodeType === Node.ELEMENT_NODE
@@ -43,12 +42,13 @@ export default function NotebookEditor() {
     return BlockNoteEditor.create({ initialContent });
   }, [initialContent]);
 
-  const [value, setValue] = useState<Record<string, string>[]>();
-  const [note, setNote] = useState();
-  const [title, setTitle] = useState();
+  const [value, setValue] = useState<PartialBlock[]>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [note, setNote] = useState<any>();
+  const [title, setTitle] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState();
+  const [lastSaved, setLastSaved] = useState<number | undefined>();
 
   const [debouncedValue] = useDebounce(value, 500);
   const [debounceTitle] = useDebounce(title, 500);
@@ -90,7 +90,6 @@ export default function NotebookEditor() {
     const data = await res.json();
     setSaving(false);
     const date = new Date();
-    // @ts-ignore
     setLastSaved(new Date(date).getTime());
     if(data.status) {
       toast({
@@ -101,7 +100,7 @@ export default function NotebookEditor() {
     }
   }
 
-  async function deleteNotebook(_id) {
+  async function deleteNotebook(_id?: string) {
     if (window.confirm("Do you really want to delete this notebook?")) {
       await fetch(`/api/v1/notebooks/note/${router.query.id}`, {
         method: "DELETE",
@@ -134,7 +133,7 @@ export default function NotebookEditor() {
     }
   }, [debouncedValue, debounceTitle]);
 
-  async function loadFromStorage(val) {
+  async function loadFromStorage(val: string) {
     const storageString = val;
 
     if (isHTML(storageString)) {
@@ -147,9 +146,15 @@ export default function NotebookEditor() {
   }
 
   async function convertHTML() {
-    //@ts-expect-error
-    const blocks = await editor.tryParseHTMLToBlocks(note?.note);
-    editor.replaceBlocks(editor.document, blocks);
+    if (!editor) return;
+    try {
+      const blocks = (await editor.tryParseHTMLToBlocks(
+        note?.note
+      )) as PartialBlock[];
+      editor.replaceBlocks(editor.document, blocks);
+    } catch (error) {
+      console.error("Failed to convert HTML to blocks:", error);
+    }
   }
 
   useEffect(() => {
@@ -162,7 +167,7 @@ export default function NotebookEditor() {
     return "Loading content...";
   }
 
-  const handleInputChange = (editor) => {
+  const handleInputChange = () => {
     setValue(editor.document);
   };
 

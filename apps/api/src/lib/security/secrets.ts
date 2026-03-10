@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import * as crypto from "crypto";
 import { prisma } from "../../prisma";
 
 const ENCRYPTION_PREFIX = "enc:v1";

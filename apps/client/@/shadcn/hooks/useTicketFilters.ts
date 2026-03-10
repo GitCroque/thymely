@@ -1,25 +1,25 @@
 import { Ticket } from '@/shadcn/types/tickets';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { safeJsonParse } from '../../../lib/safeJsonParse';
 
-export function useTicketFilters(tickets: Ticket[] = []) {
+export function useTicketFilters(tickets: Ticket[] = [], keyPrefix: string = "all") {
   const [selectedPriorities, setSelectedPriorities] = useState<string[]>(() => {
-    return safeJsonParse(localStorage.getItem("all_selectedPriorities"), []);
+    return safeJsonParse(localStorage.getItem(`${keyPrefix}_selectedPriorities`), []);
   });
 
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>(() => {
-    return safeJsonParse(localStorage.getItem("all_selectedStatuses"), []);
+    return safeJsonParse(localStorage.getItem(`${keyPrefix}_selectedStatuses`), []);
   });
 
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>(() => {
-    return safeJsonParse(localStorage.getItem("all_selectedAssignees"), []);
+    return safeJsonParse(localStorage.getItem(`${keyPrefix}_selectedAssignees`), []);
   });
 
   useEffect(() => {
-    localStorage.setItem("all_selectedPriorities", JSON.stringify(selectedPriorities));
-    localStorage.setItem("all_selectedStatuses", JSON.stringify(selectedStatuses));
-    localStorage.setItem("all_selectedAssignees", JSON.stringify(selectedAssignees));
-  }, [selectedPriorities, selectedStatuses, selectedAssignees]);
+    localStorage.setItem(`${keyPrefix}_selectedPriorities`, JSON.stringify(selectedPriorities));
+    localStorage.setItem(`${keyPrefix}_selectedStatuses`, JSON.stringify(selectedStatuses));
+    localStorage.setItem(`${keyPrefix}_selectedAssignees`, JSON.stringify(selectedAssignees));
+  }, [selectedPriorities, selectedStatuses, selectedAssignees, keyPrefix]);
 
   const handlePriorityToggle = (priority: string) => {
     setSelectedPriorities((prev) =>
@@ -51,19 +51,22 @@ export function useTicketFilters(tickets: Ticket[] = []) {
     setSelectedAssignees([]);
   };
 
-  const filteredTickets = tickets.filter((ticket) => {
-    const priorityMatch =
-      selectedPriorities.length === 0 ||
-      selectedPriorities.includes(ticket.priority);
-    const statusMatch =
-      selectedStatuses.length === 0 ||
-      selectedStatuses.includes(ticket.isComplete ? "closed" : "open");
-    const assigneeMatch =
-      selectedAssignees.length === 0 ||
-      selectedAssignees.includes(ticket.assignedTo?.name || "Unassigned");
+  const filteredTickets = useMemo(() =>
+    tickets.filter((ticket) => {
+      const priorityMatch =
+        selectedPriorities.length === 0 ||
+        selectedPriorities.includes(ticket.priority);
+      const statusMatch =
+        selectedStatuses.length === 0 ||
+        selectedStatuses.includes(ticket.isComplete ? "closed" : "open");
+      const assigneeMatch =
+        selectedAssignees.length === 0 ||
+        selectedAssignees.includes(ticket.assignedTo?.name || "Unassigned");
 
-    return priorityMatch && statusMatch && assigneeMatch;
-  });
+      return priorityMatch && statusMatch && assigneeMatch;
+    }),
+    [tickets, selectedPriorities, selectedStatuses, selectedAssignees]
+  );
 
   return {
     selectedPriorities,

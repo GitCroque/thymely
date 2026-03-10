@@ -150,8 +150,6 @@ export function IconCombo({
   const [selectedStatus, setSelectedStatus] = React.useState<ComboOption | null>(null);
   const defaultIcon = value.find((k: ComboOption) => k.value === defaultName);
 
-  console.log(disabled);
-
   return (
     <div className="flex items-center space-x-4">
       <Popover open={open} onOpenChange={setOpen}>

@@ -28,6 +28,7 @@ jobs:
       - name: Run tests
         run: cd apps/api && yarn test
       - run: cd apps/api && npx tsc --noEmit
+      - run: cd apps/client && npx tsc --noEmit
 
   build:
     needs: validate

@@ -77,7 +77,6 @@ export default function Home() {
     })
       .then((res) => res.json())
       .then((res) => {
-        console.log(res);
         setTickets(res.tickets);
       });
   }

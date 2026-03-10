@@ -18,6 +18,8 @@ import { registerRoutes } from "./routes";
 
 const execAsync = util.promisify(exec);
 
+// Log file is intentionally written to disk (not stdout) because the admin UI reads it directly.
+// In Docker deployments, container restart or volume mount handles log rotation.
 const logFilePath = "./logs.log";
 const logStream = fs.createWriteStream(logFilePath, { flags: "a" });
 

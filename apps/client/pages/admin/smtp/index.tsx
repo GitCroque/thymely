@@ -54,7 +54,6 @@ export default function Notifications() {
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          console.log(data.templates);
           setTemplates(data.templates);
         }
       });

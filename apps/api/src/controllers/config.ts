@@ -11,7 +11,7 @@ import { auditLog } from "../lib/audit";
 import { track } from "../lib/hog";
 import logger from "../lib/logger";
 import { createTransportProvider } from "../lib/nodemailer/transport";
-import { requirePermission } from "../lib/roles";
+import { invalidateConfigCache, requirePermission } from "../lib/roles";
 import { decryptSecret, encryptSecret } from "../lib/security/secrets";
 import { checkSession } from "../lib/session";
 import { prisma } from "../prisma";
@@ -26,15 +26,27 @@ async function tracking(event: string, properties: Record<string, string>) {
   });
 }
 
+async function ensureConfig(reply: FastifyReply) {
+  const config = await prisma.config.findFirst();
+  if (!config) {
+    reply.code(500).send({
+      success: false,
+      message: "Configuration not found. Please run the setup wizard.",
+    });
+    return null;
+  }
+  return config;
+}
+
 export function configRoutes(fastify: FastifyInstance) {
   // Check auth method
   fastify.get(
     "/api/v1/config/authentication/check",
 
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const config = await prisma.config.findFirst();
+      const config = await ensureConfig(reply);
+      if (!config) return;
 
-      //@ts-expect-error
       const { sso_active, sso_provider } = config;
 
       if (sso_active) {
@@ -69,15 +81,17 @@ export function configRoutes(fastify: FastifyInstance) {
         request.body;
       const encryptedClientSecret = await encryptSecret(clientSecret);
 
-      const conf = await prisma.config.findFirst();
+      const conf = await ensureConfig(reply);
+      if (!conf) return;
 
       await prisma.config.update({
-        where: { id: conf!.id },
+        where: { id: conf.id },
         data: {
           sso_active: true,
           sso_provider: "oidc",
         },
       });
+      invalidateConfigCache();
 
       const existingProvider = await prisma.openIdConfig.findFirst();
 
@@ -139,16 +153,18 @@ export function configRoutes(fastify: FastifyInstance) {
       } = request.body;
       const encryptedClientSecret = (await encryptSecret(clientSecret)) || "";
 
-      const conf = await prisma.config.findFirst();
+      const conf = await ensureConfig(reply);
+      if (!conf) return;
 
       // Update config to true
       await prisma.config.update({
-        where: { id: conf!.id },
+        where: { id: conf.id },
         data: {
           sso_active: true,
           sso_provider: "oauth",
         },
       });
+      invalidateConfigCache();
 
       // Check if the provider exists
       const existingProvider = await prisma.oAuthProvider.findFirst();
@@ -193,16 +209,18 @@ export function configRoutes(fastify: FastifyInstance) {
     "/api/v1/config/authentication",
     { preHandler: requirePermission(["settings::manage"]) },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const conf = await prisma.config.findFirst();
+      const conf = await ensureConfig(reply);
+      if (!conf) return;
 
       // Update config to false
       await prisma.config.update({
-        where: { id: conf!.id },
+        where: { id: conf.id },
         data: {
           sso_active: false,
           sso_provider: "",
         },
       });
+      invalidateConfigCache();
 
       // Delete the OAuth provider
       await prisma.oAuthProvider.deleteMany({});
@@ -337,10 +355,9 @@ export function configRoutes(fastify: FastifyInstance) {
         const decryptedSecret = await decryptSecret(email?.clientSecret);
 
         const google = new OAuth2Client(
-          //@ts-expect-error
-          email?.clientId,
-          decryptedSecret,
-          email?.redirectUri
+          email?.clientId ?? undefined,
+          decryptedSecret ?? undefined,
+          email?.redirectUri ?? undefined
         );
 
         const authorizeUrl = google.generateAuthUrl({
@@ -378,10 +395,9 @@ export function configRoutes(fastify: FastifyInstance) {
       const decryptedClientSecret = await decryptSecret(email?.clientSecret);
 
       const google = new OAuth2Client(
-        //@ts-expect-error
-        email?.clientId,
-        decryptedClientSecret,
-        email?.redirectUri
+        email?.clientId ?? undefined,
+        decryptedClientSecret ?? undefined,
+        email?.redirectUri ?? undefined
       );
 
       const r = await google.getToken(code);
@@ -439,14 +455,16 @@ export function configRoutes(fastify: FastifyInstance) {
         });
       }
 
-      const config = await prisma.config.findFirst();
+      const config = await ensureConfig(reply);
+      if (!config) return;
 
       await prisma.config.update({
-        where: { id: config!.id },
+        where: { id: config.id },
         data: {
           roles_active: isActive,
         },
       });
+      invalidateConfigCache();
 
       reply.send({
         success: true,

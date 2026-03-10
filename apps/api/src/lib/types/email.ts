@@ -8,7 +8,7 @@ export interface EmailConfig {
     servername: string;
   };
   xoauth2?: string;
-  password?: string;
+  password: string;
 }
 
 export type EmailQueue = {

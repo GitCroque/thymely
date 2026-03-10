@@ -7,6 +7,7 @@ on:
     branches: [main]
 
 env:
+  # CI-only test values — not used in production
   DATABASE_URL: postgresql://thymely:thymely@localhost:5432/thymely
   SECRET: dGhpcyBpcyBhIHRlc3Qgc2VjcmV0IGtleSBmb3IgQ0k=
   THYMELY_BOOTSTRAP_PASSWORD: admin

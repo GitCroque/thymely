@@ -10,7 +10,7 @@ const nextTranslate = require("next-translate-plugin");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: false,
+  reactStrictMode: true,
   output: "standalone",
 
   async rewrites() {
@@ -37,6 +37,7 @@ const nextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
+              // unsafe-eval required by Monaco Editor (code editor) — cannot be removed without breaking Monaco
               "script-src 'self' 'unsafe-eval'",
               // unsafe-inline required for Tailwind CSS runtime styles and Radix UI
               "style-src 'self' 'unsafe-inline'",

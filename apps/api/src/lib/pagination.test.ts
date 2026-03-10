@@ -12,10 +12,10 @@ describe("parsePagination", () => {
     expect(result).toEqual({ skip: 40, take: 20, page: 3, limit: 20 });
   });
 
-  it("clamps limit to max 200", () => {
+  it("clamps limit to max 100", () => {
     const result = parsePagination({ limit: "999" });
-    expect(result.take).toBe(200);
-    expect(result.limit).toBe(200);
+    expect(result.take).toBe(100);
+    expect(result.limit).toBe(100);
   });
 
   it("clamps limit to min 1", () => {

@@ -114,6 +114,60 @@ test.describe("Tickets", () => {
     expect(statusResult.success).toBe(true);
   });
 
+  test("should assign a ticket to a user via API", async ({ page }) => {
+    // Create a ticket
+    await createTicketViaAPI(page, { title: "Ticket for assignment test" });
+
+    // Get all tickets and find ours
+    const tickets = await page.evaluate(async () => {
+      const res = await fetch("/api/v1/tickets/all", { credentials: "include" });
+      return res.json();
+    });
+
+    const ticket = tickets.tickets?.find((t: any) => t.title === "Ticket for assignment test");
+    if (!ticket) {
+      test.skip();
+      return;
+    }
+
+    // Get the current user's ID from profile
+    const profile = await page.evaluate(async () => {
+      const res = await fetch("/api/v1/auth/profile", { credentials: "include" });
+      return res.json();
+    });
+
+    const userId = profile.user?.id;
+    if (!userId) {
+      test.skip();
+      return;
+    }
+
+    // Assign the ticket to the current user
+    const transferResult = await page.evaluate(
+      async ({ ticketId, userId }: { ticketId: string; userId: string }) => {
+        const res = await fetch("/api/v1/ticket/transfer", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: ticketId, user: userId }),
+        });
+        return res.json();
+      },
+      { ticketId: ticket.id, userId }
+    );
+
+    expect(transferResult.success).toBe(true);
+
+    // Verify the assignment by fetching the ticket
+    const ticketDetail = await page.evaluate(async (ticketId: string) => {
+      const res = await fetch(`/api/v1/ticket/${ticketId}`, { credentials: "include" });
+      return res.json();
+    }, ticket.id);
+
+    expect(ticketDetail.ticket).toBeDefined();
+    expect(ticketDetail.ticket.userId).toBe(userId);
+  });
+
   test("should enforce pagination on ticket listing", async ({ page }) => {
     const result = await page.evaluate(async () => {
       const res = await fetch("/api/v1/tickets/all?page=1&limit=5", { credentials: "include" });

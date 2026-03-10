@@ -6,7 +6,6 @@ import sanitizeHtml from "sanitize-html";
 
 import { auditLog } from "../lib/audit";
 
-//@ts-ignore
 import { track } from "../lib/hog";
 import { sendAssignedEmail } from "../lib/nodemailer/ticket/assigned";
 import { sendComment } from "../lib/nodemailer/ticket/comment";
@@ -722,10 +721,10 @@ export function ticketRoutes(fastify: FastifyInstance) {
         },
       });
 
-      //@ts-expect-error
-      const { email, title } = ticket;
+      const email = ticket?.email;
+      const title = ticket?.title ?? "";
       if (public_comment && email) {
-        sendComment(sanitizedText, title, ticket!.id, email!);
+        sendComment(sanitizedText, title, ticket!.id, email);
       }
 
       await commentNotification(ticket, user);
