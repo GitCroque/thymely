@@ -84,7 +84,7 @@ export async function getOAuthProvider() {
   return resolvedProvider;
 }
 
-export async function getSAMLProvider(providerName: any) {
+export async function getSAMLProvider(providerName: string) {
   const provider = await prisma.sAMLProvider.findUnique({
     where: { name: providerName },
   });

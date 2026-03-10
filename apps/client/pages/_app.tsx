@@ -33,7 +33,7 @@ const queryClient = new QueryClient({
   },
 });
 
-function Auth({ children }: any) {
+function Auth({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
 
   if (user) {
@@ -45,7 +45,7 @@ function Auth({ children }: any) {
   );
 }
 
-function MyApp({ Component, pageProps }: any) {
+function MyApp({ Component, pageProps }: { Component: React.ComponentType<Record<string, never>>; pageProps: Record<string, never> }) {
   const router = useRouter();
 
   if (router.pathname.startsWith("/auth")) {

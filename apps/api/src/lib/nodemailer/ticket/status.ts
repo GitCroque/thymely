@@ -4,7 +4,14 @@ import logger from "../../logger";
 import { sanitizeEmailAddress, sanitizeEmailHeader, sanitizeTemplateValue } from "../sanitize";
 import { createTransportProvider } from "../transport";
 
-export async function sendTicketStatus(ticket: any) {
+interface TicketStatusEmail {
+  title: string;
+  Number: number;
+  email: string;
+  isComplete: boolean;
+}
+
+export async function sendTicketStatus(ticket: TicketStatusEmail) {
   const email = await prisma.email.findFirst();
 
   if (email) {
@@ -35,9 +42,9 @@ export async function sendTicketStatus(ticket: any) {
         text: `Hello there, Issue #${ticket.Number}, now has a status of ${statusLabel}`,
         html: htmlToSend,
       })
-      .then((info: any) => {
+      .then((info: { messageId: string }) => {
         logger.info({ messageId: info.messageId }, "Status email sent");
       })
-      .catch((err: any) => logger.error(err, "Failed to send status email"));
+      .catch((err: Error) => logger.error(err, "Failed to send status email"));
   }
 }

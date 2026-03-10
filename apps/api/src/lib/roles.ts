@@ -13,7 +13,7 @@ export class InsufficientPermissionsError extends Error {
   }
 }
 
-let configCache: { value: any; expiresAt: number } | null = null;
+let configCache: { value: { roles_active: boolean } | null; expiresAt: number } | null = null;
 const CONFIG_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 async function getCachedConfig() {
@@ -85,6 +85,7 @@ export function requirePermission(
   requiredPermissions: Permission | Permission[],
   requireAll: boolean = true
 ) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- preHandler must accept any route generic
   return async (req: any, res: any) => {
     try {
       // Always verify authentication first

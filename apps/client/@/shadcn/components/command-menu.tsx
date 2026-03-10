@@ -266,14 +266,14 @@ export function CommandMenu() {
                 {/* Assign Actions */}
                 {usersData && (
                   <CommandGroup heading="Assign To">
-                    {usersData.map((user: any) => (
+                    {usersData.map((user: { id: string; name: string }) => (
                       <CommandItem
                         key={user.id}
                         onSelect={() => {
                           if (router.query.id) {
                             updateTicketAssignee(
                               router.query.id as string,
-                              user
+                              user.id
                             );
                             setOpen(false);
                           }

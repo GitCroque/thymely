@@ -17,9 +17,9 @@ import {
 import useTranslation from "next-translate/useTranslation";
 
 interface TicketHeaderProps {
-  ticket: any;
-  title: any;
-  setTitle: (value: any) => void;
+  ticket: { id: string; Number: number; title: string; type: string; isComplete: boolean; hidden: boolean; locked: boolean; client?: { name: string } | null };
+  title: string | undefined;
+  setTitle: (value: string) => void;
   isAdmin: boolean;
   onHide: (hidden: boolean) => void;
   onLock: (locked: boolean) => void;

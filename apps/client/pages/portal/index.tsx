@@ -16,7 +16,7 @@ export default function Home() {
   const token = getCookie("session");
 
   const [loading, setLoading] = useState(true);
-  const [tickets, setTickets] = useState<any>();
+  const [tickets, setTickets] = useState<{ id: string; title: string; email: string; priority: string; createdAt: string; isComplete: boolean; assignedTo?: { name: string } | null }[]>();
 
   async function fetchTickets() {
     await fetch(`/api/v1/tickets/user/open`, {
@@ -116,7 +116,7 @@ export default function Home() {
                       </thead>
                       <tbody className="divide-y divide-gray-200">
                         {tickets !== undefined &&
-                          tickets.slice(0, 10).map((item: any) => (
+                          tickets.slice(0, 10).map((item) => (
                             <tr
                               key={item.id}
                               className="hover:bg-gray-300 dark:hover:bg-green-600 hover:cursor-pointer"

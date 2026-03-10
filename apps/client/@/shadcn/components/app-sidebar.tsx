@@ -106,7 +106,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ],
   };
 
-  function handleKeyPress(event: any) {
+  function handleKeyPress(event: KeyboardEvent) {
     const pathname = location.pathname;
 
     // Check for Ctrl or Meta key to bypass the shortcut handler

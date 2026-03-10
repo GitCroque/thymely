@@ -70,7 +70,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
     }
   }
 
-  function handleKeyPress(event: any) {
+  function handleKeyPress(event: KeyboardEvent) {
     const pathname = location.pathname;
     console.log(pathname);
     if (
@@ -180,7 +180,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                       <ul role="list" className="flex flex-1 flex-col gap-y-7">
                         <li>
                           <ul role="list" className="-mx-2 space-y-1">
-                            {navigation.map((item: any) => (
+                            {navigation.map((item) => (
                               <li key={item.name}>
                                 <Link
                                   href={item.href}
@@ -246,7 +246,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
               <ul role="list" className="flex flex-1 flex-col gap-y-7">
                 <li>
                   <ul role="list" className="-mx-2 space-y-1">
-                    {navigation.map((item: any) => (
+                    {navigation.map((item) => (
                       <li key={item.name}>
                         <Link
                           href={item.href}

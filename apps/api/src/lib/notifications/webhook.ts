@@ -35,7 +35,15 @@ function buildSignatureHeaders(secret: string | null | undefined, body: unknown)
   };
 }
 
-export async function sendWebhookNotification(webhook: any, message: any) {
+interface WebhookConfig {
+  active: boolean;
+  url: string;
+  secret?: string | null;
+  [key: string]: unknown;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Prisma ticket with includes has many fields
+export async function sendWebhookNotification(webhook: WebhookConfig, message: any) {
   if (!webhook.active) return;
 
   const url = webhook.url;
@@ -108,11 +116,12 @@ export async function sendWebhookNotification(webhook: any, message: any) {
           ...buildSignatureHeaders(secret, discordMessage),
         },
       });
-    } catch (error: any) {
-      if (error.response) {
-        logger.error({ status: error.response?.status }, "Discord webhook API error");
+    } catch (error) {
+      const axiosError = error as { response?: { status: number }; message: string };
+      if (axiosError.response) {
+        logger.error({ status: axiosError.response.status }, "Discord webhook API error");
       } else {
-        logger.error({ error: error.message }, "Discord webhook send error");
+        logger.error({ error: axiosError.message }, "Discord webhook send error");
       }
       throw error;
     }

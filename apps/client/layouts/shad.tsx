@@ -14,7 +14,7 @@ import {
 import { Bell } from "lucide-react";
 import { useUser } from "../store/session";
 
-export default function ShadLayout({ children }: any) {
+export default function ShadLayout({ children }: { children: React.ReactNode }) {
   const location = useRouter();
 
   const { loading, user } = useUser();

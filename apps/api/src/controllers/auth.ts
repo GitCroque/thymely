@@ -53,7 +53,7 @@ function generateRandomPassword(length: number): string {
     .join("");
 }
 
-async function tracking(event: string, properties: any) {
+async function tracking(event: string, properties: Record<string, string>) {
   const client = track();
 
   client.capture({
@@ -572,7 +572,7 @@ export function authRoutes(fastify: FastifyInstance) {
           return reply.status(400).send("Invalid or expired session");
         }
 
-        const sessionData: any = cache.get(state);
+        const sessionData = cache.get(state) as { codeVerifier?: string } | undefined;
 
         if (!sessionData) {
           return reply.status(400).send("Invalid or expired session");
@@ -653,12 +653,12 @@ export function authRoutes(fastify: FastifyInstance) {
           onboarding: user.firstLogin,
           success: true,
         });
-      } catch (error: any) {
+      } catch (error) {
         request.log.error(error, "Authentication error");
         reply.status(403).send({
           success: false,
           error: "OIDC callback error",
-          details: error.message,
+          details: (error as Error).message,
         });
       }
     }
@@ -767,12 +767,12 @@ export function authRoutes(fastify: FastifyInstance) {
           onboarding: user.firstLogin,
           success: true,
         });
-      } catch (error: any) {
+      } catch (error) {
         request.log.error(error, "Authentication error");
         reply.status(403).send({
           success: false,
           error: "OAuth callback error",
-          details: error.message,
+          details: (error as Error).message,
         });
       }
     }

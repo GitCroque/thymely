@@ -9,10 +9,34 @@ import { Switch } from "@/shadcn/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shadcn/ui/avatar";
 import { PanelTopClose, Trash2 } from "lucide-react";
 
+interface TicketComment {
+  id: string;
+  text: string;
+  createdAt: string;
+  public: boolean;
+  userId: string;
+  replyEmail?: string;
+  user?: { name: string; image?: string };
+}
+
+interface TicketData {
+  following?: string[];
+  fromImap?: boolean;
+  email?: string;
+  name?: string;
+  createdAt: string;
+  createdBy?: { name: string };
+  client?: { name: string };
+  comments: TicketComment[];
+  isComplete: boolean;
+  locked: boolean;
+  assignedTo?: { id: string; name: string } | null;
+}
+
 interface TicketCommentsProps {
-  ticket: any;
-  user: any;
-  users: any;
+  ticket: TicketData;
+  user: { id: string; isAdmin: boolean };
+  users: { id: string; name: string }[] | undefined;
   comment: string | undefined;
   setComment: (value: string) => void;
   publicComment: boolean;
@@ -88,15 +112,15 @@ export default function TicketComments({
                       <div className="flex flex-col space-y-1">
                         <span className="text-xs">Followers</span>
                         {ticket.following.map(
-                          (follower: any) => {
-                            const userMatch = users.find(
+                          (follower: string) => {
+                            const userMatch = users?.find(
                               (u: { id: string }) =>
                                 u.id === follower &&
                                 u.id !==
-                                  ticket.assignedTo.id
+                                  ticket.assignedTo?.id
                             );
                             return userMatch ? (
-                              <div key={follower.id}>
+                              <div key={follower}>
                                 <span>{userMatch.name}</span>
                               </div>
                             ) : null;
@@ -104,8 +128,8 @@ export default function TicketComments({
                         )}
 
                         {ticket.following.filter(
-                          (follower: any) =>
-                            follower !== ticket.assignedTo.id
+                          (follower: string) =>
+                            follower !== ticket.assignedTo?.id
                         ).length === 0 && (
                           <span className="text-xs">
                             This issue has no followers
@@ -186,7 +210,7 @@ export default function TicketComments({
         <div className="">
           <ul role="list" className="space-y-2">
             {ticket.comments.length > 0 &&
-              ticket.comments.map((comment: any) => (
+              ticket.comments.map((comment) => (
                 <li
                   key={comment.id}
                   className="group flex flex-col space-y-1 text-sm bg-secondary/50 dark:bg-secondary/50 px-4 py-2 rounded-lg relative"
@@ -201,7 +225,7 @@ export default function TicketComments({
                       <AvatarFallback>
                         {comment.user
                           ? comment.user.name.slice(0, 1)
-                          : comment.replyEmail.slice(0, 1)}
+                          : comment.replyEmail?.slice(0, 1)}
                       </AvatarFallback>
                     </Avatar>
                     <span className="font-bold">

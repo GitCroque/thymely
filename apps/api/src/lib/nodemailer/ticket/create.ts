@@ -4,7 +4,13 @@ import logger from "../../logger";
 import { sanitizeEmailAddress, sanitizeEmailHeader, sanitizeTemplateValue } from "../sanitize";
 import { createTransportProvider } from "../transport";
 
-export async function sendTicketCreate(ticket: any) {
+interface TicketEmail {
+  id: string;
+  email: string;
+  createdAt: Date;
+}
+
+export async function sendTicketCreate(ticket: TicketEmail) {
   try {
     const email = await prisma.email.findFirst();
 
@@ -34,10 +40,10 @@ export async function sendTicketCreate(ticket: any) {
           text: `Hello there, Issue #${ticket.id}, which you reported on ${ticket.createdAt}, has now been created and logged`,
           html: htmlToSend,
         })
-        .then((info: any) => {
+        .then((info: { messageId: string }) => {
           logger.info({ messageId: info.messageId }, "Ticket creation email sent");
         })
-        .catch((err: any) => logger.error(err, "Failed to send ticket creation email"));
+        .catch((err: Error) => logger.error(err, "Failed to send ticket creation email"));
     }
   } catch (error) {
     logger.error(error, "Error in sendTicketCreate");

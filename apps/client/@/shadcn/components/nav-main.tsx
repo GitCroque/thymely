@@ -38,9 +38,9 @@ export function NavMain({
     const loadFlags = () => {
       const savedFlags = localStorage.getItem("featureFlags");
       if (savedFlags) {
-        const flags = safeJsonParse<any[]>(savedFlags, []);
+        const flags = safeJsonParse<{ name: string; enabled: boolean }[]>(savedFlags, []);
         const hideShortcuts = flags.find(
-          (f: any) => f.name === "Hide Keyboard Shortcuts"
+          (f) => f.name === "Hide Keyboard Shortcuts"
         )?.enabled;
         setHideKeyboardShortcuts(hideShortcuts || false);
       }

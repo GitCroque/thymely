@@ -37,7 +37,7 @@ export function UserCombo({
   placeholder,
 }: UserComboProps) {
   const [open, setOpen] = React.useState(false);
-  const [selectedStatus, setSelectedStatus] = React.useState<any | null>(null);
+  const [selectedStatus, setSelectedStatus] = React.useState<ComboOption | null>(null);
 
   return (
     <div className="flex items-center space-x-4">
@@ -113,9 +113,9 @@ export function UserCombo({
                     key={val.value}
                     value={val.name}
                     onSelect={(selected: string) => {
-                      const user = value.find((k: ComboOption) => k.name === selected);
+                      const user = value.find((k: ComboOption) => k.name === selected) ?? null;
                       setSelectedStatus(user);
-                      update(user ?? null);
+                      update(user);
                       setOpen(false);
                     }}
                   >
@@ -147,7 +147,7 @@ export function IconCombo({
   disabled,
 }: IconComboProps) {
   const [open, setOpen] = React.useState(false);
-  const [selectedStatus, setSelectedStatus] = React.useState<any | null>(null);
+  const [selectedStatus, setSelectedStatus] = React.useState<ComboOption | null>(null);
   const defaultIcon = value.find((k: ComboOption) => k.value === defaultName);
 
   console.log(disabled);
@@ -168,7 +168,7 @@ export function IconCombo({
                   <div className="flex-shrink-0">
                     <span className="inline-flex h-6 w-6 pl-2.5 items-center justify-center ">
                       <span className="text-xs font-medium leading-none text-foreground uppercase ">
-                        <selectedStatus.icon className="mr-2 h-4 w-4 shrink-0" />
+                        {selectedStatus.icon && <selectedStatus.icon className="mr-2 h-4 w-4 shrink-0" />}
                       </span>
                     </span>
                   </div>
@@ -207,9 +207,9 @@ export function IconCombo({
                     key={val.value}
                     value={val.name}
                     onSelect={(selected: string) => {
-                      const user = value.find((k: ComboOption) => k.name === selected);
+                      const user = value.find((k: ComboOption) => k.name === selected) ?? null;
                       setSelectedStatus(user);
-                      update(user ?? null);
+                      update(user);
                       setOpen(false);
                     }}
                   >
@@ -249,7 +249,7 @@ export function ClientCombo({
   disabled,
 }: ClientComboProps) {
   const [open, setOpen] = React.useState(false);
-  const [selectedStatus, setSelectedStatus] = React.useState<any | null>(null);
+  const [selectedStatus, setSelectedStatus] = React.useState<ComboOption | null>(null);
 
   return (
     <div className="flex items-center space-x-4">
@@ -321,9 +321,9 @@ export function ClientCombo({
                     key={val.value}
                     value={val.name}
                     onSelect={(selected: string) => {
-                      const user = value.find((k: ComboOption) => k.name === selected);
+                      const user = value.find((k: ComboOption) => k.name === selected) ?? null;
                       setSelectedStatus(user);
-                      update(user ?? null);
+                      update(user);
                       setOpen(false);
                     }}
                   >

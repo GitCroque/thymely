@@ -28,9 +28,9 @@ export function webhookRoutes(fastify: FastifyInstance) {
 
       try {
         await assertSafeWebhookUrl(url);
-      } catch (error: any) {
+      } catch (error) {
         return reply.status(400).send({
-          message: error?.message || "Invalid webhook URL",
+          message: (error as Error)?.message || "Invalid webhook URL",
           success: false,
         });
       }

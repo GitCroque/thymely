@@ -30,7 +30,7 @@ export function getBearerToken(request: FastifyRequest): string | null {
 }
 
 export function getSessionCookieToken(request: FastifyRequest): string | null {
-  const token = (request as any).cookies?.session;
+  const token = (request as FastifyRequest & { cookies?: Record<string, string> }).cookies?.session;
   return normalizeToken(token);
 }
 

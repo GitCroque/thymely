@@ -40,10 +40,10 @@ export async function sendComment(
         text: `Hello there, Issue #${title}, has had an update with a comment of ${comment}`,
         html: htmlToSend,
       })
-      .then((info: any) => {
+      .then((info: { messageId: string }) => {
         logger.info({ messageId: info.messageId }, "Comment email sent");
       })
-      .catch((err: any) => logger.error(err, "Failed to send comment email"));
+      .catch((err: Error) => logger.error(err, "Failed to send comment email"));
   } catch (error) {
     logger.error(error, "Error in sendComment");
   }

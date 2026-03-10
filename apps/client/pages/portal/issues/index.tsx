@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 
-async function getUserTickets(token: any) {
+async function getUserTickets(token: string | undefined) {
   const res = await fetch(`/api/v1/tickets/user/external`, {
     headers: {
       Authorization: `Bearer ${token}`,

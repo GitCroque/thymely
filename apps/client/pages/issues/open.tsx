@@ -33,7 +33,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useUser } from "../../store/session";
 import { safeJsonParse } from "../../lib/safeJsonParse";
 
-async function getUserTickets(token: any) {
+async function getUserTickets(token: string | undefined) {
   const res = await fetch(`/api/v1/tickets/user/open`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -88,7 +88,7 @@ export default function Tickets() {
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>(() => {
     return safeJsonParse(localStorage.getItem("open_selectedAssignees"), []);
   });
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -210,7 +210,7 @@ export default function Tickets() {
       });
   }
 
-  async function updateTicketStatus(_e: any, ticket: any) {
+  async function updateTicketStatus(_e: React.MouseEvent, ticket: { id: string; isComplete: boolean }) {
     await fetch(`/api/v1/ticket/status/update`, {
       method: "PUT",
       headers: {
@@ -231,7 +231,7 @@ export default function Tickets() {
   }
 
   // Add these new functions
-  async function updateTicketAssignee(ticketId: string, user: any) {
+  async function updateTicketAssignee(ticketId: string, user: { id: string; name: string } | undefined) {
     try {
       const response = await fetch(`/api/v1/ticket/transfer`, {
         method: "POST",
@@ -263,7 +263,7 @@ export default function Tickets() {
     }
   }
 
-  async function updateTicketPriority(ticket: any, priority: string) {
+  async function updateTicketPriority(ticket: { id: string; detail?: string; note?: string; title: string; status?: string }, priority: string) {
     try {
       const response = await fetch(`/api/v1/ticket/update`, {
         method: "PUT",

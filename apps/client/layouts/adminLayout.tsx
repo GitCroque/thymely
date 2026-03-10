@@ -25,7 +25,7 @@ import { AccountDropdown } from "../components/AccountDropdown";
 import ThemeSettings from "../components/ThemeSettings";
 import { useUser } from "../store/session";
 
-export default function AdminLayout({ children }: any) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation("thymely");
 
   const { loading, user } = useUser();
@@ -174,7 +174,7 @@ export default function AdminLayout({ children }: any) {
                         >
                           <li>
                             <ul role="list" className="-mx-2 space-y-1">
-                              {navigation.map((item: any) => (
+                              {navigation.map((item) => (
                                 <li key={item.name}>
                                   <Link
                                     href={item.href}
@@ -222,7 +222,7 @@ export default function AdminLayout({ children }: any) {
                 <ul role="list" className="flex flex-1 flex-col gap-y-7 w-full">
                   <li>
                     <ul role="list" className="-mx-2 space-y-1 w-full">
-                      {navigation.map((item: any) => (
+                      {navigation.map((item) => (
                         <li key={item.name}>
                           <Link
                             href={item.href}
@@ -241,9 +241,6 @@ export default function AdminLayout({ children }: any) {
                               {item.name}
                             </span>
                             <div className="flex w-full justify-end float-right">
-                              <span className="flex h-6 w-6 shrink-0 items-center bg-transparent border-none justify-center text-md font-medium">
-                                {item.initial}
-                              </span>
                             </div>
                           </Link>
                         </li>

@@ -8,6 +8,7 @@ import logger from "../../logger";
  * @param {object} commenter - The user object who commented.
  * @returns {Promise<void>}
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Prisma objects with many nullable fields
 export async function commentNotification(issue: any, commenter: any) {
   try {
     const text = `New comment on #${issue.Number} by ${commenter.name}`;

@@ -51,12 +51,13 @@ function sanitize(html: string): string {
   return sanitizeHtml(html, sanitizeOptions);
 }
 
-function getReplyText(email: any): string {
+function getReplyText(email: { text: string }): string {
   const parsed = new EmailReplyParser().read(email.text);
   const fragments = parsed.getFragments();
 
   let replyText = "";
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Fragment type from email-reply-parser is not exported
   fragments.forEach((fragment: any) => {
     logger.debug({ hasContent: !!fragment._content }, "Processing email fragment");
     if (!fragment._isHidden && !fragment._isSignature && !fragment._isQuoted) {
@@ -183,6 +184,7 @@ export class ImapService {
   }
 
   private static async processEmail(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mailparser ParsedMail type is complex and loosely typed
     parsed: any,
     isReply: boolean
   ): Promise<void> {

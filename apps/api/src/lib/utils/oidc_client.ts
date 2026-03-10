@@ -2,6 +2,7 @@
 
 import { Issuer } from "openid-client";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- accepts OidcConfigWithSecret from auth cache
 export async function getOidcClient(config: any) {
   const oidcIssuer = await Issuer.discover(config.issuer);
   const hasClientSecret = Boolean(config.clientSecret);

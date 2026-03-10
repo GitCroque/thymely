@@ -9,8 +9,8 @@ interface TicketListProps {
   onAssigneeChange: (ticketId: string, userId?: string) => void;
   onPriorityChange: (ticket: Ticket, priority: string) => void;
   onDelete?: (ticketId: string) => void;
-  users: any[];
-  currentUser: any;
+  users: { id: string; name: string }[];
+  currentUser: { id: string; name: string; isAdmin: boolean };
   uiSettings: UISettings;
 }
 

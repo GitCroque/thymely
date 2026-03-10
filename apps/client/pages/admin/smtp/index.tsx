@@ -26,8 +26,8 @@ export default function Notifications() {
   const [provider, setProvider] = useState("");
   const [step, setStep] = useState(0);
   const [, setConfig] = useState();
-  const [error, setError]: any = useState();
-  const [templates, setTemplates] = useState<any[]>([]);
+  const [error, setError] = useState<{ message?: string; code?: string; response?: string; responseCode?: string; command?: string }>();
+  const [templates, setTemplates] = useState<{ id: string; type: string; html: string; subject?: string }[]>([]);
 
   async function deleteEmailConfig() {
     setLoading(true);

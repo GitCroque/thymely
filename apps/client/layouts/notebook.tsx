@@ -29,7 +29,7 @@ export default function NoteBookLayout({ children }: { children: React.ReactNode
     fetchNotebooks(token)
   });
 
-  const [notebooks, setNotebooks] = useState<any>();
+  const [notebooks, setNotebooks] = useState<{ id: string; title: string }[]>();
 
   useEffect(() => {
     if (data) {

@@ -6,7 +6,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
 export default function Roles() {
-  const [roles, setRoles] = useState<any[]>([]);
+  const [roles, setRoles] = useState<{ id: string; name: string; permissions: string[]; users: { id: string }[] }[]>([]);
   const [isAllRolesActive, setIsAllRolesActive] = useState();
   const [loading, setLoading] = useState(true);
   const router = useRouter();

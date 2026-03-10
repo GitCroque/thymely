@@ -371,7 +371,7 @@ export function useTicketActions({ id, refetch, userId }: UseTicketActionsOption
     }
   }
 
-  async function updateTicketPriority(ticket: { id: string; detail: string; note: string; title: string; status: string }, priority: string) {
+  async function updateTicketPriority(ticket: { id: string; detail?: string; note?: string; title?: string; status?: string }, priority: string) {
     try {
       const response = await fetch(`/api/v1/ticket/update`, {
         method: "PUT",

@@ -1,19 +1,34 @@
 // UserContext.js
 import { useRouter } from "next/router";
-import posthog from "posthog-js";
-import { PostHogProvider } from "posthog-js/react";
 import { createContext, useContext, useEffect, useState } from "react";
 
 const UserContext = createContext();
 
-if (process.env.NEXT_PUBLIC_POSTHOG) {
-  posthog.init(process.env.NEXT_PUBLIC_POSTHOG);
-}
+const shouldUsePostHog =
+  process.env.NEXT_PUBLIC_ENVIRONMENT === "production" &&
+  process.env.NEXT_PUBLIC_TELEMETRY === "1" &&
+  !!process.env.NEXT_PUBLIC_POSTHOG;
 
 export const SessionProvider = ({ children }) => {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [posthogClient, setPosthogClient] = useState(null);
+  const [PHProvider, setPHProvider] = useState(null);
+
+  // Lazy-load PostHog only when telemetry is enabled (~50-70KB saved otherwise)
+  useEffect(() => {
+    if (!shouldUsePostHog) return;
+
+    Promise.all([import("posthog-js"), import("posthog-js/react")]).then(
+      ([posthogModule, reactModule]) => {
+        const posthog = posthogModule.default;
+        posthog.init(process.env.NEXT_PUBLIC_POSTHOG);
+        setPosthogClient(posthog);
+        setPHProvider(() => reactModule.PostHogProvider);
+      }
+    );
+  }, []);
 
   const fetchUserProfile = async () => {
     try {
@@ -47,16 +62,17 @@ export const SessionProvider = ({ children }) => {
     fetchUserProfile();
   }, [router]);
 
-  return process.env.NEXT_PUBLIC_ENVIRONMENT === "production" &&
-    process.env.NEXT_PUBLIC_TELEMETRY === "1" ? (
-    <UserContext.Provider value={{ user, setUser, loading, fetchUserProfile }}>
-      <PostHogProvider client={posthog}>{children}</PostHogProvider>
-    </UserContext.Provider>
-  ) : (
+  const provider = (
     <UserContext.Provider value={{ user, setUser, loading, fetchUserProfile }}>
       {children}
     </UserContext.Provider>
   );
+
+  if (shouldUsePostHog && posthogClient && PHProvider) {
+    return <PHProvider client={posthogClient}>{provider}</PHProvider>;
+  }
+
+  return provider;
 };
 
 export const useUser = () => {

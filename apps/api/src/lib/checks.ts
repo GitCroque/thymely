@@ -6,7 +6,7 @@ import { getSessionToken } from "./request-token";
 export const authenticateUser = (
   request: FastifyRequest,
   reply: FastifyReply,
-  done: any
+  done: () => void
 ) => {
   const token = getSessionToken(request);
 

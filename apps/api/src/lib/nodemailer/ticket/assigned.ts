@@ -4,7 +4,7 @@ import logger from "../../logger";
 import { sanitizeEmailAddress } from "../sanitize";
 import { createTransportProvider } from "../transport";
 
-export async function sendAssignedEmail(email: any) {
+export async function sendAssignedEmail(email: string) {
   try {
     const provider = await prisma.email.findFirst();
 
@@ -31,10 +31,10 @@ export async function sendAssignedEmail(email: any) {
           text: `Hello there, a ticket has been assigned to you`,
           html: htmlToSend,
         })
-        .then((info: any) => {
+        .then((info: { messageId: string }) => {
           logger.info({ messageId: info.messageId }, "Assignment email sent");
         })
-        .catch((err: any) => logger.error(err, "Failed to send assignment email"));
+        .catch((err: Error) => logger.error(err, "Failed to send assignment email"));
     }
   } catch (error) {
     logger.error(error, "Error in sendAssignedEmail");

@@ -21,7 +21,7 @@ export default function Home() {
   const [completedTickets, setCompletedTickets] = useState(0);
   const [unassigned, setUnassigned] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [tickets, setTickets] = useState<any>();
+  const [tickets, setTickets] = useState<{ id: string; title: string; email: string; priority: string; createdAt: string; isComplete: boolean; assignedTo?: { name: string } | null }[]>();
 
   async function time() {
     const date = new Date();
@@ -228,7 +228,7 @@ export default function Home() {
                       </thead>
                       <tbody className="divide-y divide-gray-200">
                         {tickets !== undefined &&
-                          tickets.slice(0, 10).map((item: any) => (
+                          tickets.slice(0, 10).map((item) => (
                             <tr
                               key={item.id}
                               className="hover:bg-gray-300 dark:hover:bg-green-600 hover:cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"

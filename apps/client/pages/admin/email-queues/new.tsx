@@ -97,14 +97,14 @@ export default function EmailQueues() {
   );
 }
 
-function PasswordProvider({ setStep }: any) {
+function PasswordProvider({ setStep }: { setStep: (step: number) => void }) {
   const router = useRouter();
 
-  const [name, setName]: any = useState();
-  const [username, setUsername]: any = useState();
-  const [password, setPassword]: any = useState();
-  const [hostname, setHostname]: any = useState();
-  const [tls, setTls]: any = useState();
+  const [name, setName] = useState<string>("");
+  const [username, setUsername] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [hostname, setHostname] = useState<string>("");
+  const [tls, setTls] = useState<string>("false");
 
   async function newQueue() {
     await fetch(`/api/v1/email-queue/create`, {

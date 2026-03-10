@@ -16,14 +16,25 @@ import { toast } from "@/shadcn/hooks/use-toast";
 import { cn } from "@/shadcn/lib/utils";
 import { CheckIcon } from "lucide-react";
 
+interface TicketForContextMenu {
+  id: string;
+  isComplete: boolean;
+  priority: string;
+  detail?: string;
+  note?: string;
+  title?: string;
+  status?: string;
+  assignedTo?: { name: string } | null;
+}
+
 interface TicketContextMenuProps {
-  ticket: any;
-  user: any;
-  users: any;
+  ticket: TicketForContextMenu;
+  user: { isAdmin: boolean };
+  users: { id: string; name: string }[] | undefined;
   priorities: string[];
-  onUpdateTicketStatus: (e: any, ticket: any) => void;
-  onUpdateTicketAssignee: (ticketId: string, user: any) => void;
-  onUpdateTicketPriority: (ticket: any, priority: string) => void;
+  onUpdateTicketStatus: (e: React.MouseEvent, ticket: TicketForContextMenu) => void;
+  onUpdateTicketAssignee: (ticketId: string, user: { id: string } | undefined) => void;
+  onUpdateTicketPriority: (ticket: TicketForContextMenu, priority: string) => void;
   onDeleteIssue: () => void;
 }
 

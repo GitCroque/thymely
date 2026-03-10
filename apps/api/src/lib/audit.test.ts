@@ -17,7 +17,7 @@ describe("auditLog", () => {
     ip: "127.0.0.1",
     headers: { "user-agent": "test-agent" },
     log: { error: vi.fn() },
-  } as any;
+  } as { ip: string; headers: Record<string, string>; log: { error: ReturnType<typeof vi.fn> } };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -48,7 +48,7 @@ describe("auditLog", () => {
       ip: "127.0.0.1",
       headers: {},
       log: { error: vi.fn() },
-    } as any;
+    } as { ip: string; headers: Record<string, string>; log: { error: ReturnType<typeof vi.fn> } };
 
     await auditLog(reqNoUA, { action: "test" });
 
@@ -60,7 +60,7 @@ describe("auditLog", () => {
   });
 
   it("does not throw on DB error", async () => {
-    (prisma.auditLog.create as any).mockRejectedValueOnce(
+    vi.mocked(prisma.auditLog.create).mockRejectedValueOnce(
       new Error("DB down")
     );
 

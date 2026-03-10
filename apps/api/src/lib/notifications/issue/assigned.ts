@@ -9,6 +9,7 @@ import logger from "../../logger";
  * @param {object} assigner - The user object doing the assigning
  * @returns {Promise<void>}
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Prisma objects with many nullable fields
 export async function assignedNotification(
   assignee: any,
   ticket: any,

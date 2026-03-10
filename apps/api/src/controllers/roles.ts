@@ -170,8 +170,8 @@ export function roleRoutes(fastify: FastifyInstance) {
         });
 
         reply.status(200).send({ role: updatedRole, success: true });
-      } catch (error: any) {
-        if (error.code === "P2025") {
+      } catch (error) {
+        if ((error as { code?: string }).code === "P2025") {
           return reply.status(404).send({
             message: "Role not found",
             success: false,
@@ -203,8 +203,8 @@ export function roleRoutes(fastify: FastifyInstance) {
         await auditLog(request, { action: "role.delete", target: "Role", targetId: id });
 
         reply.status(200).send({ success: true });
-      } catch (error: any) {
-        if (error.code === "P2025") {
+      } catch (error) {
+        if ((error as { code?: string }).code === "P2025") {
           return reply.status(404).send({
             message: "Role not found",
             success: false,
@@ -243,8 +243,8 @@ export function roleRoutes(fastify: FastifyInstance) {
         });
 
         reply.status(200).send({ user: updatedUser, success: true });
-      } catch (error: any) {
-        if (error.code === "P2025") {
+      } catch (error) {
+        if ((error as { code?: string }).code === "P2025") {
           return reply.status(404).send({
             message: "User or Role not found",
             success: false,
@@ -283,8 +283,8 @@ export function roleRoutes(fastify: FastifyInstance) {
         });
 
         reply.status(200).send({ user: updatedUser, success: true });
-      } catch (error: any) {
-        if (error.code === "P2025") {
+      } catch (error) {
+        if ((error as { code?: string }).code === "P2025") {
           return reply.status(404).send({
             message: "User or Role not found",
             success: false,

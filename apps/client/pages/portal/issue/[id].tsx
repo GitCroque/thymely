@@ -43,11 +43,11 @@ export default function Ticket() {
     refetch();
   }, [router]);
 
-  const [users, _setUsers] = useState<any>();
-  const [n, setN] = useState<any>();
+  const [users, _setUsers] = useState<{ id: string; name: string }[]>();
+  const [n, setN] = useState<{ id: string; name: string } | null>(null);
 
-  const [comment, setComment] = useState<any>();
-  const [publicComment] = useState<any>(false);
+  const [comment, setComment] = useState<string>();
+  const [publicComment] = useState<boolean>(false);
 
   const history = useRouter();
 
@@ -195,7 +195,7 @@ export default function Ticket() {
                                 leaveTo="opacity-0"
                               >
                                 <Listbox.Options className="absolute z-50 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
-                                  {users.map((user: any) => (
+                                  {users.map((user: { id: string; name: string }) => (
                                     <Listbox.Option
                                       key={user.id}
                                       className={({ active }) =>
@@ -208,7 +208,7 @@ export default function Ticket() {
                                       }
                                       value={user}
                                     >
-                                      {({ n, active }: any) => (
+                                      {({ selected: n, active }: { selected: boolean; active: boolean }) => (
                                         <>
                                           <span
                                             className={classNames(
@@ -374,7 +374,7 @@ export default function Ticket() {
                         <ul role="list" className="-mb-8">
                           {data.ticket.comments.length > 0 &&
                             data.ticket.comments.map(
-                              (item: any, itemIdx: any) => (
+                              (item: { id: string; user: { name: string }; public: boolean; createdAt: string; text: string }, itemIdx: number) => (
                                 <li key={item.id}>
                                   <div className="relative pb-8">
                                     {itemIdx !==
@@ -576,7 +576,7 @@ export default function Ticket() {
                     </span>
                   </div>
                   {data.ticket.TimeTracking.length > 0 ? (
-                    data.ticket.TimeTracking.map((i: any) => (
+                    data.ticket.TimeTracking.map((i: { id: string; user: { name: string }; time: number }) => (
                       <div key={i.id} className="text-xs">
                         <div className="flex flex-row space-x-1.5 items-center dark:text-white">
                           <span>{i.user.name} / </span>

@@ -44,7 +44,7 @@ export default function TicketSidebar({
                     disabled={ticket.locked}
                     placeholder="Assign User..."
                     hideInitial={false}
-                    
+
                   />
                 )}
               </div>
@@ -66,7 +66,7 @@ export default function TicketSidebar({
                   ticket.status ? ticket.status : ""
                 }
                 disabled={ticket.locked}
-                
+
                 placeholder="Change Client..."
                 hideInitial={false}
               />
@@ -91,7 +91,7 @@ export default function TicketSidebar({
                 : ""
             }
             disabled={ticket.locked}
-            
+
             placeholder="Change User..."
             hideInitial={false}
           />

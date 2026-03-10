@@ -1,6 +1,7 @@
 import { prisma } from "../../../prisma";
 import logger from "../../logger";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Prisma objects with many nullable fields
 export async function activeStatusNotification(
   ticket: any,
   updater: any,
@@ -34,6 +35,7 @@ export async function activeStatusNotification(
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function statusUpdateNotification(
   ticket: any,
   updater: any,

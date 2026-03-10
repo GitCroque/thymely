@@ -10,7 +10,7 @@ import dynamic from "next/dynamic";
 
 const Editor = dynamic(() => import("../components/BlockEditor"), { ssr: false });
 
-function classNames(...classes: any) {
+function classNames(...classes: (string | boolean | undefined | null)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
@@ -31,15 +31,15 @@ export default function CreateTicket() {
   const { user } = useUser();
 
   const [name, setName] = useState("");
-  const [company, setCompany] = useState<any>();
-  const [engineer, setEngineer] = useState<any>();
+  const [company, setCompany] = useState<{ id: string; name: string }>();
+  const [engineer, setEngineer] = useState<{ id: string; name: string }>();
   const [email, setEmail] = useState("");
-  const [issue, setIssue] = useState<any>("");
+  const [issue, setIssue] = useState<unknown>("");
   const [title, setTitle] = useState("");
   const [priority] = useState("medium");
-  const [options, setOptions] = useState<any>();
-  const [users, setUsers] = useState<any>();
-  const [selected, setSelected] = useState<any>(type[3]);
+  const [options, setOptions] = useState<{ id: string; name: string }[]>();
+  const [users, setUsers] = useState<{ id: string; name: string }[]>();
+  const [selected, setSelected] = useState<{ id: number; name: string }>(type[3]);
 
   const fetchClients = async () => {
     await fetch(`/api/v1/clients/all`, {
@@ -149,8 +149,6 @@ export default function CreateTicket() {
                     <span className="block truncate">
                       {company === undefined
                         ? t("select_a_client")
-                        : company === ""
-                        ? t("select_a_client")
                         : company.name}
                     </span>
                     <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
@@ -208,7 +206,7 @@ export default function CreateTicket() {
                         )}
                       </Listbox.Option>
                       {options !== undefined &&
-                        options.map((client: any) => (
+                        options.map((client: { id: string; name: string }) => (
                           <Listbox.Option
                             key={client.id}
                             className={({ active }) =>
@@ -320,7 +318,7 @@ export default function CreateTicket() {
                         )}
                       </Listbox.Option>
                       {users !== undefined &&
-                        users.map((user: any) => (
+                        users.map((user: { id: string; name: string }) => (
                           <Listbox.Option
                             key={user.id}
                             className={({ active }) =>

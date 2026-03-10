@@ -7,8 +7,10 @@ import {
   DropdownMenuTrigger,
 } from "@/shadcn/ui/dropdown-menu";
 import { BlockNoteEditor, PartialBlock } from "@blocknote/core";
+import "@blocknote/core/fonts/inter.css";
 import { safeJsonParse } from "../../lib/safeJsonParse";
 import { BlockNoteView } from "@blocknote/mantine";
+import "@blocknote/mantine/style.css";
 import { getCookie } from "cookies-next";
 import { Ellipsis } from "lucide-react";
 import dayjs from "dayjs";
@@ -41,7 +43,7 @@ export default function NotebookEditor() {
     return BlockNoteEditor.create({ initialContent });
   }, [initialContent]);
 
-  const [value, setValue] = useState<any>();
+  const [value, setValue] = useState<Record<string, string>[]>();
   const [note, setNote] = useState();
   const [title, setTitle] = useState();
   const [loading, setLoading] = useState(true);

@@ -32,7 +32,7 @@ export default function UpdateRole() {
       if (data.success) {
         setRoleName(data.role.name);
         setSelectedPermissions(data.role.permissions);
-        setSelectedUsers(data.role.users.map((u: any) => u.id));
+        setSelectedUsers(data.role.users.map((u: { id: string }) => u.id));
       }
     } catch (error) {
       console.error("Error fetching role:", error);

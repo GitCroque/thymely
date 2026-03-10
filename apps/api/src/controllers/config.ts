@@ -16,7 +16,7 @@ import { decryptSecret, encryptSecret } from "../lib/security/secrets";
 import { checkSession } from "../lib/session";
 import { prisma } from "../prisma";
 
-async function tracking(event: string, properties: any) {
+async function tracking(event: string, properties: Record<string, string>) {
   const client = track();
 
   client.capture({
@@ -236,7 +236,7 @@ export function configRoutes(fastify: FastifyInstance) {
         const provider = await createTransportProvider();
 
         const verification = await new Promise((resolve) => {
-          provider.verify(function (error: any, success: any) {
+          provider.verify(function (error: Error | null, success: true | undefined) {
             if (error) {
               logger.error(error, "Email verification failed");
               resolve(error);

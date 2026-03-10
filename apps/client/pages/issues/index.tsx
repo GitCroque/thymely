@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "../../store/session";
 
-async function getUserTickets(token: any) {
+async function getUserTickets(token: string | undefined) {
   const res = await fetch(`/api/v1/tickets/all`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -82,7 +82,7 @@ export default function Tickets() {
     );
   }, [selectedPriorities, selectedStatuses, selectedAssignees]);
 
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<{ id: string; name: string }[]>([]);
 
   async function fetchUsers() {
     await fetch(`/api/v1/users/all`, {

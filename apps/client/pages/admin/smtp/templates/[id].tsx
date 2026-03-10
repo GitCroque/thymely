@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import Editor from "react-simple-code-editor";
 
 export default function EmailTemplates() {
-  const [template, setTemplate] = useState<any>();
+  const [template, setTemplate] = useState<string>();
 
   const router = useRouter();
 

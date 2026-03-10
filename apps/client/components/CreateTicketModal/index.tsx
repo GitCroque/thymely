@@ -38,15 +38,15 @@ export default function CreateTicketModal({ keypress, setKeyPressDown }: { keypr
   const { user } = useUser();
 
   const [name, setName] = useState("");
-  const [company, setCompany] = useState<any>();
-  const [engineer, setEngineer] = useState<any>();
+  const [company, setCompany] = useState<{ id: string; name: string }>();
+  const [engineer, setEngineer] = useState<{ id: string; name: string }>();
   const [email, setEmail] = useState("");
-  const [issue, setIssue] = useState<any>();
+  const [issue, setIssue] = useState<unknown>();
   const [title, setTitle] = useState("");
   const [priority] = useState("medium");
-  const [options, setOptions] = useState<any>();
-  const [users, setUsers] = useState<any>();
-  const [selected, setSelected] = useState<any>(type[3]);
+  const [options, setOptions] = useState<{ id: string; name: string }[]>();
+  const [users, setUsers] = useState<{ id: string; name: string }[]>();
+  const [selected, setSelected] = useState<{ id: number; name: string }>(type[3]);
 
   const fetchClients = async () => {
     await fetch(`/api/v1/clients/all`, {
@@ -156,17 +156,17 @@ export default function CreateTicketModal({ keypress, setKeyPressDown }: { keypr
     const loadFlags = () => {
       const savedFlags = localStorage.getItem("featureFlags");
       if (savedFlags) {
-        const flags = safeJsonParse<any[]>(savedFlags, []);
+        const flags = safeJsonParse<{ name: string; enabled: boolean }[]>(savedFlags, []);
         const hideShortcuts = flags.find(
-          (f: any) => f.name === "Hide Keyboard Shortcuts"
+          (f) => f.name === "Hide Keyboard Shortcuts"
         )?.enabled;
 
         const hideName = flags.find(
-          (f: any) => f.name === "Hide Name in Create"
+          (f) => f.name === "Hide Name in Create"
         )?.enabled;
 
         const hideEmail = flags.find(
-          (f: any) => f.name === "Hide Email in Create"
+          (f) => f.name === "Hide Email in Create"
         )?.enabled;
 
         setHideKeyboardShortcuts(hideShortcuts || false);
@@ -272,8 +272,6 @@ export default function CreateTicketModal({ keypress, setKeyPressDown }: { keypr
                                   <span className="block truncate">
                                     {company === undefined
                                       ? t("select_a_client")
-                                      : company === ""
-                                      ? t("select_a_client")
                                       : company.name}
                                   </span>
                                   <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
@@ -335,7 +333,7 @@ export default function CreateTicketModal({ keypress, setKeyPressDown }: { keypr
                                       )}
                                     </Listbox.Option>
                                     {options !== undefined &&
-                                      options.map((client: any) => (
+                                      options.map((client) => (
                                         <Listbox.Option
                                           key={client.id}
                                           className={({ active }) =>
@@ -456,7 +454,7 @@ export default function CreateTicketModal({ keypress, setKeyPressDown }: { keypr
                                       )}
                                     </Listbox.Option>
                                     {users !== undefined &&
-                                      users.map((user: any) => (
+                                      users.map((user) => (
                                         <Listbox.Option
                                           key={user.id}
                                           className={({ active }) =>

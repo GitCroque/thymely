@@ -10,7 +10,7 @@ interface TicketFiltersProps {
   selectedPriorities: string[];
   selectedStatuses: string[];
   selectedAssignees: string[];
-  users: any[];
+  users: { id: string; name: string }[];
   onPriorityToggle: (priority: string) => void;
   onStatusToggle: (status: string) => void;
   onAssigneeToggle: (assignee: string) => void;

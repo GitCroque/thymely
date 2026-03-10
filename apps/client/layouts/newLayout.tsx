@@ -28,7 +28,7 @@ import {
 import ThemeSettings from "../components/ThemeSettings";
 import { useUser } from "../store/session";
 
-export default function NewLayout({ children }: any) {
+export default function NewLayout({ children }: { children: React.ReactNode }) {
   const location = useRouter();
 
   const { loading, user } = useUser();
@@ -71,7 +71,7 @@ export default function NewLayout({ children }: any) {
     },
   ];
 
-  function handleKeyPress(event: any) {
+  function handleKeyPress(event: KeyboardEvent) {
     const pathname = location.pathname;
 
     // Check for Ctrl or Meta key to bypass the shortcut handler
@@ -202,7 +202,7 @@ export default function NewLayout({ children }: any) {
                               keypress={keypressdown}
                               setKeyPressDown={setKeyPressDown}
                             />
-                            {navigation.map((item: any) => (
+                            {navigation.map((item) => (
                               <li key={item.name}>
                                 <Link
                                   href={item.href}
@@ -326,7 +326,7 @@ export default function NewLayout({ children }: any) {
                       keypress={keypressdown}
                       setKeyPressDown={setKeyPressDown}
                     />
-                    {navigation.map((item: any) => (
+                    {navigation.map((item) => (
                       <li
                         key={item.name}
                         className={
