@@ -5,6 +5,7 @@ import "@blocknote/mantine/style.css";
 import { useEffect, useMemo, useState } from "react";
 import Frame from "react-frame-component";
 import { LoaderCircle } from "lucide-react";
+import { sanitizeEmailHtml } from "../../lib/sanitizeHtml";
 
 interface TicketEditorProps {
   ticket: {
@@ -87,7 +88,8 @@ export default function TicketEditor({
             <div className="break-words bg-white rounded-md text-black">
               <Frame
                 className="min-h-[60vh] h-full max-h-[80vh] overflow-y-auto w-full"
-                initialContent={ticket.detail}
+                initialContent={sanitizeEmailHtml(ticket.detail)}
+                sandbox="allow-same-origin allow-popups"
               >
                 <></>
               </Frame>

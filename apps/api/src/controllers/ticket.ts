@@ -1069,7 +1069,17 @@ export function ticketRoutes(fastify: FastifyInstance) {
 
       const sanitizedHtml = sanitizeHtml(html, {
         allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img", "style", "table", "thead", "tbody", "tr", "td", "th", "div", "span", "h1", "h2", "h3", "h4", "h5", "h6"]),
-        allowedAttributes: false,
+        allowedAttributes: {
+          "*": ["style", "class"],
+          a: ["href"],
+          img: ["src", "alt", "width", "height"],
+          table: ["align", "border", "cellpadding", "cellspacing", "bgcolor", "width"],
+          td: ["align", "bgcolor", "width", "height"],
+          th: ["align", "bgcolor", "width", "height"],
+          tr: ["align", "bgcolor"],
+          div: ["align"],
+          span: [],
+        },
         allowedSchemes: ["http", "https", "mailto", "data"],
       });
 

@@ -16,6 +16,7 @@ import { getCookie } from "cookies-next";
 import useTranslation from "next-translate/useTranslation";
 import Frame from "react-frame-component";
 
+import { sanitizeEmailHtml } from "../../../lib/sanitizeHtml";
 import { useUser } from "../../../store/session";
 import { classNames } from "@/shadcn/lib/utils";
 
@@ -342,7 +343,8 @@ export default function Ticket() {
                         <div className="break-words bg-white rounded-md p-4 text-black">
                           <Frame
                             className="min-h-[60vh] h-full w-full"
-                            initialContent={data.ticket.detail}
+                            initialContent={sanitizeEmailHtml(data.ticket.detail)}
+                            sandbox="allow-same-origin allow-popups"
                           >
                             {" "}
                           </Frame>

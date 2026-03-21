@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint . --max-warnings=200"
+    "lint": "eslint . --max-warnings=200",
+    "test": "vitest run"
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^1.5.0",
@@ -16,7 +17,7 @@
     "@ducanh2912/next-pwa": "^10.2.0",
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.0.18",
-    "@monaco-editor/react": "4.7.0-rc.0",
+    "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-alert-dialog": "^1.1.2",
     "@radix-ui/react-avatar": "^1.1.1",
     "@radix-ui/react-collapsible": "^1.1.1",
@@ -42,6 +43,7 @@
     "cmdk": "^1.0.4",
     "cookies-next": "^3.0.0",
     "dayjs": "^1.11.19",
+    "isomorphic-dompurify": "^3.5.1",
     "js-file-download": "^0.4.12",
     "lodash": "^4.17.21",
     "lucide-react": "^0.473.0",
@@ -66,6 +68,7 @@
     "use-debounce": "^10.0.1"
   },
   "devDependencies": {
+    "@types/dompurify": "^3.2.0",
     "@types/lodash": "^4",
     "@types/node": "^22",
     "@types/prismjs": "^1",
@@ -79,6 +82,7 @@
     "eslint": "^9",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.7"
+    "typescript": "^5.7",
+    "vitest": "^4.1.0"
   }
 }
