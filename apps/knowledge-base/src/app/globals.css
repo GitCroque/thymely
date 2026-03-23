@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f4efe6;
+  --foreground: #14231d;
+  --card: rgba(255, 251, 246, 0.82);
+  --border: rgba(20, 35, 29, 0.12);
+  --accent: #1f6a54;
+  --accent-soft: #d6ebe3;
+  --ink-soft: #53645e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--foreground);
+  background:
+    radial-gradient(circle at top left, rgba(31, 106, 84, 0.16), transparent 32%),
+    radial-gradient(circle at top right, rgba(212, 125, 56, 0.14), transparent 26%),
+    linear-gradient(180deg, #fbf7f1 0%, #f4efe6 42%, #efe7dc 100%);
+  font-family: var(--font-sans), sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.article-prose {
+  color: var(--foreground);
+}
+
+.article-prose :where(h1, h2, h3, h4) {
+  font-family: var(--font-serif), serif;
+  color: var(--foreground);
+}
+
+.article-prose :where(p, li, blockquote) {
+  color: var(--foreground);
+}
+
+.article-prose :where(a) {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.article-prose :where(code) {
+  color: #0c4336;
+}
+
+.article-prose :where(pre) {
+  overflow-x: auto;
+  border-radius: 1rem;
+  background: #12211c;
+  color: #f8f1e8;
+}
+
+.article-prose :where(blockquote) {
+  border-left-color: rgba(31, 106, 84, 0.4);
+  color: var(--ink-soft);
+}

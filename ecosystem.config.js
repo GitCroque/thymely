@@ -30,5 +30,20 @@ module.exports = {
         secret: process.env.SECRET,
       },
     },
+    {
+      name: "knowledge-base",
+      script: "node",
+      args: "server.js",
+      cwd: "apps/knowledge-base",
+      instances: "1",
+      autorestart: true,
+      watch: false,
+      env: {
+        NODE_ENV: "production",
+        PORT: 3002,
+        KNOWLEDGE_BASE_API_URL:
+          process.env.KNOWLEDGE_BASE_API_URL || "http://127.0.0.1:5003",
+      },
+    },
   ],
 };

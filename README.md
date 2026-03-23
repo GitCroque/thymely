@@ -137,6 +137,7 @@ yarn test:e2e
 apps/
   api/        Fastify 5 + Prisma 5 backend (port 5003)
   client/     Next.js 16 frontend (port 3000)
+  knowledge-base/ Public KB app (Next.js, port 3002)
   landing/    Landing page (Next.js)
   docs/       Documentation (Nextra 4)
 packages/

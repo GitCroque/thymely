@@ -14,6 +14,7 @@ COPY package.json yarn.lock .yarnrc.yml ./
 # Copy all workspace package.json files (required by yarn workspaces)
 COPY apps/api/package.json ./apps/api/
 COPY apps/client/package.json ./apps/client/
+COPY apps/knowledge-base/package.json ./apps/knowledge-base/
 COPY apps/docs/package.json ./apps/docs/
 COPY apps/landing/package.json ./apps/landing/
 COPY packages/config/package.json ./packages/config/
@@ -26,6 +27,7 @@ RUN yarn install --mode=skip-build
 # Copy source code
 COPY apps/api ./apps/api
 COPY apps/client ./apps/client
+COPY apps/knowledge-base ./apps/knowledge-base
 COPY ecosystem.config.js ./
 
 # Rebuild native modules + generate Prisma client + compile API
@@ -34,6 +36,7 @@ RUN yarn rebuild && cd apps/api && npx prisma generate && npx tsc
 # Build client — version is inlined by Next.js at build time
 ARG APP_VERSION=dev
 RUN cd apps/client && NEXT_PUBLIC_CLIENT_VERSION=${APP_VERSION} npx next build --webpack
+RUN cd apps/knowledge-base && npx next build
 
 FROM node:22-bookworm-slim AS runner
 
@@ -52,11 +55,15 @@ COPY --from=builder /app/apps/client/.next/standalone/apps/client ./apps/client
 COPY --from=builder /app/apps/client/.next/standalone/node_modules ./apps/client/node_modules
 COPY --from=builder /app/apps/client/.next/static ./apps/client/.next/static
 COPY --from=builder /app/apps/client/public ./apps/client/public
+COPY --from=builder /app/apps/knowledge-base/.next/standalone/apps/knowledge-base ./apps/knowledge-base
+COPY --from=builder /app/apps/knowledge-base/.next/standalone/node_modules ./apps/knowledge-base/node_modules
+COPY --from=builder /app/apps/knowledge-base/.next/static ./apps/knowledge-base/.next/static
+COPY --from=builder /app/apps/knowledge-base/public ./apps/knowledge-base/public
 COPY --from=builder /app/ecosystem.config.js ./ecosystem.config.js
 
 RUN chown -R app:app /app /home/app
 
-EXPOSE 3000 5003
+EXPOSE 3000 3002 5003
 
 USER app
 

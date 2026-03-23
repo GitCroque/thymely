@@ -22,6 +22,7 @@ services:
     image: ghcr.io/gitcroque/thymely:latest
     ports:
       - 1000:3000
+      - 1002:3002
       - 1001:5003
     restart: always
     depends_on:

@@ -8,6 +8,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { Button } from "@radix-ui/themes";
 import {
+  BookOpenText,
   ContactIcon,
   FileText,
   KeyRound,
@@ -88,6 +89,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       href: "/admin/roles",
       current: location.pathname === "/admin/roles",
       icon: RollerCoaster,
+    },
+    {
+      name: "Knowledge Base",
+      href: "/admin/knowledge-base",
+      current: location.pathname === "/admin/knowledge-base",
+      icon: BookOpenText,
     },
     {
       name: "Logs",

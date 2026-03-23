@@ -10,6 +10,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum KnowledgeBaseStatus {
+  DRAFT
+  PUBLISHED
+}
+
 model OAuthProvider {
   id               Int    @id @default(autoincrement())
   name             String @unique
@@ -359,14 +364,24 @@ model knowledgeBase {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
 
-  title   String
-  content String
-  tags    String[]
-  author  String
-  public  Boolean  @default(false)
+  title          String
+  slug           String              @unique
+  excerpt        String?
+  content        String
+  tags           String[]            @default([])
+  author         String
+  public         Boolean             @default(false)
+  status         KnowledgeBaseStatus @default(DRAFT)
+  publishedAt    DateTime?
+  category       String?
+  seoTitle       String?
+  seoDescription String?
 
   ticketId String?
   ticket   Ticket? @relation(fields: [ticketId], references: [id])
+
+  @@index([status, publishedAt])
+  @@index([category])
 }
 
 model Imap_Email {

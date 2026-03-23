@@ -22,6 +22,7 @@ services:
     build: "."
     ports:
       - 3000:3000
+      - 3002:3002
       - 5001:5003
     restart: always
     depends_on:

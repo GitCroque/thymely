@@ -107,11 +107,25 @@ const publicRoutes = new Set([
   "GET /api/v1/config/authentication/check",
 ]);
 
+const publicRoutePrefixes = [
+  {
+    method: "GET",
+    prefix: "/api/v1/kb/public/",
+  },
+];
+
 server.addHook("preHandler", async (request, reply) => {
   const route = request.url.split("?")[0];
   const routeKey = `${request.method.toUpperCase()} ${route}`;
 
-  if (publicRoutes.has(routeKey)) {
+  if (
+    publicRoutes.has(routeKey) ||
+    publicRoutePrefixes.some(
+      (publicRoute) =>
+        publicRoute.method === request.method.toUpperCase() &&
+        route.startsWith(publicRoute.prefix)
+    )
+  ) {
     return;
   }
 
