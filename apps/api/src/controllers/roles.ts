@@ -83,6 +83,7 @@ export function roleRoutes(fastify: FastifyInstance) {
         prisma.role.findMany({
           skip,
           take,
+          orderBy: { createdAt: "desc" },
           include: {
             users: false,
           },
@@ -160,13 +161,77 @@ export function roleRoutes(fastify: FastifyInstance) {
             description,
             permissions,
             isDefault,
-            updatedAt: new Date(),
             users: {
               set: Array.isArray(users)
                 ? users.map((userId) => ({ id: userId }))
                 : [{ id: users }], // Ensure users is an array of objects with unique IDs when updating
             },
           },
+        });
+
+        reply.status(200).send({ role: updatedRole, success: true });
+      } catch (error) {
+        if ((error as { code?: string }).code === "P2025") {
+          return reply.status(404).send({
+            message: "Role not found",
+            success: false,
+          });
+        }
+        throw error;
+      }
+    }
+  );
+
+  // Toggle role active state
+  fastify.patch<{
+    Params: {
+      id: string;
+    };
+    Body: {
+      isActive: boolean;
+    };
+  }>(
+    "/api/v1/role/:id/toggle",
+    {
+      preHandler: requirePermission(["role::update"]),
+      schema: {
+        params: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+          },
+          required: ["id"],
+          additionalProperties: false,
+        },
+        body: {
+          type: "object",
+          properties: {
+            isActive: { type: "boolean" },
+          },
+          required: ["isActive"],
+          additionalProperties: false,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+      const { isActive } = request.body;
+      const session = await checkSession(request);
+
+      try {
+        const updatedRole = await prisma.role.update({
+          where: { id },
+          data: {
+            active: isActive,
+          },
+        });
+
+        await auditLog(request, {
+          action: "role.toggle",
+          userId: session?.id,
+          target: "Role",
+          targetId: id,
+          metadata: { active: isActive },
         });
 
         reply.status(200).send({ role: updatedRole, success: true });

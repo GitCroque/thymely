@@ -7,5 +7,12 @@ export const hasAccess = (response: Response) => {
       description: "Please check your permissions.",
     });
   }
-  return response;
+  if (response.status === 403) {
+    toast({
+      title: "Forbidden",
+      description: "You do not have access to this resource.",
+    });
+  }
+
+  return response.ok;
 };

@@ -2,9 +2,19 @@ import { Switch } from "@headlessui/react";
 import { Flex } from "@radix-ui/themes";
 import { getCookie } from "cookies-next";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useUser } from "../../../../store/session";
 import { toast } from "@/shadcn/hooks/use-toast";
+
+interface AuthCheckResponse {
+  success?: boolean;
+  oauth?: boolean;
+}
+
+interface CreateUserResponse {
+  success?: boolean;
+  message?: string;
+}
 
 export default function CreateUser() {
   const [password, setPassword] = useState("");
@@ -12,63 +22,113 @@ export default function CreateUser() {
   const [name, setName] = useState("");
   const [admin, setAdmin] = useState(false);
   const [language, setLanguage] = useState("en");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isSsoEnabled, setIsSsoEnabled] = useState(false);
 
   const { user } = useUser();
 
   const router = useRouter();
 
   async function createUser() {
-    await fetch(`/api/v1/auth/user/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + getCookie("session"),
-      },
-      body: JSON.stringify({
-        password,
-        email,
-        name,
-        admin,
-        language,
-      }),
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        if (res.success === true) {
-          router.push("/admin/users/internal");
-          toast({
-            variant: "default",
-            title: "Success",
-            description: "User updated succesfully",
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "There has been an error ",
-            description: "Whoops! please wait and try again!",
-          });
-        }
+    if (isSubmitting || isCheckingAuth) return;
+
+    if (!email || !name) {
+      toast({
+        variant: "destructive",
+        title: "Missing fields",
+        description: "Name and email are required.",
       });
+      return;
+    }
+
+    if (!isSsoEnabled && password.length < 8) {
+      toast({
+        variant: "destructive",
+        title: "Invalid password",
+        description: "Password must be at least 8 characters.",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(`/api/v1/auth/user/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + getCookie("session"),
+        },
+        body: JSON.stringify({
+          password: isSsoEnabled ? undefined : password,
+          email,
+          name,
+          admin,
+          language,
+        }),
+      });
+
+      const res = await response.json() as CreateUserResponse;
+
+      if (response.ok && res.success) {
+        await router.push("/admin/users/internal");
+        toast({
+          variant: "default",
+          title: "Success",
+          description: "User created successfully.",
+        });
+        return;
+      }
+
+      toast({
+        variant: "destructive",
+        title: "There has been an error",
+        description: res.message || "Whoops! please wait and try again!",
+      });
+    } catch (_error) {
+      toast({
+        variant: "destructive",
+        title: "Connection error",
+        description: "Unable to create the user right now.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
-  // TODO: Wire up auth check in UI
-  // async function checkAuth() {
-  //   await fetch(`/api/v1/auth/check`, {
-  //     method: "GET",
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //       Authorization: "Bearer " + getCookie("session"),
-  //     },
-  //   })
-  //     .then((res) => res.json())
-  //     .then((res) => {
-  //       if (res.success === true) {
-  //         setAuth(res.auth);
-  //         setIsLoading(false);
-  //       } else {
-  //       }
-  //     });
-  // }
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkAuth() {
+      try {
+        const response = await fetch(`/api/v1/auth/check`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        const res = await response.json() as AuthCheckResponse;
+        if (isMounted) {
+          setIsSsoEnabled(Boolean(res.oauth));
+        }
+      } catch (_error) {
+        if (isMounted) {
+          setIsSsoEnabled(Boolean(user?.sso_status));
+        }
+      } finally {
+        if (isMounted) {
+          setIsCheckingAuth(false);
+        }
+      }
+    }
+
+    void checkAuth();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.sso_status]);
 
   return (
     <div>
@@ -101,15 +161,20 @@ export default function CreateUser() {
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
-              {!user.sso_active && (
+              {!isSsoEnabled && (
                 <div className="w-1/2">
                   <label className="text-foreground font-bold">Password</label>
                   <input
-                    type="text"
+                    type="password"
                     className="px-3 py-2 text-foreground bg-transparent border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm"
                     placeholder=""
                     onChange={(e) => setPassword(e.target.value)}
                   />
+                </div>
+              )}
+              {isSsoEnabled && (
+                <div className="w-1/2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+                  SSO is enabled. This user will sign in through the configured identity provider.
                 </div>
               )}
               <div className="w-1/2 flex flex-col">
@@ -157,15 +222,20 @@ export default function CreateUser() {
                   </Switch>
                 </div>
               </div>
-              <div
-                className="flex justify-end w-full "
-                onClick={() => createUser()}
-              >
+              <div className="flex justify-end w-full ">
                 <button
                   type="button"
+                  onClick={() => {
+                    void createUser();
+                  }}
+                  disabled={isSubmitting || isCheckingAuth}
                   className="rounded-md bg-green-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-green-500"
                 >
-                  Create User
+                  {isCheckingAuth
+                    ? "Checking authentication..."
+                    : isSubmitting
+                      ? "Creating..."
+                      : "Create User"}
                 </button>
               </div>
             </Flex>

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
 // Mock prisma before importing roles
 vi.mock("../prisma", () => ({
@@ -18,26 +18,9 @@ vi.mock("./session", () => ({
 }));
 
 import { hasPermission, invalidateConfigCache, InsufficientPermissionsError } from "./roles";
-import type { Permission } from "./types/permissions";
 
-// Minimal types matching Prisma's Role and User
-type MockRole = {
-  id: string;
-  name: string;
-  description: string | null;
-  permissions: string[];
-  isDefault: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-type MockUser = {
-  id: string;
-  name: string;
-  email: string;
-  isAdmin: boolean;
-  roles: MockRole[];
-};
+type UserWithRoles = Parameters<typeof hasPermission>[0];
+type MockRole = UserWithRoles["roles"][number];
 
 function makeRole(overrides: Partial<MockRole> = {}): MockRole {
   return {
@@ -46,13 +29,14 @@ function makeRole(overrides: Partial<MockRole> = {}): MockRole {
     description: null,
     permissions: [],
     isDefault: false,
+    active: true,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
   };
 }
 
-function makeUser(overrides: Partial<MockUser> = {}): MockUser {
+function makeUser(overrides: Partial<UserWithRoles> = {}): UserWithRoles {
   return {
     id: "user-1",
     name: "Test User",
@@ -67,9 +51,9 @@ describe("hasPermission", () => {
   it("returns true for admin user regardless of permissions", () => {
     const admin = makeUser({ isAdmin: true, roles: [] });
 
-    expect(hasPermission(admin as any, "issue::create")).toBe(true);
-    expect(hasPermission(admin as any, ["issue::create", "user::manage"])).toBe(true);
-    expect(hasPermission(admin as any, "settings::manage")).toBe(true);
+    expect(hasPermission(admin, "issue::create")).toBe(true);
+    expect(hasPermission(admin, ["issue::create", "user::manage"])).toBe(true);
+    expect(hasPermission(admin, "settings::manage")).toBe(true);
   });
 
   it("returns true when user has the required single permission", () => {
@@ -77,7 +61,7 @@ describe("hasPermission", () => {
       roles: [makeRole({ permissions: ["issue::create", "issue::read"] })],
     });
 
-    expect(hasPermission(user as any, "issue::create")).toBe(true);
+    expect(hasPermission(user, "issue::create")).toBe(true);
   });
 
   it("returns false when user lacks the required single permission", () => {
@@ -85,7 +69,7 @@ describe("hasPermission", () => {
       roles: [makeRole({ permissions: ["issue::read"] })],
     });
 
-    expect(hasPermission(user as any, "issue::create")).toBe(false);
+    expect(hasPermission(user, "issue::create")).toBe(false);
   });
 
   it("returns true when user has ALL required permissions (requireAll: true, default)", () => {
@@ -95,8 +79,8 @@ describe("hasPermission", () => {
       ],
     });
 
-    expect(hasPermission(user as any, ["issue::create", "issue::read"])).toBe(true);
-    expect(hasPermission(user as any, ["issue::create", "issue::read"], true)).toBe(true);
+    expect(hasPermission(user, ["issue::create", "issue::read"])).toBe(true);
+    expect(hasPermission(user, ["issue::create", "issue::read"], true)).toBe(true);
   });
 
   it("returns false when user is missing one of the required permissions (requireAll: true)", () => {
@@ -104,7 +88,7 @@ describe("hasPermission", () => {
       roles: [makeRole({ permissions: ["issue::create"] })],
     });
 
-    expect(hasPermission(user as any, ["issue::create", "issue::delete"])).toBe(false);
+    expect(hasPermission(user, ["issue::create", "issue::delete"])).toBe(false);
   });
 
   it("returns true when user has at least one permission (requireAll: false)", () => {
@@ -113,7 +97,7 @@ describe("hasPermission", () => {
     });
 
     expect(
-      hasPermission(user as any, ["issue::create", "issue::delete"], false)
+      hasPermission(user, ["issue::create", "issue::delete"], false)
     ).toBe(true);
   });
 
@@ -123,7 +107,7 @@ describe("hasPermission", () => {
     });
 
     expect(
-      hasPermission(user as any, ["issue::create", "issue::delete"], false)
+      hasPermission(user, ["issue::create", "issue::delete"], false)
     ).toBe(false);
   });
 
@@ -135,7 +119,7 @@ describe("hasPermission", () => {
       ],
     });
 
-    expect(hasPermission(user as any, ["issue::create", "user::manage"])).toBe(true);
+    expect(hasPermission(user, ["issue::create", "user::manage"])).toBe(true);
   });
 
   it("includes permissions from the default role", () => {
@@ -147,26 +131,26 @@ describe("hasPermission", () => {
     });
 
     expect(
-      hasPermission(user as any, ["issue::read", "issue::comment", "issue::create"])
+      hasPermission(user, ["issue::read", "issue::comment", "issue::create"])
     ).toBe(true);
   });
 
   it("returns false for user with no roles and no permissions", () => {
     const user = makeUser({ roles: [] });
 
-    expect(hasPermission(user as any, "issue::create")).toBe(false);
+    expect(hasPermission(user, "issue::create")).toBe(false);
   });
 
   it("handles empty required permissions array (requireAll: true → vacuously true)", () => {
     const user = makeUser({ roles: [] });
 
-    expect(hasPermission(user as any, [], true)).toBe(true);
+    expect(hasPermission(user, [], true)).toBe(true);
   });
 
   it("handles empty required permissions array (requireAll: false → vacuously false)", () => {
     const user = makeUser({ roles: [] });
 
-    expect(hasPermission(user as any, [], false)).toBe(false);
+    expect(hasPermission(user, [], false)).toBe(false);
   });
 
   it("deduplicates permissions across roles", () => {
@@ -179,8 +163,20 @@ describe("hasPermission", () => {
 
     // Should work correctly even if same permission appears in multiple roles
     expect(
-      hasPermission(user as any, ["issue::create", "issue::read", "user::read"])
+      hasPermission(user, ["issue::create", "issue::read", "user::read"])
     ).toBe(true);
+  });
+
+  it("ignores inactive roles when resolving permissions", () => {
+    const user = makeUser({
+      roles: [
+        makeRole({ permissions: ["issue::read"], active: false }),
+        makeRole({ id: "r2", permissions: ["issue::create"], active: true }),
+      ],
+    });
+
+    expect(hasPermission(user, "issue::create")).toBe(true);
+    expect(hasPermission(user, "issue::read")).toBe(false);
   });
 });
 

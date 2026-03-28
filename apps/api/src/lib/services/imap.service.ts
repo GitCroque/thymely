@@ -2,6 +2,7 @@ import EmailReplyParser from "email-reply-parser";
 import Imap from "imap";
 import { simpleParser } from "mailparser";
 import sanitizeHtml from "sanitize-html";
+import type { Readable } from "stream";
 import { prisma } from "../../prisma";
 import logger from "../logger";
 import { decryptSecret } from "../security/secrets";
@@ -68,6 +69,10 @@ function getReplyText(email: { text: string }): string {
   return replyText;
 }
 
+type TicketCreatedBy = {
+  id?: string;
+};
+
 /**
  * Checks if the sender email is authorized to add a comment on the given ticket.
  * Authorized senders: ticket creator, assigned user, or anyone who previously commented.
@@ -93,7 +98,7 @@ async function isSenderAuthorizedForTicket(
 
   // Check if sender is the ticket creator (createdBy is Json with potential userId)
   if (ticket.createdBy && typeof ticket.createdBy === "object") {
-    const createdByData = ticket.createdBy as Record<string, any>;
+    const createdByData = ticket.createdBy as TicketCreatedBy;
     if (createdByData.id) {
       const creatorUser = await prisma.user.findUnique({
         where: { id: createdByData.id },
@@ -148,7 +153,11 @@ async function isSenderAuthorizedForTicket(
 
 export class ImapService {
   private static async getImapConfig(queue: EmailQueue): Promise<EmailConfig> {
-    const rejectUnauthorized = process.env.ALLOW_INSECURE_IMAP_TLS !== "true";
+    const isProduction = process.env.NODE_ENV === "production";
+    if (!isProduction && process.env.ALLOW_INSECURE_IMAP_TLS === "true") {
+      logger.warn("ALLOW_INSECURE_IMAP_TLS is enabled — TLS certificate validation disabled. Do NOT use in production.");
+    }
+    const rejectUnauthorized = isProduction || process.env.ALLOW_INSECURE_IMAP_TLS !== "true";
     const decryptedPassword = await decryptSecret(queue.password);
 
     switch (queue.serviceType) {
@@ -333,8 +342,8 @@ export class ImapService {
                 const fetch = imap.fetch(results, { bodies: "" });
 
                 fetch.on("message", (msg) => {
-                  msg.on("body", (stream) => {
-                    simpleParser(stream as any, async (err, parsed) => {
+                  msg.on("body", (stream: NodeJS.ReadableStream) => {
+                    simpleParser(stream as unknown as Readable, async (err, parsed) => {
                       if (err) throw err;
                       const subjectLower = parsed.subject?.toLowerCase() || "";
                       const isReply =

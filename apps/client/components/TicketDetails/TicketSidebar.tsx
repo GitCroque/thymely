@@ -1,15 +1,24 @@
 import { ClientCombo, IconCombo, UserCombo } from "../Combo";
+import type { ComboOption } from "../Combo";
+
+interface TicketSidebarTicket {
+  assignedTo?: { name: string } | null;
+  client?: { name: string } | null;
+  priority?: string | null;
+  status?: string | null;
+  locked: boolean;
+}
 
 interface TicketSidebarProps {
-  ticket: any;
-  users: any;
-  clients: any;
-  priorityOptions: any[];
-  ticketStatusMap: any[];
-  setN: (value: any) => void;
-  setPriority: (value: any) => void;
-  setTicketStatus: (value: any) => void;
-  setAssignedClient: (value: any) => void;
+  ticket: TicketSidebarTicket;
+  users?: ComboOption[];
+  clients?: ComboOption[];
+  priorityOptions: ComboOption[];
+  ticketStatusMap: ComboOption[];
+  setN: (value: ComboOption | null) => void;
+  setPriority: (value: ComboOption | null) => void;
+  setTicketStatus: (value: ComboOption | null) => void;
+  setAssignedClient: (value: ComboOption | null) => void;
   variant: "desktop" | "mobile";
 }
 
@@ -59,15 +68,13 @@ export default function TicketSidebar({
                 hideInitial={false}
               />
 
-              <UserCombo
+              <IconCombo
                 value={ticketStatusMap}
                 update={setTicketStatus}
                 defaultName={
                   ticket.status ? ticket.status : ""
                 }
                 disabled={ticket.locked}
-
-                placeholder="Change Client..."
                 hideInitial={false}
               />
             </div>

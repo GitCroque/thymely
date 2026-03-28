@@ -23,6 +23,7 @@ import TicketContextMenu from "./TicketContextMenu";
 import TicketEditor from "./TicketEditor";
 import { useTicketData } from "./useTicketData";
 import { useTicketActions } from "./useTicketActions";
+import type { ComboOption } from "../Combo";
 
 const ticketStatusMap = [
   { id: 0, value: "hold", name: "Hold", icon: CircleDotDashed },
@@ -43,19 +44,19 @@ const priorities = ["low", "medium", "high"];
 export default function Ticket() {
   const { user } = useUser();
 
-  const { id, data, status, refetch, users, clients } = useTicketData();
+  const { id, data, status, refetch, users, userOptions, clientOptions } = useTicketData();
 
   const actions = useTicketActions({ id, refetch, userId: user.id });
 
   // Local UI state
   const [title, setTitle] = useState<string>();
   const [issue, setIssue] = useState<unknown>();
-  const [priority, setPriority] = useState<{ value: string }>();
-  const [ticketStatus, setTicketStatus] = useState<{ value: string }>();
+  const [priority, setPriority] = useState<ComboOption | null>();
+  const [ticketStatus, setTicketStatus] = useState<ComboOption | null>();
   const [comment, setComment] = useState<string>();
   const [publicComment, setPublicComment] = useState(false);
-  const [n, setN] = useState<{ id: string }>();
-  const [assignedClient, setAssignedClient] = useState<{ id: string }>();
+  const [n, setN] = useState<ComboOption | null>();
+  const [assignedClient, setAssignedClient] = useState<ComboOption | null>();
   // Debounced values for auto-save
   const [debouncedValue] = useDebounce(issue, 500);
   const [debounceTitle] = useDebounce(title, 500);
@@ -84,13 +85,16 @@ export default function Ticket() {
   // Transfer ticket on user selection
   useEffect(() => {
     if (!data?.ticket || n === undefined) return;
-    actions.transferTicket(n, data.ticket.locked);
+    actions.transferTicket(n ? { id: n.value } : null, data.ticket.locked);
   }, [n]);
 
   // Transfer client on client selection
   useEffect(() => {
     if (!data?.ticket || assignedClient === undefined) return;
-    actions.transferClient(assignedClient, data.ticket.locked);
+    actions.transferClient(
+      assignedClient ? { id: assignedClient.value } : null,
+      data.ticket.locked
+    );
   }, [assignedClient]);
 
   return (
@@ -124,8 +128,8 @@ export default function Ticket() {
                   />
                   <TicketSidebar
                     ticket={data.ticket}
-                    users={users}
-                    clients={clients}
+                    users={userOptions}
+                    clients={clientOptions}
                     priorityOptions={priorityOptions}
                     ticketStatusMap={ticketStatusMap}
                     setN={setN}
@@ -155,8 +159,8 @@ export default function Ticket() {
                 </div>
                 <TicketSidebar
                   ticket={data.ticket}
-                  users={users}
-                  clients={clients}
+                  users={userOptions}
+                  clients={clientOptions}
                   priorityOptions={priorityOptions}
                   ticketStatusMap={ticketStatusMap}
                   setN={setN}

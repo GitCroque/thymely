@@ -75,16 +75,17 @@ model Role {
   name        String   @unique
   description String?
   permissions Json[]
+  active      Boolean  @default(true)
   isDefault   Boolean  @default(false)
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   users       User[]
 }
 
 model User {
   id                           String    @id @default(uuid())
   createdAt                    DateTime  @default(now())
-  updatedAt                    DateTime  @default(now())
+  updatedAt                    DateTime  @updatedAt
   name                         String
   password                     String?
   email                        String    @unique
@@ -123,7 +124,7 @@ model User {
 model Team {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   name      String
 
   members User[]
@@ -133,7 +134,7 @@ model Team {
 model Ticket {
   id         String       @id @default(uuid())
   createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
   name       String?
   title      String
   detail     String?
@@ -169,15 +170,18 @@ model Ticket {
   notifications notifications[]
 
   @@index([isComplete, hidden])
+  @@index([isDeleted, hidden])
   @@index([userId])
   @@index([clientId])
+  @@index([teamId])
   @@index([status])
+  @@index([createdAt])
 }
 
 model TimeTracking {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   title     String
   comment   String?
   time      Int
@@ -214,7 +218,7 @@ model Comment {
 model Client {
   id           String         @id @default(uuid())
   createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
   name         String
   email        String         @unique
   contactName  String
@@ -256,7 +260,7 @@ model TicketFile {
 model Notes {
   id         String   @id @default(uuid())
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
   title      String
   note       String
   Favourited Boolean  @default(false)
@@ -268,7 +272,7 @@ model Notes {
 model Todos {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   text      String
   done      Boolean  @default(false)
 
@@ -279,7 +283,7 @@ model Todos {
 model Webhooks {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   name      String
   url       String
   type      Hook
@@ -291,7 +295,7 @@ model Webhooks {
 model Discord {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   name      String
   secret    String?
   url       String
@@ -301,7 +305,7 @@ model Discord {
 model Slack {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   name      String
   secret    String?
   url       String
@@ -311,7 +315,7 @@ model Slack {
 model Email {
   id           String   @id @default(uuid())
   createdAt    DateTime @default(now())
-  updatedAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
   active       Boolean  @default(false)
   user         String
   pass         String?
@@ -332,7 +336,7 @@ model Email {
 model Config {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   notifications    Json? // Array of service names and an active field of TRUE OR FALSE
   sso_provider     String?
@@ -349,7 +353,7 @@ model Config {
 model Uptime {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   name    String
   url     String
@@ -362,7 +366,7 @@ model Uptime {
 model knowledgeBase {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   title          String
   slug           String              @unique
@@ -387,7 +391,7 @@ model knowledgeBase {
 model Imap_Email {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   from    String?
   subject String?
@@ -402,7 +406,7 @@ model Imap_Email {
 model EmailQueue {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   name         String
   username     String
@@ -426,7 +430,7 @@ model EmailQueue {
 model notifications {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   read Boolean @default(false)
   text String
@@ -440,7 +444,7 @@ model notifications {
 model emailTemplate {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   html String
   type Template

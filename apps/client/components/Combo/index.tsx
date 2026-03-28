@@ -13,7 +13,7 @@ import {
 } from "@/shadcn/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
 
-interface ComboOption {
+export interface ComboOption {
   name: string;
   value: string;
   icon?: React.ComponentType<{ className?: string }>;
@@ -60,7 +60,7 @@ export function UserCombo({
                     </span>
                   </div>
                 )}
-                <span>{defaultName}</span>
+                <span>{selectedStatus.name}</span>
               </div>
             ) : defaultName ? (
               <>
@@ -90,7 +90,7 @@ export function UserCombo({
               <CommandGroup>
                 <CommandItem
                   className=" hover:cursor-pointer"
-                  value={undefined}
+                  value="unassign"
                   onSelect={() => {
                     setSelectedStatus(null);
                     update(null);
@@ -268,7 +268,7 @@ export function ClientCombo({
                     </span>
                   </span>
                 </div>
-                <span className="mt-[2px]">{defaultName}</span>
+                <span className="mt-[2px]">{selectedStatus.name}</span>
               </div>
             ) : defaultName ? (
               <>
@@ -296,7 +296,7 @@ export function ClientCombo({
               <CommandGroup>
                 <CommandItem
                   className=" hover:cursor-pointer"
-                  value={undefined}
+                  value="unassign"
                   onSelect={() => {
                     setSelectedStatus(null);
                     update(null);

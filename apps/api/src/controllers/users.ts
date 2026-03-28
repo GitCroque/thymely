@@ -72,39 +72,33 @@ export function userRoutes(fastify: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const session = await checkSession(request);
+      const { email, password, name, admin } = request.body;
 
-      if (session!.isAdmin) {
-        const { email, password, name, admin } = request.body;
+      const e = email.toLowerCase();
 
-        const e = email.toLowerCase();
+      const hash = await bcrypt.hash(password, 12);
 
-        const hash = await bcrypt.hash(password, 12);
+      await prisma.user.create({
+        data: {
+          name,
+          email: e,
+          password: hash,
+          isAdmin: admin,
+        },
+      });
 
-        await prisma.user.create({
-          data: {
-            name,
-            email: e,
-            password: hash,
-            isAdmin: admin,
-          },
-        });
+      const client = track();
 
-        const client = track();
+      client.capture({
+        event: "user_created",
+        distinctId: "uuid",
+      });
 
-        client.capture({
-          event: "user_created",
-          distinctId: "uuid",
-        });
+      client.shutdownAsync();
 
-        client.shutdownAsync();
-
-        reply.send({
-          success: true,
-        });
-      } else {
-        reply.status(403).send({ message: "Unauthorized", failed: true });
-      }
+      reply.send({
+        success: true,
+      });
     }
   );
 
@@ -133,22 +127,16 @@ export function userRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const { password, id } = request.body;
 
-      const session = await checkSession(request);
-
-      if (session!.isAdmin) {
-        const hashedPass = await bcrypt.hash(password, 12);
-        await prisma.user.update({
-          where: { id: id },
-          data: {
-            password: hashedPass,
-          },
-        });
-        reply
-          .status(201)
-          .send({ message: "password updated success", failed: false });
-      } else {
-        reply.status(403).send({ message: "Unauthorized", failed: true });
-      }
+      const hashedPass = await bcrypt.hash(password, 12);
+      await prisma.user.update({
+        where: { id: id },
+        data: {
+          password: hashedPass,
+        },
+      });
+      reply
+        .status(200)
+        .send({ message: "password updated success", success: true });
     }
   );
 

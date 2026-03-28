@@ -257,9 +257,8 @@ export function useTicketActions({ id, refetch, userId }: UseTicketActionsOption
     refetch();
   }
 
-  async function transferTicket(targetUser: { id: string } | undefined, locked: boolean) {
+  async function transferTicket(targetUser: { id: string } | null | undefined, locked: boolean) {
     if (locked) return;
-    if (targetUser === undefined) return;
 
     const res = await fetch(`/api/v1/ticket/transfer`, {
       method: "POST",
@@ -268,7 +267,7 @@ export function useTicketActions({ id, refetch, userId }: UseTicketActionsOption
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        user: targetUser.id,
+        user: targetUser?.id,
         id,
       }),
     }).then((res) => res.json());
@@ -284,9 +283,8 @@ export function useTicketActions({ id, refetch, userId }: UseTicketActionsOption
     refetch();
   }
 
-  async function transferClient(client: { id: string } | undefined, locked: boolean) {
+  async function transferClient(client: { id: string } | null | undefined, locked: boolean) {
     if (locked) return;
-    if (client === undefined) return;
 
     const res = await fetch(`/api/v1/ticket/transfer/client`, {
       method: "POST",
@@ -295,7 +293,7 @@ export function useTicketActions({ id, refetch, userId }: UseTicketActionsOption
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        client: client.id,
+        client: client?.id,
         id,
       }),
     }).then((res) => res.json());

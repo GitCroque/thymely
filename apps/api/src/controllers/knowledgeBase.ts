@@ -337,7 +337,6 @@ export function knowledgeBaseRoutes(fastify: FastifyInstance) {
               request.body.excerpt,
               request.body.content
             ),
-            updatedAt: new Date(),
           },
           select: getAdminArticleSelect(),
         });

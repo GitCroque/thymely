@@ -1,4 +1,5 @@
 import axios from "axios";
+import type { AxiosResponse } from "axios";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
@@ -96,17 +97,19 @@ export function authRoutes(fastify: FastifyInstance) {
             password: { type: "string", minLength: 8, maxLength: 128 },
             admin: { type: "boolean" },
             name: { type: "string", maxLength: 200 },
+            language: { type: "string", maxLength: 10 },
           },
-          required: ["email", "password", "name", "admin"],
+          required: ["email", "name", "admin"],
         },
       },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const { email, password, admin, name } = request.body as {
+      const { email, password, admin, name, language } = request.body as {
         email: string;
-        password: string;
+        password?: string;
         admin: boolean;
         name: string;
+        language?: string;
       };
 
       const requester = await checkSession(request);
@@ -114,6 +117,17 @@ export function authRoutes(fastify: FastifyInstance) {
       if (!requester?.isAdmin) {
         return reply.code(401).send({
           message: "Unauthorized",
+        });
+      }
+
+      const config = await prisma.config.findFirst({
+        select: { sso_active: true },
+      });
+
+      if (!config?.sso_active && !password) {
+        return reply.code(400).send({
+          message: "Password is required when SSO is disabled",
+          success: false,
         });
       }
 
@@ -132,9 +146,10 @@ export function authRoutes(fastify: FastifyInstance) {
       const user = await prisma.user.create({
         data: {
           email,
-          password: await bcrypt.hash(password, 12),
+          password: password ? await bcrypt.hash(password, 12) : null,
           name,
           isAdmin: admin,
+          language,
         },
       });
 
@@ -717,8 +732,11 @@ export function authRoutes(fastify: FastifyInstance) {
         const fetch_token = await client.getToken(tokenParams);
         const access_token = fetch_token.token.access_token;
 
-        // // Fetch user info from the provider
-        const userInfoResponse: any = await axios.get(
+        type OAuthUserInfo = {
+          email?: string | null;
+        };
+
+        const userInfoResponse: AxiosResponse<OAuthUserInfo> = await axios.get(
           oauthProvider.userInfoUrl,
           {
             headers: {
@@ -727,14 +745,21 @@ export function authRoutes(fastify: FastifyInstance) {
           }
         );
 
-        const emails =
+        const email =
           oauthProvider.name === "github"
             ? await getUserEmails(access_token as string)
-            : userInfoResponse.email;
+            : userInfoResponse.data.email;
+
+        if (!email) {
+          return reply.code(400).send({
+            success: false,
+            message: "OAuth provider did not return an email address",
+          });
+        }
 
         // Issue JWT token
         const user = await prisma.user.findUnique({
-          where: { email: emails },
+          where: { email },
         });
 
         if (!user) {

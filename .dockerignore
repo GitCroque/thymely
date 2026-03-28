@@ -6,9 +6,9 @@ dist/
 .DS_Store
 .vscode/
 
-# # Exclude any sensitive or secret files
-# .env
-# .env.*
+# Exclude any sensitive or secret files
+.env
+.env.*
 
 # Exclude any temporary or cache files
 *.log

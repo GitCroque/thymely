@@ -89,6 +89,9 @@ server.addHook("onSend", async (request, reply, payload) => {
   reply.header("X-Frame-Options", "DENY");
   reply.header("Referrer-Policy", "no-referrer");
   reply.header("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  if (isProduction) {
+    reply.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
 
   return payload;
 });

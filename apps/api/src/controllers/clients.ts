@@ -118,7 +118,7 @@ export function clientRoutes(fastify: FastifyInstance) {
       const where = { isDeleted: false };
 
       const [clients, total] = await Promise.all([
-        prisma.client.findMany({ where, skip, take }),
+        prisma.client.findMany({ where, skip, take, orderBy: { createdAt: "desc" } }),
         prisma.client.count({ where }),
       ]);
 

@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { toast } from "@/shadcn/hooks/use-toast";
 import { hasAccess } from "@/shadcn/lib/hasAccess";
+import type { ComboOption } from "../Combo";
 
 interface User {
   id: string;
@@ -23,6 +24,8 @@ export function useTicketData() {
 
   const [users, setUsers] = useState<User[]>();
   const [clients, setClients] = useState<Client[]>();
+  const [userOptions, setUserOptions] = useState<ComboOption[]>();
+  const [clientOptions, setClientOptions] = useState<ComboOption[]>();
 
   const fetchTicketById = async () => {
     const res = await fetch(`/api/v1/ticket/${id}`, {
@@ -31,64 +34,109 @@ export function useTicketData() {
       },
     });
 
-    hasAccess(res);
+    if (!hasAccess(res)) {
+      throw new Error("Failed to fetch ticket");
+    }
 
     return res.json();
   };
 
   const { data, status, refetch } = useQuery({
-    queryKey: ["fetchTickets"],
+    queryKey: ["ticket", id],
     queryFn: fetchTicketById,
-    enabled: false,
+    enabled: !!id,
+    staleTime: 60_000,
+    retry: 2,
+    refetchOnWindowFocus: false,
   });
 
-  useEffect(() => {
-    refetch();
-  }, [router]);
-
   async function fetchUsers() {
-    const res = await fetch(`/api/v1/users/all`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    }).then((res) => res.json());
+    try {
+      const response = await fetch(`/api/v1/users/all`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    if (!res.success) {
+      if (!hasAccess(response)) {
+        return;
+      }
+
+      const res = await response.json() as {
+        success?: boolean;
+        message?: string;
+        users?: User[];
+      };
+
+      if (!res.success || !res.users) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: res.message || "Failed to fetch users",
+        });
+        return;
+      }
+
+      setUsers(res.users);
+      setUserOptions(
+        res.users.map((user) => ({
+          name: user.name,
+          value: user.id,
+        }))
+      );
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: res.message || "Failed to fetch users",
+        description: "Failed to fetch users",
       });
-      return;
-    }
-
-    if (res.users) {
-      setUsers(res.users);
     }
   }
 
   async function fetchClients() {
-    const res = await fetch(`/api/v1/clients/all`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    }).then((res) => res.json());
+    try {
+      const response = await fetch(`/api/v1/clients/all`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    if (!res.success) {
+      if (!hasAccess(response)) {
+        return;
+      }
+
+      const res = await response.json() as {
+        success?: boolean;
+        message?: string;
+        clients?: Client[];
+      };
+
+      if (!res.success || !res.clients) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: res.message || "Failed to fetch clients",
+        });
+        return;
+      }
+
+      setClients(res.clients);
+      setClientOptions(
+        res.clients.map((client) => ({
+          name: client.name,
+          value: client.id,
+        }))
+      );
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: res.message || "Failed to fetch clients",
+        description: "Failed to fetch clients",
       });
-      return;
-    }
-
-    if (res.clients) {
-      setClients(res.clients);
     }
   }
 
@@ -104,5 +152,7 @@ export function useTicketData() {
     refetch,
     users,
     clients,
+    userOptions,
+    clientOptions,
   };
 }

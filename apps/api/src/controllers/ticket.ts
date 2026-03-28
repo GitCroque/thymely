@@ -26,6 +26,18 @@ import { assertSafeWebhookUrl } from "../lib/security/webhook-url";
 import { checkSession } from "../lib/session";
 import { prisma } from "../prisma";
 
+interface TicketWebhookSource {
+  id: string;
+  title: string;
+  priority: string;
+  email: string | null;
+  name: string | null;
+  type: string;
+  createdBy: unknown;
+  assignedTo?: unknown;
+  client?: unknown;
+}
+
 const validateEmail = (email: string) => {
   return String(email)
     .toLowerCase()
@@ -52,7 +64,7 @@ function buildWebhookHeaders(secret: string | null | undefined, body: unknown) {
   };
 }
 
-async function dispatchTicketCreatedWebhooks(ticket: any) {
+async function dispatchTicketCreatedWebhooks(ticket: TicketWebhookSource) {
   const webhooks = await prisma.webhooks.findMany({
     where: {
       type: "ticket_created",
@@ -116,17 +128,17 @@ async function createTicketCore(request: FastifyRequest<{ Body: TicketCreateBody
 
   const user = options.authenticated ? await checkSession(request) : null;
 
-  const ticket: any = await prisma.ticket.create({
-    data: {
-      name,
-      title,
-      detail: JSON.stringify(detail),
-      priority: priority ? priority : "low",
-      email,
-      type: type ? type.toLowerCase() as any : "support",
-      createdBy: createdBy
-        ? { id: createdBy.id, name: createdBy.name, role: createdBy.role, email: createdBy.email }
-        : undefined,
+      const ticket = await prisma.ticket.create({
+        data: {
+          name,
+          title,
+          detail: JSON.stringify(detail),
+          priority: priority ? priority : "low",
+          email,
+          type: type ?? "support",
+          createdBy: createdBy
+            ? { id: createdBy.id, name: createdBy.name, role: createdBy.role, email: createdBy.email }
+            : undefined,
       client: company !== undefined ? { connect: { id: typeof company === "string" ? company : company.id } } : undefined,
       fromImap: false,
       assignedTo: engineer && engineer.name !== "Unassigned" ? { connect: { id: engineer.id } } : undefined,
@@ -135,12 +147,20 @@ async function createTicketCore(request: FastifyRequest<{ Body: TicketCreateBody
   });
 
   if (email && validateEmail(email)) {
-    await sendTicketCreate(ticket);
+    await sendTicketCreate({
+      id: ticket.id,
+      email,
+      createdAt: ticket.createdAt,
+    });
   }
 
   if (engineer && engineer.name !== "Unassigned") {
-    const assigned = await prisma.user.findUnique({ where: { id: ticket.userId } });
-    await sendAssignedEmail(assigned!.email);
+    if (ticket.userId) {
+      const assigned = await prisma.user.findUnique({ where: { id: ticket.userId } });
+      if (assigned?.email) {
+        await sendAssignedEmail(assigned.email);
+      }
+    }
     const assigner = user || await checkSession(request);
     await assignedNotification(engineer, ticket, assigner);
   }
@@ -298,6 +318,9 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/tickets/search",
     {
       preHandler: requirePermission(["issue::read"]),
+      config: {
+        rateLimit: { max: 30, timeWindow: "1 minute" },
+      },
       schema: {
         body: {
           type: "object",
@@ -316,7 +339,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
       const where = { title: { contains: query }, isDeleted: false };
 
       const [tickets, total] = await Promise.all([
-        prisma.ticket.findMany({ where, skip, take }),
+        prisma.ticket.findMany({ where, skip, take, orderBy: { createdAt: "desc" } }),
         prisma.ticket.count({ where }),
       ]);
 
@@ -462,7 +485,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
       const where = { isComplete: false, assignedTo: null, hidden: false, isDeleted: false };
 
       const [tickets, total] = await Promise.all([
-        prisma.ticket.findMany({ where, skip, take }),
+        prisma.ticket.findMany({ where, skip, take, orderBy: { createdAt: "desc" } }),
         prisma.ticket.count({ where }),
       ]);
 
@@ -819,7 +842,7 @@ export function ticketRoutes(fastify: FastifyInstance) {
 
       const user = await checkSession(request);
 
-      const ticket: any = await prisma.ticket.update({
+      const ticket = await prisma.ticket.update({
         where: { id: id },
         data: {
           isComplete: status,
@@ -828,7 +851,14 @@ export function ticketRoutes(fastify: FastifyInstance) {
 
       await activeStatusNotification(ticket, user, status ? "Completed" : "Outstanding");
 
-      await sendTicketStatus(ticket);
+      if (ticket.email && validateEmail(ticket.email)) {
+        await sendTicketStatus({
+          title: ticket.title,
+          Number: ticket.Number,
+          email: ticket.email,
+          isComplete: ticket.isComplete,
+        });
+      }
 
       const webhooks = await prisma.webhooks.findMany({
         where: {

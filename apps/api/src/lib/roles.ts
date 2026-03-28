@@ -55,7 +55,8 @@ export function hasPermission(
   const userPermissions = new Set<Permission>();
 
   // Add permissions from default role if it exists
-  const defaultRole = user.roles.find((role) => role.isDefault);
+  const activeRoles = user.roles.filter((role) => role.active);
+  const defaultRole = activeRoles.find((role) => role.isDefault);
   if (defaultRole) {
     defaultRole.permissions.forEach((perm) =>
       userPermissions.add(perm as Permission)
@@ -63,7 +64,7 @@ export function hasPermission(
   }
 
   // Add permissions from additional roles
-  user.roles.forEach((role) => {
+  activeRoles.forEach((role) => {
     role.permissions.forEach((perm) => userPermissions.add(perm as Permission));
   });
 

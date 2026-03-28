@@ -49,11 +49,13 @@ yarn-error.log*
 
 # Typescript build
 dist
+*.tsbuildinfo
 
 infra
 
 .cursorrules
 .cursor/
+.vscode/
 
 # Claude Code
 CLAUDE.md
