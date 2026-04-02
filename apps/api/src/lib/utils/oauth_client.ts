@@ -5,7 +5,15 @@ const { AuthorizationCode } = require('simple-oauth2');
 
 const oauthClients = {};
 
-export function getOAuthClient(providerConfig: any) {
+interface OAuthProviderConfig {
+  name: string;
+  clientId: string;
+  clientSecret: string;
+  tokenUrl: string;
+  authorizationUrl: string;
+}
+
+export function getOAuthClient(providerConfig: OAuthProviderConfig) {
   const { name } = providerConfig;
   if (!oauthClients[name]) {
     oauthClients[name] = new AuthorizationCode({
@@ -21,4 +29,3 @@ export function getOAuthClient(providerConfig: any) {
   }
   return oauthClients[name];
 }
-

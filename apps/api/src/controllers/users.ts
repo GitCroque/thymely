@@ -7,12 +7,57 @@ import { requirePermission } from "../lib/roles";
 import { checkSession } from "../lib/session";
 import { prisma } from "../prisma";
 
+const paginationQuerySchema = {
+  type: "object",
+  properties: {
+    page: { type: "string", pattern: "^[0-9]+$" },
+    limit: { type: "string", pattern: "^[0-9]+$" },
+  },
+};
+
 export function userRoutes(fastify: FastifyInstance) {
   // All users
   fastify.get(
     "/api/v1/users/all",
     {
       preHandler: requirePermission(["user::read"]),
+      schema: {
+        querystring: paginationQuerySchema,
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              users: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string", format: "uuid" },
+                    name: { type: "string" },
+                    email: { type: "string", format: "email" },
+                    isAdmin: { type: "boolean" },
+                    createdAt: { type: "string", format: "date-time" },
+                    updatedAt: { type: "string", format: "date-time" },
+                    language: { type: "string", nullable: true },
+                  },
+                  required: ["id", "name", "email", "isAdmin", "createdAt", "updatedAt"],
+                },
+              },
+              pagination: {
+                type: "object",
+                properties: {
+                  page: { type: "number" },
+                  limit: { type: "number" },
+                  total: { type: "number" },
+                },
+                required: ["page", "limit", "total"],
+              },
+            },
+            required: ["success", "users", "pagination"],
+          },
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { skip, take, page, limit } = parsePagination(request.query as { page?: string; limit?: string });
@@ -69,6 +114,15 @@ export function userRoutes(fastify: FastifyInstance) {
           required: ["email", "password", "name"],
           additionalProperties: false,
         },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+            },
+            required: ["success"],
+          },
+        },
       },
     },
     async (request, reply) => {
@@ -122,6 +176,16 @@ export function userRoutes(fastify: FastifyInstance) {
           required: ["password", "id"],
           additionalProperties: false,
         },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+              success: { type: "boolean" },
+            },
+            required: ["message", "success"],
+          },
+        },
       },
     },
     async (request, reply) => {
@@ -147,6 +211,26 @@ export function userRoutes(fastify: FastifyInstance) {
     };
   }>(
     "/api/v1/user/notification/:id",
+    {
+      schema: {
+        params: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+          },
+          required: ["id"],
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+            },
+            required: ["success"],
+          },
+        },
+      },
+    },
     async (request, reply) => {
       const { id } = request.params;
       const session = await checkSession(request);

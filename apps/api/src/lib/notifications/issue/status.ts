@@ -1,24 +1,62 @@
 import { prisma } from "../../../prisma";
 import logger from "../../logger";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Prisma objects with many nullable fields
+interface TicketNotificationUser {
+  id: string;
+  name: string;
+}
+
+interface TicketNotificationTarget {
+  id: string;
+  Number: number | string;
+  following: unknown;
+  createdBy: unknown;
+}
+
+function getCreatedById(ticket: TicketNotificationTarget) {
+  if (
+    ticket.createdBy &&
+    typeof ticket.createdBy === "object" &&
+    "id" in ticket.createdBy &&
+    typeof ticket.createdBy.id === "string"
+  ) {
+    return ticket.createdBy.id;
+  }
+
+  return null;
+}
+
+function getFollowerIds(ticket: TicketNotificationTarget) {
+  const followers = Array.isArray(ticket.following)
+    ? ticket.following.filter((userId): userId is string => typeof userId === "string")
+    : [];
+
+  const createdById = getCreatedById(ticket);
+
+  if (!createdById) {
+    return followers;
+  }
+
+  return followers.includes(createdById)
+    ? followers
+    : [...followers, createdById];
+}
+
 export async function activeStatusNotification(
-  ticket: any,
-  updater: any,
+  ticket: TicketNotificationTarget | null,
+  updater: TicketNotificationUser | null,
   newStatus: string
 ) {
   try {
+    if (!ticket || !updater) {
+      return;
+    }
+
     const text = `#${ticket.Number} status changed to ${
       newStatus ? "Closed" : "Open"
     } by ${updater.name}`;
 
-    // Get all followers of the ticket, ensuring the creator is not already a follower
-    const followers = [
-      ...(ticket.following || []),
-      ...(ticket.following?.includes(ticket.createdBy.id)
-        ? []
-        : [ticket.createdBy.id]),
-    ];
+    const followers = getFollowerIds(ticket);
 
     // Create notifications for all followers (except the updater)
     await prisma.notifications.createMany({
@@ -35,22 +73,19 @@ export async function activeStatusNotification(
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function statusUpdateNotification(
-  ticket: any,
-  updater: any,
+  ticket: TicketNotificationTarget | null,
+  updater: TicketNotificationUser | null,
   newStatus: string
 ) {
   try {
+    if (!ticket || !updater) {
+      return;
+    }
+
     const text = `#${ticket.Number} status changed to ${newStatus} by ${updater.name}`;
 
-    // Get all followers of the ticket, ensuring the creator is not already a follower
-    const followers = [
-      ...(ticket.following || []),
-      ...(ticket.following?.includes(ticket.createdBy.id)
-        ? []
-        : [ticket.createdBy.id]),
-    ];
+    const followers = getFollowerIds(ticket);
 
     // Create notifications for all followers (except the updater)
     await prisma.notifications.createMany({

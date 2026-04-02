@@ -1,6 +1,6 @@
-import handlebars from "handlebars";
 import { prisma } from "../../../prisma";
 import logger from "../../logger";
+import { renderEmailTemplate } from "../render-template";
 import { sanitizeEmailAddress, sanitizeEmailHeader, sanitizeTemplateValue } from "../sanitize";
 import { createTransportProvider } from "../transport";
 
@@ -23,12 +23,11 @@ export async function sendTicketStatus(ticket: TicketStatusEmail) {
       },
     });
 
-    const template = handlebars.compile(testhtml?.html);
     const replacements = {
       title: sanitizeTemplateValue(String(ticket.title)),
       status: ticket.isComplete ? "COMPLETED" : "OUTSTANDING",
     };
-    const htmlToSend = template(replacements);
+    const htmlToSend = renderEmailTemplate(testhtml?.html, replacements);
 
     const statusLabel = ticket.isComplete ? "COMPLETED" : "OUTSTANDING";
     const to = sanitizeEmailAddress(ticket.email);

@@ -10,7 +10,6 @@ import { Button } from "@radix-ui/themes";
 import {
   BookOpenText,
   ContactIcon,
-  FileText,
   KeyRound,
   Mail,
   Mailbox,
@@ -95,12 +94,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       href: "/admin/knowledge-base",
       current: location.pathname === "/admin/knowledge-base",
       icon: BookOpenText,
-    },
-    {
-      name: "Logs",
-      href: "/admin/logs",
-      current: location.pathname === "/admin/logs",
-      icon: FileText,
     },
   ];
 

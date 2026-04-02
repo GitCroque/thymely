@@ -1,6 +1,6 @@
-import handlebars from "handlebars";
 import { prisma } from "../../../prisma";
 import logger from "../../logger";
+import { renderEmailTemplate } from "../render-template";
 import { sanitizeEmailAddress } from "../sanitize";
 import { createTransportProvider } from "../transport";
 
@@ -20,8 +20,7 @@ export async function sendAssignedEmail(email: string) {
         },
       });
 
-      const template = handlebars.compile(testhtml?.html);
-      const htmlToSend = template({});
+      const htmlToSend = renderEmailTemplate(testhtml?.html, {});
 
       await mail
         .sendMail({

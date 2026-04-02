@@ -45,7 +45,6 @@
     "dayjs": "^1.11.20",
     "isomorphic-dompurify": "^3.5.1",
     "js-file-download": "^0.4.12",
-    "lodash": "^4.17.23",
     "lucide-react": "^0.473.0",
     "monaco-editor": "^0.55.1",
     "next": "^16.1.7",
@@ -70,7 +69,6 @@
   },
   "devDependencies": {
     "@types/dompurify": "^3.2.0",
-    "@types/lodash": "^4",
     "@types/node": "^22",
     "@types/prismjs": "^1",
     "@types/prop-types": "^15",

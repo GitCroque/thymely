@@ -2,32 +2,21 @@ import compress from "@fastify/compress";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
-import { exec } from "child_process";
 import "dotenv/config";
 import Fastify, { FastifyInstance } from "fastify";
 import multipart from "@fastify/multipart";
-import fs from "fs";
-import util from "util";
 
 import { track } from "./lib/hog";
 import { getEmails } from "./lib/imap";
-import { backfillEncryptedSecrets } from "./lib/security/backfill";
 import { checkSession } from "./lib/session";
 import { prisma } from "./prisma";
 import { registerRoutes } from "./routes";
-
-const execAsync = util.promisify(exec);
-
-// Log file is intentionally written to disk (not stdout) because the admin UI reads it directly.
-// In Docker deployments, container restart or volume mount handles log rotation.
-const logFilePath = "./logs.log";
-const logStream = fs.createWriteStream(logFilePath, { flags: "a" });
 
 const trustProxy = process.env.TRUST_PROXY === "true";
 
 const server: FastifyInstance = Fastify({
   logger: {
-    stream: logStream,
+    level: process.env.LOG_LEVEL || "info",
   },
   disableRequestLogging: true,
   trustProxy,
@@ -172,53 +161,8 @@ server.get(
 
 const start = async () => {
   try {
-    const prismaEnv = { ...process.env, NO_UPDATE_NOTIFIER: "1", npm_config_update_notifier: "false" };
-    const prismaOpts = { env: prismaEnv };
-
-    function filterPrismaOutput(text: string): string {
-      return text
-        .replace(/┌[\s\S]*?┘/g, "")           // Prisma update banner
-        .replace(/npm notice[^\n]*/g, "")       // npm notice lines
-        .replace(/New major version[^\n]*/g, "") // npm upgrade prompt
-        .replace(/To update run:[^\n]*/g, "")   // npm upgrade command
-        .replace(/```[\s\S]*?```/g, "")         // Prisma code examples
-        .replace(/See other ways[^\n]*/g, "")   // Prisma import hints
-        .replace(/or start using[^\n]*/g, "")   // Prisma edge hint
-        .replace(/Start using[^\n]*/g, "")      // Prisma usage hint
-        .replace(/\n{3,}/g, "\n")               // Collapse blank lines
-        .trim();
-    }
-
-    const { stdout: migrateOut, stderr: migrateErr } = await execAsync(
-      "npx prisma migrate deploy",
-      prismaOpts
-    );
-    const cleanMigrate = filterPrismaOutput(migrateOut);
-    if (cleanMigrate) console.log(cleanMigrate);
-    const cleanMigrateErr = filterPrismaOutput(migrateErr || "");
-    if (cleanMigrateErr) console.error(cleanMigrateErr);
-
-    const { stdout: generateOut, stderr: generateErr } = await execAsync(
-      "npx prisma generate",
-      prismaOpts
-    );
-    const cleanGenerate = filterPrismaOutput(generateOut);
-    if (cleanGenerate) console.log(cleanGenerate);
-    const cleanGenerateErr = filterPrismaOutput(generateErr || "");
-    if (cleanGenerateErr) console.error(cleanGenerateErr);
-
-    const { stdout: seedOut, stderr: seedErr } = await execAsync(
-      "npx prisma db seed",
-      prismaOpts
-    );
-    const cleanSeed = filterPrismaOutput(seedOut);
-    if (cleanSeed) console.log(cleanSeed);
-    const cleanSeedErr = filterPrismaOutput(seedErr || "");
-    if (cleanSeedErr) console.error(cleanSeedErr);
-
     await prisma.$connect();
     server.log.info("Connected to Prisma");
-    await backfillEncryptedSecrets();
 
     const port = 5003;
 
@@ -230,7 +174,7 @@ const start = async () => {
       distinctId: "uuid",
     });
     client.shutdownAsync();
-    console.info(`Server listening on ${address}`);
+    server.log.info({ address }, "Server listening");
 
     const BASE_IMAP_INTERVAL = 60000;
     const MAX_IMAP_INTERVAL = 300000;

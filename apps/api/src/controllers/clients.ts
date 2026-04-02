@@ -5,6 +5,22 @@ import { parsePagination } from "../lib/pagination";
 import { requirePermission } from "../lib/roles";
 import { prisma } from "../prisma";
 
+const paginationQuerySchema = {
+  type: "object",
+  properties: {
+    page: { type: "string", pattern: "^[0-9]+$" },
+    limit: { type: "string", pattern: "^[0-9]+$" },
+  },
+};
+
+const successResponseSchema = {
+  type: "object",
+  properties: {
+    success: { type: "boolean" },
+  },
+  required: ["success"],
+};
+
 export function clientRoutes(fastify: FastifyInstance) {
   // Register a new client
   fastify.post<{
@@ -29,6 +45,9 @@ export function clientRoutes(fastify: FastifyInstance) {
           },
           required: ["name"],
           additionalProperties: false,
+        },
+        response: {
+          200: successResponseSchema,
         },
       },
     },
@@ -83,6 +102,9 @@ export function clientRoutes(fastify: FastifyInstance) {
           required: ["id"],
           additionalProperties: false,
         },
+        response: {
+          200: successResponseSchema,
+        },
       },
     },
     async (request, reply) => {
@@ -111,6 +133,43 @@ export function clientRoutes(fastify: FastifyInstance) {
     "/api/v1/clients/all",
     {
       preHandler: requirePermission(["client::read"]),
+      schema: {
+        querystring: paginationQuerySchema,
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              clients: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string", format: "uuid" },
+                    name: { type: "string" },
+                    email: { type: "string", nullable: true },
+                    number: { type: "string", nullable: true },
+                    contactName: { type: "string", nullable: true },
+                    createdAt: { type: "string", format: "date-time" },
+                    updatedAt: { type: "string", format: "date-time" },
+                  },
+                  required: ["id", "name", "createdAt", "updatedAt"],
+                },
+              },
+              pagination: {
+                type: "object",
+                properties: {
+                  page: { type: "number" },
+                  limit: { type: "number" },
+                  total: { type: "number" },
+                },
+                required: ["page", "limit", "total"],
+              },
+            },
+            required: ["success", "clients", "pagination"],
+          },
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { skip, take, page, limit } = parsePagination(request.query as { page?: string; limit?: string });
@@ -139,6 +198,18 @@ export function clientRoutes(fastify: FastifyInstance) {
     "/api/v1/clients/:id/delete-client",
     {
       preHandler: requirePermission(["client::delete"]),
+      schema: {
+        params: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+          },
+          required: ["id"],
+        },
+        response: {
+          200: successResponseSchema,
+        },
+      },
     },
     async (request, reply) => {
       const { id } = request.params;

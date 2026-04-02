@@ -1,6 +1,6 @@
-import handlebars from "handlebars";
 import { prisma } from "../../../prisma";
 import logger from "../../logger";
+import { renderEmailTemplate } from "../render-template";
 import { sanitizeEmailAddress, sanitizeEmailHeader, sanitizeTemplateValue } from "../sanitize";
 import { createTransportProvider } from "../transport";
 
@@ -21,12 +21,11 @@ export async function sendComment(
       },
     });
 
-    const template = handlebars.compile(testhtml?.html);
     const replacements = {
       title: sanitizeTemplateValue(title),
       comment: sanitizeTemplateValue(comment),
     };
-    const htmlToSend = template(replacements);
+    const htmlToSend = renderEmailTemplate(testhtml?.html, replacements);
 
     const to = sanitizeEmailAddress(email);
     const subject = sanitizeEmailHeader(`New comment on Issue #${title} ref: #${id}`);

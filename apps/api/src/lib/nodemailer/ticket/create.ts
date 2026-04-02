@@ -1,6 +1,6 @@
-import handlebars from "handlebars";
 import { prisma } from "../../../prisma";
 import logger from "../../logger";
+import { renderEmailTemplate } from "../render-template";
 import { sanitizeEmailAddress, sanitizeEmailHeader, sanitizeTemplateValue } from "../sanitize";
 import { createTransportProvider } from "../transport";
 
@@ -23,11 +23,10 @@ export async function sendTicketCreate(ticket: TicketEmail) {
         },
       });
 
-      const template = handlebars.compile(testhtml?.html);
       const replacements = {
         id: sanitizeTemplateValue(String(ticket.id)),
       };
-      const htmlToSend = template(replacements);
+      const htmlToSend = renderEmailTemplate(testhtml?.html, replacements);
 
       const to = sanitizeEmailAddress(ticket.email);
       const subject = sanitizeEmailHeader(`Issue #${ticket.id} has just been created & logged`);

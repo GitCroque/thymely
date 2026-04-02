@@ -4,7 +4,15 @@ import { requirePermission } from "../lib/roles";
 import { checkSession } from "../lib/session";
 import { prisma } from "../prisma";
 
-async function tracking(event: string, properties: any) {
+const successResponseSchema = {
+  type: "object",
+  properties: {
+    success: { type: "boolean" },
+  },
+  required: ["success"],
+};
+
+async function tracking(event: string, properties: Record<string, unknown>) {
   const client = track();
 
   client.capture({
@@ -27,6 +35,27 @@ export function notebookRoutes(fastify: FastifyInstance) {
     "/api/v1/notebook/note/create",
     {
       preHandler: requirePermission(["document::create"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            content: { type: "string", maxLength: 100000 },
+            title: { type: "string", maxLength: 200 },
+          },
+          required: ["content", "title"],
+          additionalProperties: false,
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              id: { type: "string", format: "uuid" },
+            },
+            required: ["success", "id"],
+          },
+        },
+      },
     },
     async (request, reply) => {
       const { content, title } = request.body;
@@ -53,6 +82,33 @@ export function notebookRoutes(fastify: FastifyInstance) {
     "/api/v1/notebooks/all",
     {
       preHandler: requirePermission(["document::read"]),
+      schema: {
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              notebooks: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string", format: "uuid" },
+                    title: { type: "string" },
+                    note: { type: "string" },
+                    createdAt: { type: "string", format: "date-time" },
+                    updatedAt: { type: "string", format: "date-time" },
+                    userId: { type: "string", format: "uuid" },
+                    Favourited: { type: "boolean" },
+                  },
+                  required: ["id", "title", "note", "createdAt", "updatedAt", "userId", "Favourited"],
+                },
+              },
+            },
+            required: ["success", "notebooks"],
+          },
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const user = await checkSession(request);
@@ -74,6 +130,42 @@ export function notebookRoutes(fastify: FastifyInstance) {
     "/api/v1/notebooks/note/:id",
     {
       preHandler: requirePermission(["document::read"]),
+      schema: {
+        params: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+          },
+          required: ["id"],
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              note: {
+                anyOf: [
+                  {
+                    type: "object",
+                    properties: {
+                      id: { type: "string", format: "uuid" },
+                      title: { type: "string" },
+                      note: { type: "string" },
+                      createdAt: { type: "string", format: "date-time" },
+                      updatedAt: { type: "string", format: "date-time" },
+                      userId: { type: "string", format: "uuid" },
+                      Favourited: { type: "boolean" },
+                    },
+                    required: ["id", "title", "note", "createdAt", "updatedAt", "userId", "Favourited"],
+                  },
+                  { type: "null" },
+                ],
+              },
+            },
+            required: ["success", "note"],
+          },
+        },
+      },
     },
     async (request, reply) => {
       const user = await checkSession(request);
@@ -97,6 +189,18 @@ export function notebookRoutes(fastify: FastifyInstance) {
     "/api/v1/notebooks/note/:id",
     {
       preHandler: requirePermission(["document::delete"]),
+      schema: {
+        params: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+          },
+          required: ["id"],
+        },
+        response: {
+          200: successResponseSchema,
+        },
+      },
     },
     async (request, reply) => {
       const user = await checkSession(request);
@@ -128,6 +232,27 @@ export function notebookRoutes(fastify: FastifyInstance) {
     "/api/v1/notebooks/note/:id/update",
     {
       preHandler: requirePermission(["document::update"]),
+      schema: {
+        params: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+          },
+          required: ["id"],
+        },
+        body: {
+          type: "object",
+          properties: {
+            content: { type: "string", maxLength: 100000 },
+            title: { type: "string", maxLength: 200 },
+          },
+          required: ["content", "title"],
+          additionalProperties: false,
+        },
+        response: {
+          200: successResponseSchema,
+        },
+      },
     },
     async (request, reply) => {
       const user = await checkSession(request);

@@ -11,6 +11,65 @@ import {
 // import ClientNotesModal from "../../components/ClientNotesModal";
 // import UpdateClientModal from "../../components/UpdateClientModal";
 
+interface ClientRecord {
+  id: string;
+  name: string;
+  number?: string | null;
+  contactName?: string | null;
+}
+
+interface ClientResponse {
+  clients: ClientRecord[];
+}
+
+interface ColumnFilterProps {
+  column: {
+    filterValue?: string;
+    setFilter: (value?: string) => void;
+  };
+}
+
+interface TableColumnDefinition {
+  id: string;
+  hideHeader?: boolean;
+  canFilter?: boolean;
+  getHeaderProps: () => Record<string, unknown>;
+  render: (name: string) => unknown;
+}
+
+interface TableHeaderGroupDefinition {
+  headers: TableColumnDefinition[];
+  getHeaderGroupProps: () => Record<string, unknown>;
+}
+
+interface TableCellDefinition {
+  getCellProps: () => Record<string, unknown>;
+  render: (name: string) => unknown;
+}
+
+interface TableRowDefinition {
+  values: Record<string, unknown>;
+  cells: TableCellDefinition[];
+  original: ClientRecord;
+  getRowProps: () => Record<string, unknown>;
+}
+
+interface TableInstanceDefinition {
+  getTableProps: () => Record<string, unknown>;
+  getTableBodyProps: () => Record<string, unknown>;
+  headerGroups: TableHeaderGroupDefinition[];
+  page: TableRowDefinition[];
+  prepareRow: (row: TableRowDefinition) => void;
+  canPreviousPage: boolean;
+  canNextPage: boolean;
+  nextPage: () => void;
+  previousPage: () => void;
+  setPageSize: (pageSize: number) => void;
+  state: {
+    pageSize: number;
+  };
+}
+
 const fetchAllClients = async () => {
   const res = await fetch(`/api/v1/clients/all`, {
     headers: {
@@ -18,10 +77,10 @@ const fetchAllClients = async () => {
       Authorization: `Bearer ${getCookie("session")}`,
     },
   });
-  return res.json();
+  return res.json() as Promise<ClientResponse>;
 };
 
-function DefaultColumnFilter({ column: { filterValue, setFilter } }: any) {
+function DefaultColumnFilter({ column: { filterValue, setFilter } }: ColumnFilterProps) {
   return (
     <input
       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
@@ -34,15 +93,25 @@ function DefaultColumnFilter({ column: { filterValue, setFilter } }: any) {
     />
   );
 }
-function Table({ columns, data }: any) {
+function Table({
+  columns,
+  data,
+}: {
+  columns: Array<Record<string, unknown>>;
+  data: ClientRecord[];
+}) {
   const filterTypes = React.useMemo(
     () => ({
       // Add a new fuzzyTextFilterFn filter type.
       // fuzzyText: fuzzyTextFilterFn,
       // Or, override the default text filter to use
       // "startWith"
-      text: (rows: any, id: any, filterValue: any) =>
-        rows.filter((row: any) => {
+      text: (
+        rows: TableRowDefinition[],
+        id: string,
+        filterValue: string
+      ) =>
+        rows.filter((row) => {
           const rowValue = row.values[id];
           return rowValue !== undefined
             ? String(rowValue)
@@ -76,18 +145,18 @@ function Table({ columns, data }: any) {
     state: { pageSize },
   } = useTable(
     {
-      columns,
-      data,
-      defaultColumn, // Be sure to pass the defaultColumn option
-      filterTypes,
+      columns: columns as never,
+      data: data as never,
+      defaultColumn: defaultColumn as never, // Be sure to pass the defaultColumn option
+      filterTypes: filterTypes as never,
       initialState: {
         pageIndex: 0,
-      },
-    },
+      } as never,
+    } as never,
     useFilters, // useFilters!
     useGlobalFilter,
     usePagination
-  );
+  ) as unknown as TableInstanceDefinition;
 
   return (
     <div className="overflow-x-auto md:-mx-6 lg:-mx-8">
@@ -98,21 +167,23 @@ function Table({ columns, data }: any) {
             className="min-w-full divide-y divide-gray-200"
           >
             <thead className="bg-gray-50">
-              {headerGroups.map((headerGroup: any) => (
+              {headerGroups.map((headerGroup: TableHeaderGroupDefinition) => (
                 <tr
                   {...headerGroup.getHeaderGroupProps()}
-                  key={headerGroup.headers.map((header: any) => header.id)}
+                  key={headerGroup.headers.map((header) => header.id).join("-")}
                 >
-                  {headerGroup.headers.map((column: any) =>
+                  {headerGroup.headers.map((column: TableColumnDefinition) =>
                     column.hideHeader === false ? null : (
                       <th
                         {...column.getHeaderProps()}
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                       >
-                        {column.render("Header")}
+                        {column.render("Header") as React.ReactNode}
                         {/* Render the columns filter UI */}
                         <div>
-                          {column.canFilter ? column.render("Filter") : null}
+                          {column.canFilter
+                            ? (column.render("Filter") as React.ReactNode)
+                            : null}
                         </div>
                       </th>
                     )
@@ -121,16 +192,16 @@ function Table({ columns, data }: any) {
               ))}
             </thead>
             <tbody {...getTableBodyProps()}>
-              {page.map((row: any) => {
+              {page.map((row: TableRowDefinition) => {
                 prepareRow(row);
                 return (
                   <tr {...row.getRowProps()} className="bg-white">
-                    {row.cells.map((cell: any) => (
+                    {row.cells.map((cell: TableCellDefinition) => (
                       <td
                         className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
                         {...cell.getCellProps()}
                       >
-                        {cell.render("Cell")}
+                        {cell.render("Cell") as React.ReactNode}
                       </td>
                     ))}
                   </tr>
@@ -193,12 +264,12 @@ function Table({ columns, data }: any) {
 }
 
 export default function Clients() {
-  const { data, status, refetch } = useQuery({
+  const { data, status, refetch } = useQuery<ClientResponse>({
     queryKey: ["fetchAllClients"],
     queryFn: fetchAllClients,
   });
 
-  async function deleteClient(id: any) {
+  async function deleteClient(id: string) {
     await fetch(`/api/v1/clients/${id}/delete-client`, {
       method: "DELETE",
       headers: {
@@ -227,7 +298,7 @@ export default function Clients() {
       {
         Header: "",
         id: "actions",
-        Cell: ({ row }: any) => {
+        Cell: ({ row }: { row: TableRowDefinition }) => {
           return (
             <div className="space-x-4 flex flex-row">
               {/* <UpdateClientModal client={row.original} />
@@ -316,7 +387,7 @@ export default function Clients() {
                   </div>
 
                   <div className="sm:hidden">
-                    {data.clients.map((client: any) => (
+                    {data.clients.map((client: ClientRecord) => (
                       <div
                         key={client.id}
                         className="flex flex-col text-center bg-white rounded-lg shadow mt-4"

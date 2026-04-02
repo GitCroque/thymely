@@ -21,6 +21,30 @@ export function webhookRoutes(fastify: FastifyInstance) {
     "/api/v1/webhook/create",
     {
       preHandler: requirePermission(["webhook::create"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            name: { type: "string", maxLength: 200 },
+            url: { type: "string", maxLength: 2000 },
+            type: { type: "string", enum: Object.values(Hook) },
+            active: { type: "boolean" },
+            secret: { type: "string", nullable: true, maxLength: 2000 },
+          },
+          required: ["name", "url", "type", "active"],
+          additionalProperties: false,
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+              success: { type: "boolean" },
+            },
+            required: ["message", "success"],
+          },
+        },
+      },
     },
     async (request, reply) => {
       const user = await checkSession(request);
@@ -64,6 +88,33 @@ export function webhookRoutes(fastify: FastifyInstance) {
     "/api/v1/webhooks/all",
     {
       preHandler: requirePermission(["webhook::read"]),
+      schema: {
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              webhooks: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string", format: "uuid" },
+                    createdAt: { type: "string", format: "date-time" },
+                    updatedAt: { type: "string", format: "date-time" },
+                    name: { type: "string" },
+                    url: { type: "string" },
+                    type: { type: "string", enum: Object.values(Hook) },
+                    active: { type: "boolean" },
+                  },
+                  required: ["id", "createdAt", "updatedAt", "name", "url", "type", "active"],
+                },
+              },
+              success: { type: "boolean" },
+            },
+            required: ["webhooks", "success"],
+          },
+        },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const webhooks = await prisma.webhooks.findMany({
@@ -91,6 +142,24 @@ export function webhookRoutes(fastify: FastifyInstance) {
     "/api/v1/admin/webhook/:id/delete",
     {
       preHandler: requirePermission(["webhook::delete"]),
+      schema: {
+        params: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+          },
+          required: ["id"],
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+            },
+            required: ["success"],
+          },
+        },
+      },
     },
     async (request, reply) => {
       const { id } = request.params;

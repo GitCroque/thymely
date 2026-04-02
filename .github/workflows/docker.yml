@@ -26,12 +26,79 @@ jobs:
       - name: Security audit
         run: yarn npm audit --all --severity high --environment production
       - name: Run tests
-        run: cd apps/api && yarn test
+        run: yarn test
       - run: cd apps/api && npx tsc --noEmit
       - run: cd apps/client && npx tsc --noEmit
+      - run: yarn build
+
+  smoke-e2e:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "yarn"
+      - run: yarn install --immutable
+      - name: Write CI env file
+        run: |
+          cat <<'EOF' > .env
+          POSTGRES_USER=thymely
+          POSTGRES_PASSWORD=thymely
+          POSTGRES_DB=thymely
+          DATABASE_URL=postgresql://thymely:thymely@thymely_postgres:5432/thymely
+          SECRET=dGhpcyBpcyBhIHRlc3Qgc2VjcmV0IGtleSBmb3IgQ0k=
+          THYMELY_BOOTSTRAP_PASSWORD=admin
+          DATA_ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          NODE_ENV=production
+          PUBLIC_APP_URL=http://localhost:3000
+          CORS_ORIGIN=http://localhost:3000
+          TRUST_PROXY=false
+          COOKIE_SECURE=false
+          LOG_LEVEL=info
+          EOF
+      - name: Start local stack
+        run: docker compose -f docker-compose.local.yml up -d --build
+      - name: Wait for services
+        run: |
+          for i in $(seq 1 90); do
+            if curl -fsS http://localhost:5003/ | grep -q '"healthy":true'; then
+              break
+            fi
+            sleep 2
+          done
+          curl -fsS http://localhost:3000/auth/login > /dev/null
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+      - name: Run smoke E2E
+        run: yarn test:e2e:smoke
+        env:
+          CI: true
+          E2E_BASE_URL: http://localhost:3000
+          E2E_ADMIN_EMAIL: admin@admin.com
+          E2E_ADMIN_PASSWORD: admin
+      - name: Collect docker logs
+        if: always()
+        run: docker compose -f docker-compose.local.yml logs --no-color > docker-compose.log
+      - name: Tear down local stack
+        if: always()
+        run: docker compose -f docker-compose.local.yml down -v
+      - name: Upload smoke artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-e2e-artifacts
+          path: |
+            docker-compose.log
+            playwright-report/
+            test-results/
+          retention-days: 7
 
   build:
-    needs: validate
+    needs: [validate, smoke-e2e]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     strategy:

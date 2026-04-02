@@ -256,6 +256,15 @@ export function ticketRoutes(fastify: FastifyInstance) {
           where: {
             ticketId: id,
           },
+          select: {
+            id: true,
+            createdAt: true,
+            filename: true,
+            mime: true,
+            size: true,
+            ticketId: true,
+            userId: true,
+          },
         }),
       ]);
 

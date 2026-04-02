@@ -3,6 +3,7 @@ services:
     container_name: thymely_postgres
     image: postgres:17
     restart: always
+    env_file: .env
     volumes:
       - pgdata:/var/lib/postgresql/data
     environment:
@@ -17,9 +18,30 @@ services:
     networks:
       - backend
 
+  thymely_init:
+    container_name: thymely_init
+    image: ghcr.io/gitcroque/thymely:nightly
+    restart: "no"
+    env_file: .env
+    depends_on:
+      thymely_postgres:
+        condition: service_healthy
+    command: ["sh", "-lc", "cd apps/api && yarn bootstrap:init"]
+    environment:
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_HOST: thymely_postgres
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@thymely_postgres:5432/${POSTGRES_DB:-thymely}
+      SECRET: ${SECRET}
+      DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:-}
+      THYMELY_BOOTSTRAP_PASSWORD: ${THYMELY_BOOTSTRAP_PASSWORD:-}
+    networks:
+      - backend
+
   thymely:
     container_name: thymely
     image: ghcr.io/gitcroque/thymely:nightly
+    env_file: .env
     ports:
       - 3000:3000
       - 3002:3002
@@ -28,6 +50,8 @@ services:
     depends_on:
       thymely_postgres:
         condition: service_healthy
+      thymely_init:
+        condition: service_completed_successfully
     environment:
       DB_USERNAME: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
@@ -35,6 +59,11 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@thymely_postgres:5432/${POSTGRES_DB:-thymely}
       SECRET: ${SECRET}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:-}
       HOSTNAME: "0.0.0.0"
     networks:
       - frontend

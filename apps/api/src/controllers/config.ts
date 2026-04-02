@@ -24,6 +24,7 @@ async function tracking(event: string, properties: Record<string, string>) {
     properties: properties,
     distinctId: "uuid",
   });
+  client.shutdownAsync();
 }
 
 async function ensureConfig(reply: FastifyReply) {
@@ -42,7 +43,21 @@ export function configRoutes(fastify: FastifyInstance) {
   // Check auth method
   fastify.get(
     "/api/v1/config/authentication/check",
-
+    {
+      schema: {
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              sso: { type: "boolean" },
+              provider: { type: "string" },
+            },
+            required: ["success", "sso"],
+          },
+        },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const config = await ensureConfig(reply);
       if (!config) return;
@@ -75,7 +90,33 @@ export function configRoutes(fastify: FastifyInstance) {
     };
   }>(
     "/api/v1/config/authentication/oidc/update",
-    { preHandler: requirePermission(["settings::manage"]) },
+    {
+      preHandler: requirePermission(["settings::manage"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            clientId: { type: "string", maxLength: 500 },
+            clientSecret: { type: "string", maxLength: 2000 },
+            redirectUri: { type: "string", maxLength: 2000 },
+            issuer: { type: "string", maxLength: 2000 },
+            jwtSecret: { type: "string", nullable: true, maxLength: 2000 },
+          },
+          required: ["clientId", "clientSecret", "redirectUri", "issuer"],
+          additionalProperties: false,
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              message: { type: "string" },
+            },
+            required: ["success", "message"],
+          },
+        },
+      },
+    },
     async (request, reply) => {
       const { clientId, clientSecret, redirectUri, issuer, jwtSecret: _jwtSecret } =
         request.body;
@@ -140,7 +181,35 @@ export function configRoutes(fastify: FastifyInstance) {
     };
   }>(
     "/api/v1/config/authentication/oauth/update",
-    { preHandler: requirePermission(["settings::manage"]) },
+    {
+      preHandler: requirePermission(["settings::manage"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            name: { type: "string", maxLength: 200 },
+            clientId: { type: "string", maxLength: 500 },
+            clientSecret: { type: "string", maxLength: 2000 },
+            redirectUri: { type: "string", maxLength: 2000 },
+            tenantId: { type: "string", nullable: true, maxLength: 500 },
+            issuer: { type: "string", nullable: true, maxLength: 2000 },
+            jwtSecret: { type: "string", nullable: true, maxLength: 2000 },
+          },
+          required: ["name", "clientId", "clientSecret", "redirectUri"],
+          additionalProperties: false,
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              message: { type: "string" },
+            },
+            required: ["success", "message"],
+          },
+        },
+      },
+    },
     async (request, reply) => {
       const {
         name,
@@ -207,7 +276,21 @@ export function configRoutes(fastify: FastifyInstance) {
   // Delete auth config
   fastify.delete(
     "/api/v1/config/authentication",
-    { preHandler: requirePermission(["settings::manage"]) },
+    {
+      preHandler: requirePermission(["settings::manage"]),
+      schema: {
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              message: { type: "string" },
+            },
+            required: ["success", "message"],
+          },
+        },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const conf = await ensureConfig(reply);
       if (!conf) return;
@@ -237,7 +320,32 @@ export function configRoutes(fastify: FastifyInstance) {
   // Check if Emails are enabled & GET email settings
   fastify.get(
     "/api/v1/config/email",
-    { preHandler: requirePermission(["settings::manage"]) },
+    {
+      preHandler: requirePermission(["settings::manage"]),
+      schema: {
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              active: { type: "boolean" },
+              email: {
+                type: "object",
+                properties: {
+                  active: { type: "boolean" },
+                  host: { type: "string", nullable: true },
+                  port: { type: "string", nullable: true },
+                  reply: { type: "string", nullable: true },
+                  user: { type: "string", nullable: true },
+                },
+              },
+              verification: {},
+            },
+            required: ["success", "active"],
+          },
+        },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       // GET EMAIL SETTINGS
       const config = await prisma.email.findFirst({
@@ -297,7 +405,39 @@ export function configRoutes(fastify: FastifyInstance) {
     };
   }>(
     "/api/v1/config/email",
-    { preHandler: requirePermission(["settings::manage"]) },
+    {
+      preHandler: requirePermission(["settings::manage"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            host: { type: "string", maxLength: 255 },
+            active: { type: "boolean" },
+            port: { type: "string", maxLength: 10 },
+            reply: { type: "string", format: "email", maxLength: 254 },
+            username: { type: "string", maxLength: 254 },
+            password: { type: "string", maxLength: 500 },
+            serviceType: { type: "string", maxLength: 50 },
+            clientId: { type: "string", nullable: true, maxLength: 500 },
+            clientSecret: { type: "string", nullable: true, maxLength: 2000 },
+            redirectUri: { type: "string", nullable: true, maxLength: 2000 },
+          },
+          required: ["host", "active", "port", "reply", "username", "password", "serviceType"],
+          additionalProperties: false,
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              message: { type: "string" },
+              authorizeUrl: { type: "string" },
+            },
+            required: ["success", "message"],
+          },
+        },
+      },
+    },
     async (request, reply) => {
       const {
         host,
@@ -371,6 +511,7 @@ export function configRoutes(fastify: FastifyInstance) {
           message: "SSO Provider updated!",
           authorizeUrl: authorizeUrl,
         });
+        return;
       }
 
       reply.send({
@@ -387,7 +528,28 @@ export function configRoutes(fastify: FastifyInstance) {
     };
   }>(
     "/api/v1/config/email/oauth/gmail",
-    { preHandler: requirePermission(["settings::manage"]) },
+    {
+      preHandler: requirePermission(["settings::manage"]),
+      schema: {
+        querystring: {
+          type: "object",
+          properties: {
+            code: { type: "string", minLength: 1 },
+          },
+          required: ["code"],
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              message: { type: "string" },
+            },
+            required: ["success", "message"],
+          },
+        },
+      },
+    },
     async (request, reply) => {
       const { code } = request.query;
 
@@ -422,7 +584,21 @@ export function configRoutes(fastify: FastifyInstance) {
   // Disable/Enable Email
   fastify.delete(
     "/api/v1/config/email",
-    { preHandler: requirePermission(["settings::manage"]) },
+    {
+      preHandler: requirePermission(["settings::manage"]),
+      schema: {
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              message: { type: "string" },
+            },
+            required: ["success", "message"],
+          },
+        },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       await prisma.email.deleteMany({});
 
@@ -442,6 +618,26 @@ export function configRoutes(fastify: FastifyInstance) {
     "/api/v1/config/toggle-roles",
     {
       preHandler: requirePermission(["settings::manage"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            isActive: { type: "boolean" },
+          },
+          required: ["isActive"],
+          additionalProperties: false,
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              message: { type: "string" },
+            },
+            required: ["success", "message"],
+          },
+        },
+      },
     },
     async (request, reply) => {
       const { isActive } = request.body;
