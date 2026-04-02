@@ -45,8 +45,10 @@ function StepIndicator({ current }: { current: number }) {
 }
 
 function PasswordStep({
+  email,
   onNext,
 }: {
+  email: string;
   onNext: () => void;
 }) {
   const [password, setPassword] = useState("");
@@ -65,19 +67,31 @@ function PasswordStep({
     setError("");
 
     try {
+      // Change the password (this deletes all sessions + clears cookie)
       const res = await fetch("/api/v1/auth/reset-password", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getCookie("session")}`,
-        },
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       }).then((r) => r.json());
 
-      if (res.success) {
+      if (!res.success) {
+        setError(res.message || "Failed to update password");
+        return;
+      }
+
+      // Re-login to get a fresh session (reset-password invalidates all sessions)
+      const login = await fetch("/api/v1/auth/login", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      }).then((r) => r.json());
+
+      if (login.user) {
         onNext();
       } else {
-        setError(res.message || "Failed to update password");
+        setError("Password changed but re-login failed. Please refresh and log in.");
       }
     } catch {
       setError("Connection error. Please try again.");
@@ -198,10 +212,8 @@ function EmailStep({
     try {
       const res = await fetch("/api/v1/config/email", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getCookie("session")}`,
-        },
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ host, port, username, password, reply, active: true }),
       }).then((r) => r.json());
 
@@ -383,7 +395,7 @@ export default function Onboarding() {
         <StepIndicator current={step} />
 
         {step === 0 && (
-          <PasswordStep onNext={() => setStep(1)} />
+          <PasswordStep email={currentUser.email} onNext={() => setStep(1)} />
         )}
 
         {step === 1 && (
