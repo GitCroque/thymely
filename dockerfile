@@ -62,12 +62,13 @@ COPY --from=builder --chown=app:app /app/apps/knowledge-base/.next/standalone/no
 COPY --from=builder --chown=app:app /app/apps/knowledge-base/.next/static ./apps/knowledge-base/.next/static
 COPY --from=builder --chown=app:app /app/apps/knowledge-base/public ./apps/knowledge-base/public
 COPY --from=builder --chown=app:app /app/ecosystem.config.js ./ecosystem.config.js
+COPY --chown=app:app start.sh ./start.sh
 
 EXPOSE 3000 3002 5003
 
 USER app
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
   CMD node -e "fetch('http://localhost:5003/').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
 
-CMD ["pm2-runtime", "ecosystem.config.js"]
+CMD ["sh", "start.sh"]
