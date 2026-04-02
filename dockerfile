@@ -42,26 +42,26 @@ FROM node:22-bookworm-slim AS runner
 
 WORKDIR /app
 
+ENV PATH="/app/node_modules/.bin:/app/apps/api/node_modules/.bin:${PATH}"
+
 # Install runtime deps + pm2 + create app user in a single layer
 RUN apt-get update && apt-get install -y --no-install-recommends openssl libstdc++6 && rm -rf /var/lib/apt/lists/* && \
     npm install -g pm2 && \
     addgroup --system app && adduser --system --home /home/app --ingroup app app
 
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/apps/api/dist ./apps/api/dist
-COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
-COPY --from=builder /app/apps/api/src/prisma ./apps/api/src/prisma
-COPY --from=builder /app/apps/client/.next/standalone/apps/client ./apps/client
-COPY --from=builder /app/apps/client/.next/standalone/node_modules ./apps/client/node_modules
-COPY --from=builder /app/apps/client/.next/static ./apps/client/.next/static
-COPY --from=builder /app/apps/client/public ./apps/client/public
-COPY --from=builder /app/apps/knowledge-base/.next/standalone/apps/knowledge-base ./apps/knowledge-base
-COPY --from=builder /app/apps/knowledge-base/.next/standalone/node_modules ./apps/knowledge-base/node_modules
-COPY --from=builder /app/apps/knowledge-base/.next/static ./apps/knowledge-base/.next/static
-COPY --from=builder /app/apps/knowledge-base/public ./apps/knowledge-base/public
-COPY --from=builder /app/ecosystem.config.js ./ecosystem.config.js
-
-RUN chown -R app:app /app /home/app
+COPY --from=builder --chown=app:app /app/node_modules ./node_modules
+COPY --from=builder --chown=app:app /app/apps/api/dist ./apps/api/dist
+COPY --from=builder --chown=app:app /app/apps/api/package.json ./apps/api/package.json
+COPY --from=builder --chown=app:app /app/apps/api/src/prisma ./apps/api/src/prisma
+COPY --from=builder --chown=app:app /app/apps/client/.next/standalone/apps/client ./apps/client
+COPY --from=builder --chown=app:app /app/apps/client/.next/standalone/node_modules ./apps/client/node_modules
+COPY --from=builder --chown=app:app /app/apps/client/.next/static ./apps/client/.next/static
+COPY --from=builder --chown=app:app /app/apps/client/public ./apps/client/public
+COPY --from=builder --chown=app:app /app/apps/knowledge-base/.next/standalone/apps/knowledge-base ./apps/knowledge-base
+COPY --from=builder --chown=app:app /app/apps/knowledge-base/.next/standalone/node_modules ./apps/knowledge-base/node_modules
+COPY --from=builder --chown=app:app /app/apps/knowledge-base/.next/static ./apps/knowledge-base/.next/static
+COPY --from=builder --chown=app:app /app/apps/knowledge-base/public ./apps/knowledge-base/public
+COPY --from=builder --chown=app:app /app/ecosystem.config.js ./ecosystem.config.js
 
 EXPOSE 3000 3002 5003
 
