@@ -1,5 +1,4 @@
 import { useRouter } from "next/router";
-import { getCookie } from "cookies-next";
 import { useState } from "react";
 import {
   KeyRound,
@@ -357,19 +356,14 @@ export default function Onboarding() {
 
   async function finishOnboarding() {
     try {
-      const res = await fetch(`/api/v1/auth/user/${currentUser.id}/first-login`, {
+      await fetch(`/api/v1/auth/user/${currentUser.id}/first-login`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${getCookie("session")}`,
-        },
-      }).then((r) => r.json());
-
-      if (res.success) {
-        router.push("/");
-      }
+        credentials: "include",
+      });
     } catch {
-      router.push("/");
+      // Best-effort — redirect regardless
     }
+    router.push("/");
   }
 
   return (
