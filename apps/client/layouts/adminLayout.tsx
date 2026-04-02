@@ -23,14 +23,17 @@ import Link from "next/link";
 import { Fragment, useState } from "react";
 import { AccountDropdown } from "../components/AccountDropdown";
 import ThemeSettings from "../components/ThemeSettings";
-import { useUser } from "../store/session";
+import { useAuthedUser } from "../store/session";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation("thymely");
 
-  const { loading, user } = useUser();
+  const { loading, user } = useAuthedUser();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const unreadNotifications = user.notifications.filter(
+    (notification) => !notification.read
+  );
 
   if (user && !user.isAdmin) {
     return (
@@ -291,9 +294,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   >
                     <Link href="/notifications">
                       <InboxStackIcon className="h-4 w-4 text-foreground" />
-                      {user.notifications.filter(
-                        (notification: { read: boolean }) => !notification.read
-                      ).length > 0 && (
+                      {unreadNotifications.length > 0 && (
                         <svg
                           className="h-2.5 w-2.5 absolute bottom-6 left-6 animate-pulse fill-green-500"
                           viewBox="0 0 6 6"

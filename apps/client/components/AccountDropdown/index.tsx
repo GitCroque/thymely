@@ -17,12 +17,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shadcn/ui/dropdown-menu";
-import { useUser } from "../../store/session";
+import { useAuthedUser } from "../../store/session";
 import { useRouter } from "next/router";
 import { deleteCookie, getCookie } from "cookies-next";
 
 export function AccountDropdown() {
-  const { user } = useUser();
+  const { user } = useAuthedUser();
 
   const router = useRouter();
 

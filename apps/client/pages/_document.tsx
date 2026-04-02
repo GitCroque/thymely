@@ -1,4 +1,4 @@
-import { Html, Head, Main, NextScript } from "next/document";
+import { Head, Html, Main, NextScript } from "next/document";
 
 export default function Document() {
   return (
@@ -15,12 +15,9 @@ export default function Document() {
           content="Ticket management system selfhosted open source"
         />
         <meta name="keywords" content="Keywords" />
-
         <meta name="theme-color" content="#ffffff" />
         <link rel="manifest" href="/manifest.json" />
-
         <title>Thymely</title>
-
         <link href="/favicon/favicon.ico" rel="icon" />
         <link
           href="/favicon/favicon-16x16.png"
@@ -34,7 +31,7 @@ export default function Document() {
           type="image/png"
           sizes="32x32"
         />
-        <link rel="apple-touch-icon" href="/apple-icon.png"></link>
+        <link rel="apple-touch-icon" href="/apple-icon.png" />
       </Head>
       <body>
         <Main />

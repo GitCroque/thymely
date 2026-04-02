@@ -33,7 +33,7 @@ import { CheckIcon, Filter, X } from "lucide-react";
 import dayjs from "dayjs";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { useUser } from "../store/session";
+import { useAuthedUser } from "../store/session";
 
 // --- Types ---
 
@@ -102,7 +102,7 @@ export default function TicketListPage({ ticketStatus }: TicketListPageProps) {
     refetchInterval: 30000,
   });
 
-  const user = useUser();
+  const { user } = useAuthedUser();
 
   const { data: usersData } = useQuery({
     queryKey: ["users", "all"],

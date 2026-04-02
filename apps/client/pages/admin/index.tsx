@@ -1,4 +1,4 @@
-export default function BlankPage() {
+export default function AdminIndexPage() {
   return (
     <div className="flex flex-col">
       <div className="flex align-middle flex-row justify-center">

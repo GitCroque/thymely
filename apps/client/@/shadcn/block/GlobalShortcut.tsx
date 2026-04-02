@@ -7,7 +7,7 @@ import {
   FolderIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
-import { useUser } from "../../../store/session";
+import { useAuthedUser } from "../../../store/session";
 
 function classNames(...classes: (string | boolean | undefined | null)[]) {
   return classes.filter(Boolean).join(" ");
@@ -19,7 +19,7 @@ export default function GlobalShortcut() {
   const [query, setQuery] = useState("");
   const [tickets, setTickets] = useState<{ id: string; title: string; Number: number }[]>([]);
 
-  const { user } = useUser();
+  const { user } = useAuthedUser();
 
   const quickActions = [
     {

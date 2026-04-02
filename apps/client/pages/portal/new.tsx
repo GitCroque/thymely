@@ -13,7 +13,7 @@ import {
 } from "@heroicons/react/20/solid";
 
 import { Fragment, useState } from "react";
-import { useUser } from "../../store/session";
+import { useAuthedUser } from "../../store/session";
 import { toast } from "@/shadcn/hooks/use-toast";
 
 const type = [
@@ -37,7 +37,7 @@ export default function ClientTicketNew() {
     return classes.filter(Boolean).join(" ");
   }
 
-  const { user } = useUser();
+  const { user } = useAuthedUser();
 
   const [isLoading, setIsLoading] = useState(false);
   const [view, setView] = useState("new");

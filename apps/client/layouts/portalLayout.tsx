@@ -13,7 +13,7 @@ import { useRouter } from "next/router";
 import React, { Fragment, useEffect, useState } from "react";
 
 import useTranslation from "next-translate/useTranslation";
-import { useUser } from "../store/session";
+import { useAuthedUser } from "../store/session";
 
 function classNames(...classes: (string | boolean | undefined | null)[]) {
   return classes.filter(Boolean).join(" ");
@@ -22,16 +22,12 @@ function classNames(...classes: (string | boolean | undefined | null)[]) {
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   const location = useRouter();
 
-  const { loading, user } = useUser();
-  const locale = user ? user.language : "en";
+  const { loading, user } = useAuthedUser();
+  const locale = user.language ?? "en";
 
   const { t } = useTranslation("thymely");
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  if (!user) {
-    location.push("/auth/login");
-  }
 
   if (location.pathname.includes("/admin") && user.isAdmin === false) {
     location.push("/");

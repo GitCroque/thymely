@@ -11,10 +11,10 @@ import {
   CardTitle,
 } from "@/shadcn/ui/card";
 
-import { useUser } from "../store/session";
+import { useAuthedUser } from "../store/session";
 
 export default function UserProfile() {
-  const { user } = useUser();
+  const { user } = useAuthedUser();
   const token = getCookie("session");
 
   const { t } = useTranslation("thymely");
@@ -23,7 +23,7 @@ export default function UserProfile() {
 
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
-  const [language, setLanguage] = useState(user.language);
+  const [language, setLanguage] = useState(user.language ?? "en");
 
   function changeLanguage(locale: string) {
     setLanguage(locale);
@@ -43,7 +43,7 @@ export default function UserProfile() {
         id: user.id,
         name: name ? name : user.name,
         email: email ? email : user.email,
-        language: language ? language : user.language,
+        language: language ? language : (user.language ?? "en"),
       }),
     });
   }

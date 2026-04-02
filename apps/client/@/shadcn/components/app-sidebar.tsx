@@ -21,29 +21,25 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import CreateTicketModal from "../../../components/CreateTicketModal";
 import ThemeSettings from "../../../components/ThemeSettings";
-import { useUser } from "../../../store/session";
+import { useAuthedUser } from "../../../store/session";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useRouter();
 
-  const { user } = useUser();
-  const locale = user ? user.language : "en";
+  const { user } = useAuthedUser();
+  const locale = user.language ?? "en";
 
   const [keypressdown, setKeyPressDown] = useState(false);
 
   const { t } = useTranslation("thymely");
   const sidebar = useSidebar();
 
-  if (!user) {
-    location.push("/auth/login");
-  }
-
   if (location.pathname.includes("/admin") && user.isAdmin === false) {
     location.push("/");
     alert("You do not have the correct perms for that action.");
   }
 
-  if (user && user.external_user) {
+  if (user.external_user) {
     location.push("/portal");
   }
 

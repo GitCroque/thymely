@@ -8,42 +8,106 @@ import {
   usePagination,
   useTable,
 } from "react-table";
-import ResetPassword from "../../../../components//ResetPassword";
+import ResetPassword from "../../../../components/ResetPassword";
 import UpdateUserModal from "../../../../components/UpdateUserModal";
 
-const fetchUsers = async (token) => {
-  const res = await fetch(`/api/v1/users/all`, {
+interface InternalUserRecord {
+  id: string;
+  name: string;
+  email: string;
+  isAdmin: boolean;
+}
+
+interface InternalUsersResponse {
+  users: InternalUserRecord[];
+}
+
+interface ColumnFilterProps {
+  column: {
+    filterValue?: string;
+    setFilter: (value?: string) => void;
+  };
+}
+
+interface TableColumnDefinition {
+  id: string;
+  hideHeader?: boolean;
+  canFilter?: boolean;
+  getHeaderProps: () => Record<string, unknown>;
+  render: (name: string) => unknown;
+}
+
+interface TableHeaderGroupDefinition {
+  headers: TableColumnDefinition[];
+  getHeaderGroupProps: () => Record<string, unknown>;
+}
+
+interface TableCellDefinition {
+  getCellProps: () => Record<string, unknown>;
+  render: (name: string) => unknown;
+}
+
+interface TableRowDefinition {
+  values: Record<string, unknown>;
+  cells: TableCellDefinition[];
+  original: InternalUserRecord;
+  getRowProps: () => Record<string, unknown>;
+}
+
+interface TableInstanceDefinition {
+  getTableProps: () => Record<string, unknown>;
+  getTableBodyProps: () => Record<string, unknown>;
+  headerGroups: TableHeaderGroupDefinition[];
+  page: TableRowDefinition[];
+  prepareRow: (row: TableRowDefinition) => void;
+  canPreviousPage: boolean;
+  canNextPage: boolean;
+  nextPage: () => void;
+  previousPage: () => void;
+  setPageSize: (pageSize: number) => void;
+  state: {
+    pageSize: number;
+  };
+}
+
+async function fetchUsers(token?: string) {
+  const response = await fetch("/api/v1/users/all", {
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${token || ""}`,
     },
   });
-  
-  return res.json();
-};
 
-function DefaultColumnFilter({ column: { filterValue, setFilter } }) {
+  return response.json() as Promise<InternalUsersResponse>;
+}
+
+function DefaultColumnFilter({ column: { filterValue, setFilter } }: ColumnFilterProps) {
   return (
-    // <input
-    //   className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-    //   type="text"
-    //   value={filterValue || ""}
-    //   autoComplete="off"
-    //   onChange={(e) => {
-    //     setFilter(e.target.value || undefined); // Set undefined to remove the filter entirely
-    //   }}
-    //   placeholder="Type to filter"
-    // />
-    <></>
+    <input
+      className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+      type="text"
+      value={filterValue || ""}
+      onChange={(event) => {
+        setFilter(event.target.value || undefined);
+      }}
+      placeholder="Type to filter"
+    />
   );
 }
-function Table({ columns, data }) {
+
+function Table({
+  columns,
+  data,
+}: {
+  columns: Array<Record<string, unknown>>;
+  data: InternalUserRecord[];
+}) {
   const filterTypes = React.useMemo(
     () => ({
-      // Add a new fuzzyTextFilterFn filter type.
-      // fuzzyText: fuzzyTextFilterFn,
-      // Or, override the default text filter to use
-      // "startWith"
-      text: (rows, id, filterValue) =>
+      text: (
+        rows: TableRowDefinition[],
+        id: string,
+        filterValue: string
+      ) =>
         rows.filter((row) => {
           const rowValue = row.values[id];
           return rowValue !== undefined
@@ -58,7 +122,6 @@ function Table({ columns, data }) {
 
   const defaultColumn = React.useMemo(
     () => ({
-      // Let's set up our default Filter UI
       Filter: DefaultColumnFilter,
     }),
     []
@@ -72,26 +135,24 @@ function Table({ columns, data }) {
     prepareRow,
     canPreviousPage,
     canNextPage,
-    pageCount,
-    gotoPage,
     nextPage,
     previousPage,
     setPageSize,
-    state: { pageIndex, pageSize },
+    state: { pageSize },
   } = useTable(
     {
-      columns,
-      data,
-      defaultColumn, // Be sure to pass the defaultColumn option
-      filterTypes,
+      columns: columns as never,
+      data: data as never,
+      defaultColumn: defaultColumn as never,
+      filterTypes: filterTypes as never,
       initialState: {
         pageIndex: 0,
-      },
-    },
-    useFilters, // useFilters!
+      } as never,
+    } as never,
+    useFilters,
     useGlobalFilter,
     usePagination
-  );
+  ) as unknown as TableInstanceDefinition;
 
   return (
     <div className="overflow-x-auto md:-mx-6 lg:-mx-8">
@@ -102,21 +163,22 @@ function Table({ columns, data }) {
             className="min-w-full divide-y divide-gray-200"
           >
             <thead className="bg-gray-50">
-              {headerGroups.map((headerGroup) => (
+              {headerGroups.map((headerGroup: TableHeaderGroupDefinition) => (
                 <tr
                   {...headerGroup.getHeaderGroupProps()}
-                  key={headerGroup.headers.map((header) => header.id)}
+                  key={headerGroup.headers.map((header) => header.id).join("-")}
                 >
-                  {headerGroup.headers.map((column) =>
+                  {headerGroup.headers.map((column: TableColumnDefinition) =>
                     column.hideHeader === false ? null : (
                       <th
                         {...column.getHeaderProps()}
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                       >
-                        {column.render("Header")}
-                        {/* Render the columns filter UI */}
+                        {column.render("Header") as React.ReactNode}
                         <div>
-                          {column.canFilter ? column.render("Filter") : null}
+                          {column.canFilter
+                            ? (column.render("Filter") as React.ReactNode)
+                            : null}
                         </div>
                       </th>
                     )
@@ -125,16 +187,16 @@ function Table({ columns, data }) {
               ))}
             </thead>
             <tbody {...getTableBodyProps()}>
-              {page.map((row, i) => {
+              {page.map((row: TableRowDefinition) => {
                 prepareRow(row);
                 return (
                   <tr {...row.getRowProps()} className="bg-white">
-                    {row.cells.map((cell) => (
+                    {row.cells.map((cell: TableCellDefinition) => (
                       <td
                         className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
                         {...cell.getCellProps()}
                       >
-                        {cell.render("Cell")}
+                        {cell.render("Cell") as React.ReactNode}
                       </td>
                     ))}
                   </tr>
@@ -143,17 +205,14 @@ function Table({ columns, data }) {
             </tbody>
           </table>
 
-          {data.legnth > 10 && (
+          {data.length > 10 && (
             <nav
               className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6"
               aria-label="Pagination"
             >
               <div className="hidden sm:block">
                 <div className="flex flex-row flex-nowrap w-full space-x-2">
-                  <p
-                    htmlFor="location"
-                    className="block text-sm font-medium text-gray-700 mt-4"
-                  >
+                  <p className="block text-sm font-medium text-gray-700 mt-4">
                     Show
                   </p>
                   <select
@@ -161,13 +220,13 @@ function Table({ columns, data }) {
                     name="location"
                     className="block w-full pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                     value={pageSize}
-                    onChange={(e) => {
-                      setPageSize(Number(e.target.value));
+                    onChange={(event) => {
+                      setPageSize(Number(event.target.value));
                     }}
                   >
-                    {[10, 20, 30, 40, 50].map((pageSize) => (
-                      <option key={pageSize} value={pageSize}>
-                        {pageSize}
+                    {[10, 20, 30, 40, 50].map((currentPageSize) => (
+                      <option key={currentPageSize} value={currentPageSize}>
+                        {currentPageSize}
                       </option>
                     ))}
                   </select>
@@ -199,24 +258,23 @@ function Table({ columns, data }) {
   );
 }
 
-export default function UserAuthPanel() {
-  const token = getCookie("session");
-  const { data, status, refetch } = useQuery({ queryKey: ["fetchAuthUsers"], queryFn: () =>
-    fetchUsers(token)
+export default function InternalUsersPage() {
+  const token = getCookie("session")?.toString();
+  const { data, status, refetch } = useQuery({
+    queryKey: ["fetchAuthUsers"],
+    queryFn: () => fetchUsers(token),
   });
 
-  async function deleteUser(id) {
+  async function deleteUser(id: string) {
     try {
       await fetch(`/api/v1/auth/user/${id}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token || ""}`,
         },
-      })
-        .then((response) => response.json())
-        .then(() => {
-          refetch();
-        });
+      });
+
+      await refetch();
     } catch (error) {
       console.log(error);
     }
@@ -238,26 +296,24 @@ export default function UserAuthPanel() {
       {
         Header: "",
         id: "actions",
-        Cell: ({ row }) => {
-          return (
-            <div className="space-x-4 flex flex-row">
-              <UpdateUserModal user={row.original} />
-              <ResetPassword user={row.original} />
-              {row.original.isAdmin ? null : (
-                <button
-                  type="button"
-                  onClick={() => deleteUser(row.original.id)}
-                  className="inline-flex items-center px-4 py-1.5 border font-semibold border-gray-300 shadow-sm text-xs rounded text-white bg-red-700 hover:bg-red-500"
-                >
-                  Delete
-                </button>
-              )}
-            </div>
-          );
-        },
+        Cell: ({ row }: { row: { original: InternalUserRecord } }) => (
+          <div className="space-x-4 flex flex-row">
+            <UpdateUserModal user={row.original} />
+            <ResetPassword user={row.original} />
+            {row.original.isAdmin ? null : (
+              <button
+                type="button"
+                onClick={() => deleteUser(row.original.id)}
+                className="inline-flex items-center px-4 py-1.5 border font-semibold border-gray-300 shadow-sm text-xs rounded text-white bg-red-700 hover:bg-red-500"
+              >
+                Delete
+              </button>
+            )}
+          </div>
+        ),
       },
     ],
-    []
+    [token]
   );
 
   return (
@@ -272,7 +328,7 @@ export default function UserAuthPanel() {
           <div className="px-4 sm:px-6 md:px-0">
             <div className="sm:flex sm:items-center">
               <div className="sm:flex-auto mt-4">
-                <p className="mt-2 text-sm text-gray-700  dark:text-white">
+                <p className="mt-2 text-sm text-gray-700 dark:text-white">
                   A list of all internal users of your instance.
                 </p>
               </div>
@@ -294,14 +350,11 @@ export default function UserAuthPanel() {
 
               {status === "error" && (
                 <div className="min-h-screen flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8">
-                  <h2 className="text-2xl font-bold">
-                    {" "}
-                    Error fetching data ...{" "}
-                  </h2>
+                  <h2 className="text-2xl font-bold">Error fetching data ...</h2>
                 </div>
               )}
 
-              {status === "success" && (
+              {status === "success" && data && (
                 <div>
                   <div className="hidden sm:block">
                     <Table columns={columns} data={data.users} />
@@ -313,7 +366,7 @@ export default function UserAuthPanel() {
                         className="flex flex-col text-center bg-white rounded-lg shadow mt-4"
                       >
                         <div className="flex-1 flex flex-col p-8">
-                          <h3 className=" text-gray-900 text-sm font-medium">
+                          <h3 className="text-gray-900 text-sm font-medium">
                             {user.name}
                           </h3>
                           <dl className="mt-1 flex-grow flex flex-col justify-between">
@@ -329,10 +382,7 @@ export default function UserAuthPanel() {
                           </dl>
                         </div>
                         <div className="space-x-4 flex flex-row justify-center -mt-8 mb-4">
-                          <UpdateUserModal
-                            user={user}
-                            refetch={() => handleRefresh}
-                          />
+                          <UpdateUserModal user={user} />
                           <ResetPassword user={user} />
                         </div>
                       </div>

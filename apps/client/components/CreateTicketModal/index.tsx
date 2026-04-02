@@ -5,7 +5,7 @@ import { getCookie } from "cookies-next";
 import useTranslation from "next-translate/useTranslation";
 import { useRouter } from "next/router";
 import { Fragment, useEffect, useState } from "react";
-import { useUser } from "../../store/session";
+import { useAuthedUser } from "../../store/session";
 
 import { toast } from "@/shadcn/hooks/use-toast";
 import { safeJsonParse } from "../../lib/safeJsonParse";
@@ -35,7 +35,7 @@ export default function CreateTicketModal({ keypress, setKeyPressDown }: { keypr
 
   const token = getCookie("session");
 
-  const { user } = useUser();
+  const { user } = useAuthedUser();
 
   const [name, setName] = useState("");
   const [company, setCompany] = useState<{ id: string; name: string }>();

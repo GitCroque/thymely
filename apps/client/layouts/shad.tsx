@@ -12,26 +12,25 @@ import {
   SidebarTrigger,
 } from "@/shadcn/ui/sidebar";
 import { Bell } from "lucide-react";
-import { useUser } from "../store/session";
+import { useAuthedUser } from "../store/session";
 
 export default function ShadLayout({ children }: { children: React.ReactNode }) {
   const location = useRouter();
 
-  const { loading, user } = useUser();
+  const { loading, user } = useAuthedUser();
+  const unreadNotifications = user.notifications.filter(
+    (notification) => !notification.read
+  );
 
 
   useTranslation("thymely");
-
-  if (!user) {
-    location.push("/auth/login");
-  }
 
   if (location.pathname.includes("/admin") && user.isAdmin === false) {
     location.push("/");
     alert("You do not have the correct perms for that action.");
   }
 
-  if (user && user.external_user) {
+  if (user.external_user) {
     location.push("/portal");
   }
 
@@ -64,9 +63,7 @@ export default function ShadLayout({ children }: { children: React.ReactNode }) 
                   >
                     <Link href="/notifications">
                       <Bell className="h-4 w-4 text-foreground" />
-                      {user.notifications.filter(
-                        (notification: { read: boolean }) => !notification.read
-                      ).length > 0 && (
+                      {unreadNotifications.length > 0 && (
                         <svg
                           className="h-2.5 w-2.5 absolute bottom-6 left-6 animate-pulse fill-green-500"
                           viewBox="0 0 6 6"

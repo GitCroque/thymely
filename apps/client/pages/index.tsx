@@ -7,13 +7,13 @@ import { useRouter } from "next/router";
 
 import { getCookie } from "cookies-next";
 import dayjs from "dayjs";
-import { useUser } from "../store/session";
+import { useAuthedUser } from "../store/session";
 
 export default function Home() {
   const router = useRouter();
   const { t } = useTranslation("thymely");
 
-  const { user } = useUser();
+  const { user } = useAuthedUser();
   const token = getCookie("session");
 
   const [, setHour] = useState<number>();

@@ -349,9 +349,15 @@ export default function Onboarding() {
   const { user } = useUser();
   const [step, setStep] = useState(0);
 
+  if (!user) {
+    return null;
+  }
+
+  const currentUser = user;
+
   async function finishOnboarding() {
     try {
-      const res = await fetch(`/api/v1/auth/user/${user.id}/first-login`, {
+      const res = await fetch(`/api/v1/auth/user/${currentUser.id}/first-login`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${getCookie("session")}`,

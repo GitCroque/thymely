@@ -16,7 +16,7 @@ import dayjs from "dayjs";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
 import { useDebounce } from "use-debounce";
-import { useUser } from "../../store/session";
+import { useAuthedUser } from "../../store/session";
 
 function isHTML(str: string) {
   const doc = new DOMParser().parseFromString(str, "text/html");
@@ -29,7 +29,7 @@ export default function NotebookEditor() {
   const router = useRouter();
   const token = getCookie("session");
 
-  const user = useUser();
+  const { user } = useAuthedUser();
 
   const [initialContent, setInitialContent] = useState<
     PartialBlock[] | undefined | "loading"
@@ -63,7 +63,7 @@ export default function NotebookEditor() {
         Authorization: `Bearer ${token}`,
       },
     }).then((res) => res.json());
-    if (res.note.userId !== user.user.id) {
+    if (res.note.userId !== user.id) {
       router.back();
     }
     await loadFromStorage(res.note.note).then((content) => {

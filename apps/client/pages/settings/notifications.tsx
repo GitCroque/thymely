@@ -1,14 +1,14 @@
 import { Switch } from "@headlessui/react";
 import { getCookie } from "cookies-next";
 import { useState } from "react";
-import { useUser } from "../../store/session";
+import { useAuthedUser } from "../../store/session";
 
 function classNames(...classes: (string | boolean | undefined)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
 export default function UserNotifications() {
-  const { user } = useUser();
+  const { user } = useAuthedUser();
   const token = getCookie("session");
 
   const [ticket_creation, setTicket_creation] = useState(user.ticket_created);

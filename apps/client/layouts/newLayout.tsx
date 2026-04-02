@@ -26,13 +26,13 @@ import {
   SquareKanban,
 } from "lucide-react";
 import ThemeSettings from "../components/ThemeSettings";
-import { useUser } from "../store/session";
+import { useAuthedUser } from "../store/session";
 
 export default function NewLayout({ children }: { children: React.ReactNode }) {
   const location = useRouter();
 
-  const { loading, user } = useUser();
-  const locale = user ? user.language : "en";
+  const { loading, user } = useAuthedUser();
+  const locale = user.language ?? "en";
 
   const [keypressdown, setKeyPressDown] = useState(false);
 
@@ -40,18 +40,18 @@ export default function NewLayout({ children }: { children: React.ReactNode }) {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  if (!user) {
-    location.push("/auth/login");
-  }
-
   if (location.pathname.includes("/admin") && user.isAdmin === false) {
     location.push("/");
     alert("You do not have the correct perms for that action.");
   }
 
-  if (user && user.external_user) {
+  if (user.external_user) {
     location.push("/portal");
   }
+
+  const unreadNotifications = user.notifications.filter(
+    (notification) => !notification.read
+  );
 
   const navigation = [
     {
@@ -490,9 +490,7 @@ export default function NewLayout({ children }: { children: React.ReactNode }) {
                 >
                   <Link href="/notifications">
                     <Bell className="h-4 w-4 text-foreground" />
-                    {user.notifications.filter(
-                      (notification: { read: boolean }) => !notification.read
-                    ).length > 0 && (
+                    {unreadNotifications.length > 0 && (
                       <svg
                         className="h-2.5 w-2.5 absolute bottom-6 left-6 animate-pulse fill-green-500"
                         viewBox="0 0 6 6"

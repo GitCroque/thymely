@@ -3,7 +3,7 @@ import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import useTranslation from "next-translate/useTranslation";
 import { useRouter } from "next/router";
-import { useUser } from "../store/session";
+import { useAuthedUser } from "../store/session";
 import { getCookie } from "cookies-next";
 import { toast } from "@/shadcn/hooks/use-toast";
 import dynamic from "next/dynamic";
@@ -28,7 +28,7 @@ export default function CreateTicket() {
   const { t } = useTranslation("thymely");
   const router = useRouter();
   const token = getCookie("session");
-  const { user } = useUser();
+  const { user } = useAuthedUser();
 
   const [name, setName] = useState("");
   const [company, setCompany] = useState<{ id: string; name: string }>();

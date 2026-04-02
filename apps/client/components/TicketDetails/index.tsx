@@ -14,7 +14,7 @@ import {
   SignalLow,
   SignalMedium,
 } from "lucide-react";
-import { useUser } from "../../store/session";
+import { useAuthedUser } from "../../store/session";
 
 import TicketHeader from "./TicketHeader";
 import TicketSidebar from "./TicketSidebar";
@@ -42,7 +42,7 @@ const priorityOptions = [
 const priorities = ["low", "medium", "high"];
 
 export default function Ticket() {
-  const { user } = useUser();
+  const { user } = useAuthedUser();
 
   const { id, data, status, refetch, users, userOptions, clientOptions } = useTicketData();
 

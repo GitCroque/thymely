@@ -11,7 +11,7 @@ import useTranslation from "next-translate/useTranslation";
 
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useUser } from "../../store/session";
+import { useAuthedUser } from "../../store/session";
 
 async function getUserTickets(token: string | undefined) {
   const res = await fetch(`/api/v1/tickets/all`, {
@@ -26,7 +26,7 @@ export default function Tickets() {
   useTranslation("thymely");
 
   const token = getCookie("session") as string;
-  const user = useUser();
+  const { user } = useAuthedUser();
   
   const { data, status, refetch } = useQuery({
     queryKey: ["allusertickets"],
