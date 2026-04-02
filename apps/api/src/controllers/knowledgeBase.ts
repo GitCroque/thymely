@@ -92,6 +92,76 @@ function formatPublicArticle(
   };
 }
 
+const paginationQuerySchema = {
+  type: "object",
+  properties: {
+    page: { type: "string", pattern: "^[0-9]+$" },
+    limit: { type: "string", pattern: "^[0-9]+$" },
+  },
+  additionalProperties: false,
+} as const;
+
+const publicPaginationQuerySchema = {
+  type: "object",
+  properties: {
+    category: { type: "string", maxLength: 80 },
+    page: { type: "string", pattern: "^[0-9]+$" },
+    limit: { type: "string", pattern: "^[0-9]+$" },
+  },
+  additionalProperties: false,
+} as const;
+
+const articleIdParamSchema = {
+  type: "object",
+  properties: {
+    id: { type: "string", format: "uuid" },
+  },
+  required: ["id"],
+  additionalProperties: false,
+} as const;
+
+const articleSlugParamSchema = {
+  type: "object",
+  properties: {
+    slug: { type: "string", minLength: 1, maxLength: 180 },
+  },
+  required: ["slug"],
+  additionalProperties: false,
+} as const;
+
+const articleListResponseSchema = {
+  type: "object",
+  properties: {
+    success: { type: "boolean" },
+    articles: {
+      type: "array",
+      items: { type: "object", additionalProperties: true },
+    },
+    pagination: {
+      type: "object",
+      properties: {
+        page: { type: "integer" },
+        limit: { type: "integer" },
+        total: { type: "integer" },
+      },
+      required: ["page", "limit", "total"],
+      additionalProperties: false,
+    },
+  },
+  required: ["success", "articles", "pagination"],
+  additionalProperties: true,
+} as const;
+
+const articleResponseSchema = {
+  type: "object",
+  properties: {
+    success: { type: "boolean" },
+    article: { type: "object", additionalProperties: true },
+  },
+  required: ["success", "article"],
+  additionalProperties: true,
+} as const;
+
 export function knowledgeBaseRoutes(fastify: FastifyInstance) {
   fastify.get<{
     Querystring: {
@@ -102,6 +172,10 @@ export function knowledgeBaseRoutes(fastify: FastifyInstance) {
     "/api/v1/kb/articles",
     {
       preHandler: requirePermission(["kb::read"]),
+      schema: {
+        querystring: paginationQuerySchema,
+        response: { 200: articleListResponseSchema },
+      },
     },
     async (request, reply) => {
       const { skip, take, page, limit } = parsePagination(request.query);
@@ -131,6 +205,10 @@ export function knowledgeBaseRoutes(fastify: FastifyInstance) {
     "/api/v1/kb/article/:id",
     {
       preHandler: requirePermission(["kb::read"]),
+      schema: {
+        params: articleIdParamSchema,
+        response: { 200: articleResponseSchema },
+      },
     },
     async (request, reply) => {
       const article = await prisma.knowledgeBase.findUnique({
@@ -409,6 +487,12 @@ export function knowledgeBaseRoutes(fastify: FastifyInstance) {
     };
   }>(
     "/api/v1/kb/public/articles",
+    {
+      schema: {
+        querystring: publicPaginationQuerySchema,
+        response: { 200: articleListResponseSchema },
+      },
+    },
     async (request, reply) => {
       const { skip, take, page, limit } = parsePagination(request.query);
       const category = normalizeOptionalField(request.query.category);
@@ -461,6 +545,12 @@ export function knowledgeBaseRoutes(fastify: FastifyInstance) {
     };
   }>(
     "/api/v1/kb/public/articles/:slug",
+    {
+      schema: {
+        params: articleSlugParamSchema,
+        response: { 200: articleResponseSchema },
+      },
+    },
     async (request, reply) => {
       const article = await prisma.knowledgeBase.findFirst({
         where: {

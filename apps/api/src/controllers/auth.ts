@@ -26,6 +26,177 @@ const options = {
 
 const cache = new LRUCache(options);
 
+const uuidParamSchema = {
+  type: "object",
+  properties: {
+    id: { type: "string", minLength: 1 },
+  },
+  required: ["id"],
+  additionalProperties: false,
+} as const;
+
+const sessionIdParamSchema = {
+  type: "object",
+  properties: {
+    sessionId: { type: "string", minLength: 1 },
+  },
+  required: ["sessionId"],
+  additionalProperties: false,
+} as const;
+
+const successResponseSchema = {
+  type: "object",
+  properties: {
+    success: { type: "boolean" },
+  },
+  required: ["success"],
+  additionalProperties: true,
+} as const;
+
+const passwordResetRequestBodySchema = {
+  type: "object",
+  properties: {
+    email: { type: "string", format: "email", maxLength: 254 },
+  },
+  required: ["email"],
+  additionalProperties: false,
+} as const;
+
+const passwordResetCodeBodySchema = {
+  type: "object",
+  properties: {
+    token: { type: "string", maxLength: 512 },
+  },
+  additionalProperties: false,
+} as const;
+
+const passwordResetPasswordBodySchema = {
+  type: "object",
+  properties: {
+    password: { type: "string", maxLength: 128 },
+    token: { type: "string", maxLength: 512 },
+  },
+  additionalProperties: false,
+} as const;
+
+const passwordBodySchema = {
+  type: "object",
+  properties: {
+    password: { type: "string", maxLength: 128 },
+  },
+  additionalProperties: false,
+} as const;
+
+const adminResetPasswordBodySchema = {
+  type: "object",
+  properties: {
+    password: { type: "string", maxLength: 128 },
+    user: { type: "string", minLength: 1 },
+  },
+  required: ["password", "user"],
+  additionalProperties: false,
+} as const;
+
+const profileUpdateBodySchema = {
+  type: "object",
+  properties: {
+    id: { type: "string", minLength: 1 },
+    name: { type: "string", maxLength: 200 },
+    email: { type: "string", format: "email", maxLength: 254 },
+    language: { type: "string", maxLength: 10 },
+  },
+  required: ["name", "email"],
+  additionalProperties: false,
+} as const;
+
+const notificationPreferencesBodySchema = {
+  type: "object",
+  properties: {
+    notify_ticket_created: { type: "boolean" },
+    notify_ticket_assigned: { type: "boolean" },
+    notify_ticket_comments: { type: "boolean" },
+    notify_ticket_status_changed: { type: "boolean" },
+  },
+  required: [
+    "notify_ticket_created",
+    "notify_ticket_assigned",
+    "notify_ticket_comments",
+    "notify_ticket_status_changed",
+  ],
+  additionalProperties: false,
+} as const;
+
+const userRoleBodySchema = {
+  type: "object",
+  properties: {
+    id: { type: "string", minLength: 1 },
+    role: { type: "boolean" },
+  },
+  required: ["id", "role"],
+  additionalProperties: false,
+} as const;
+
+const oauthCallbackQuerySchema = {
+  type: "object",
+  properties: {
+    code: { type: "string", minLength: 1 },
+    state: { type: "string", minLength: 1 },
+  },
+  required: ["code", "state"],
+  additionalProperties: true,
+} as const;
+
+const oidcCallbackQuerySchema = {
+  type: "object",
+  properties: {
+    code: { type: "string" },
+    state: { type: "string", minLength: 1 },
+    iss: { type: "string" },
+  },
+  required: ["state"],
+  additionalProperties: true,
+} as const;
+
+const authCheckResponseSchema = {
+  type: "object",
+  properties: {
+    success: { type: "boolean" },
+    message: { type: "string" },
+    oauth: { type: "boolean" },
+    type: { type: "string" },
+    url: { type: "string" },
+    error: { type: "string" },
+  },
+  additionalProperties: true,
+} as const;
+
+const profileResponseSchema = {
+  type: "object",
+  properties: {
+    user: {
+      type: "object",
+      additionalProperties: true,
+    },
+  },
+  required: ["user"],
+  additionalProperties: true,
+} as const;
+
+const sessionsResponseSchema = {
+  type: "object",
+  properties: {
+    sessions: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: true,
+      },
+    },
+  },
+  required: ["sessions"],
+  additionalProperties: true,
+} as const;
+
 function hashResetToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
@@ -236,7 +407,13 @@ export function authRoutes(fastify: FastifyInstance) {
   // Forgot password and generate one-time token
   fastify.post(
     "/api/v1/auth/password-reset",
-    { config: { rateLimit: { max: 5, timeWindow: "15 minutes" } } },
+    {
+      config: { rateLimit: { max: 5, timeWindow: "15 minutes" } },
+      schema: {
+        body: passwordResetRequestBodySchema,
+        response: { 200: successResponseSchema },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { email } = request.body as { email: string };
       const forwardedProto = request.headers["x-forwarded-proto"];
@@ -276,7 +453,13 @@ export function authRoutes(fastify: FastifyInstance) {
   // Validate password reset token
   fastify.post(
     "/api/v1/auth/password-reset/code",
-    { config: { rateLimit: { max: 10, timeWindow: "15 minutes" } } },
+    {
+      config: { rateLimit: { max: 10, timeWindow: "15 minutes" } },
+      schema: {
+        body: passwordResetCodeBodySchema,
+        response: { 200: successResponseSchema },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { token } = request.body as { token: string };
       if (!token) {
@@ -308,7 +491,13 @@ export function authRoutes(fastify: FastifyInstance) {
   // Reset user password using one-time token
   fastify.post(
     "/api/v1/auth/password-reset/password",
-    { config: { rateLimit: { max: 5, timeWindow: "15 minutes" } } },
+    {
+      config: { rateLimit: { max: 5, timeWindow: "15 minutes" } },
+      schema: {
+        body: passwordResetPasswordBodySchema,
+        response: { 200: successResponseSchema },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { password, token } = request.body as {
         password: string;
@@ -451,6 +640,11 @@ export function authRoutes(fastify: FastifyInstance) {
   // Checks if a user is password auth or other
   fastify.get(
     "/api/v1/auth/check",
+    {
+      schema: {
+        response: { 200: authCheckResponseSchema },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const authtype = await prisma.config.findMany({
         where: {
@@ -558,6 +752,12 @@ export function authRoutes(fastify: FastifyInstance) {
   // oidc api callback route
   fastify.get(
     "/api/v1/auth/oidc/callback",
+    {
+      schema: {
+        querystring: oidcCallbackQuerySchema,
+        response: { 200: successResponseSchema },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const oidc = await getOidcConfig();
@@ -686,6 +886,12 @@ export function authRoutes(fastify: FastifyInstance) {
     };
   }>(
     "/api/v1/auth/oauth/callback",
+    {
+      schema: {
+        querystring: oauthCallbackQuerySchema,
+        response: { 200: successResponseSchema },
+      },
+    },
     async (request, reply) => {
       const { code, state } = request.query;
       const oauthProvider = await getOAuthProvider();
@@ -807,6 +1013,10 @@ export function authRoutes(fastify: FastifyInstance) {
     "/api/v1/auth/user/:id",
     {
       preHandler: requirePermission(["user::delete"]),
+      schema: {
+        params: uuidParamSchema,
+        response: { 200: successResponseSchema },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { id } = request.params as { id: string };
@@ -861,6 +1071,11 @@ export function authRoutes(fastify: FastifyInstance) {
   // User Profile
   fastify.get(
     "/api/v1/auth/profile",
+    {
+      schema: {
+        response: { 200: profileResponseSchema },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const user = await checkSession(request);
       if (!user) {
@@ -906,6 +1121,12 @@ export function authRoutes(fastify: FastifyInstance) {
   // Reset Users password
   fastify.post(
     "/api/v1/auth/reset-password",
+    {
+      schema: {
+        body: passwordBodySchema,
+        response: { 200: successResponseSchema },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { password } = request.body as {
         password: string;
@@ -952,6 +1173,10 @@ export function authRoutes(fastify: FastifyInstance) {
     "/api/v1/auth/admin/reset-password",
     {
       preHandler: requirePermission(["user::manage"]),
+      schema: {
+        body: adminResetPasswordBodySchema,
+        response: { 200: successResponseSchema },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { password, user } = request.body as {
@@ -997,6 +1222,10 @@ export function authRoutes(fastify: FastifyInstance) {
     "/api/v1/auth/profile",
     {
       preHandler: requirePermission(["user::update"]),
+      schema: {
+        body: profileUpdateBodySchema,
+        response: { 200: profileResponseSchema },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const session = await checkSession(request);
@@ -1027,6 +1256,10 @@ export function authRoutes(fastify: FastifyInstance) {
     "/api/v1/auth/profile/notifications/emails",
     {
       preHandler: requirePermission(["user::update"]),
+      schema: {
+        body: notificationPreferencesBodySchema,
+        response: { 200: profileResponseSchema },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const session = await checkSession(request);
@@ -1062,6 +1295,12 @@ export function authRoutes(fastify: FastifyInstance) {
   // Logout a user (deletes session)
   fastify.get(
     "/api/v1/auth/user/:id/logout",
+    {
+      schema: {
+        params: uuidParamSchema,
+        response: { 200: successResponseSchema },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { id } = request.params as { id: string };
 
@@ -1098,6 +1337,10 @@ export function authRoutes(fastify: FastifyInstance) {
     "/api/v1/auth/user/role",
     {
       preHandler: requirePermission(["user::manage"]),
+      schema: {
+        body: userRoleBodySchema,
+        response: { 200: successResponseSchema },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const session = await checkSession(request);
@@ -1138,6 +1381,12 @@ export function authRoutes(fastify: FastifyInstance) {
   // first login
   fastify.post(
     "/api/v1/auth/user/:id/first-login",
+    {
+      schema: {
+        params: uuidParamSchema,
+        response: { 200: successResponseSchema },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { id } = request.params as { id: string };
 
@@ -1173,6 +1422,11 @@ export function authRoutes(fastify: FastifyInstance) {
   // Add a new endpoint to list and manage active sessions
   fastify.get(
     "/api/v1/auth/sessions",
+    {
+      schema: {
+        response: { 200: sessionsResponseSchema },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const currentUser = await checkSession(request);
       if (!currentUser) {
@@ -1271,6 +1525,12 @@ export function authRoutes(fastify: FastifyInstance) {
   // Add ability to revoke specific sessions
   fastify.delete(
     "/api/v1/auth/sessions/:sessionId",
+    {
+      schema: {
+        params: sessionIdParamSchema,
+        response: { 200: successResponseSchema },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const currentUser = await checkSession(request);
       if (!currentUser) {

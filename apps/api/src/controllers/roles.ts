@@ -6,6 +6,107 @@ import { requirePermission } from "../lib/roles";
 import { checkSession } from "../lib/session";
 import { prisma } from "../prisma";
 
+const paginationQuerySchema = {
+  type: "object",
+  properties: {
+    page: { type: "string", pattern: "^[0-9]+$" },
+    limit: { type: "string", pattern: "^[0-9]+$" },
+  },
+  additionalProperties: false,
+} as const;
+
+const roleIdParamSchema = {
+  type: "object",
+  properties: {
+    id: { type: "string", format: "uuid" },
+  },
+  required: ["id"],
+  additionalProperties: false,
+} as const;
+
+const successResponseSchema = {
+  type: "object",
+  properties: {
+    success: { type: "boolean" },
+  },
+  required: ["success"],
+  additionalProperties: true,
+} as const;
+
+const rolesListResponseSchema = {
+  type: "object",
+  properties: {
+    success: { type: "boolean" },
+    roles: {
+      type: "array",
+      items: { type: "object", additionalProperties: true },
+    },
+    pagination: {
+      type: "object",
+      properties: {
+        page: { type: "integer" },
+        limit: { type: "integer" },
+        total: { type: "integer" },
+      },
+      required: ["page", "limit", "total"],
+      additionalProperties: false,
+    },
+    roles_active: { type: "object", additionalProperties: true },
+  },
+  required: ["success", "roles", "pagination", "roles_active"],
+  additionalProperties: true,
+} as const;
+
+const roleResponseSchema = {
+  type: "object",
+  properties: {
+    success: { type: "boolean" },
+    role: { type: "object", additionalProperties: true },
+  },
+  required: ["success", "role"],
+  additionalProperties: true,
+} as const;
+
+const roleUpdateBodySchema = {
+  type: "object",
+  properties: {
+    name: { type: "string", maxLength: 100 },
+    description: { type: "string", maxLength: 500 },
+    permissions: { type: "array", items: { type: "string" } },
+    isDefault: { type: "boolean" },
+    users: {
+      anyOf: [
+        { type: "string", format: "uuid" },
+        {
+          type: "array",
+          items: { type: "string", format: "uuid" },
+        },
+      ],
+    },
+  },
+  additionalProperties: false,
+} as const;
+
+const roleAssignmentBodySchema = {
+  type: "object",
+  properties: {
+    userId: { type: "string", format: "uuid" },
+    roleId: { type: "string", format: "uuid" },
+  },
+  required: ["userId", "roleId"],
+  additionalProperties: false,
+} as const;
+
+const userResponseSchema = {
+  type: "object",
+  properties: {
+    success: { type: "boolean" },
+    user: { type: "object", additionalProperties: true },
+  },
+  required: ["success", "user"],
+  additionalProperties: true,
+} as const;
+
 export function roleRoutes(fastify: FastifyInstance) {
   // Create a new role
   fastify.post<{
@@ -75,6 +176,10 @@ export function roleRoutes(fastify: FastifyInstance) {
     "/api/v1/roles/all",
     {
       preHandler: requirePermission(["role::read"]),
+      schema: {
+        querystring: paginationQuerySchema,
+        response: { 200: rolesListResponseSchema },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { skip, take, page, limit } = parsePagination(request.query as { page?: string; limit?: string });
@@ -109,6 +214,10 @@ export function roleRoutes(fastify: FastifyInstance) {
     "/api/v1/role/:id",
     {
       preHandler: requirePermission(["role::read"]),
+      schema: {
+        params: roleIdParamSchema,
+        response: { 200: roleResponseSchema },
+      },
     },
     async (request, reply) => {
       const { id } = request.params;
@@ -147,6 +256,11 @@ export function roleRoutes(fastify: FastifyInstance) {
     "/api/v1/role/:id/update",
     {
       preHandler: requirePermission(["role::update"]),
+      schema: {
+        params: roleIdParamSchema,
+        body: roleUpdateBodySchema,
+        response: { 200: roleResponseSchema },
+      },
     },
     async (request, reply) => {
       const { id } = request.params;
@@ -256,6 +370,10 @@ export function roleRoutes(fastify: FastifyInstance) {
     "/api/v1/role/:id/delete",
     {
       preHandler: requirePermission(["role::delete"]),
+      schema: {
+        params: roleIdParamSchema,
+        response: { 200: successResponseSchema },
+      },
     },
     async (request, reply) => {
       const { id } = request.params;
@@ -290,6 +408,10 @@ export function roleRoutes(fastify: FastifyInstance) {
     "/api/v1/role/assign",
     {
       preHandler: requirePermission(["role::update"]),
+      schema: {
+        body: roleAssignmentBodySchema,
+        response: { 200: userResponseSchema },
+      },
     },
     async (request, reply) => {
       const { userId, roleId } = request.body;
@@ -330,6 +452,10 @@ export function roleRoutes(fastify: FastifyInstance) {
     "/api/v1/role/remove",
     {
       preHandler: requirePermission(["role::manage"]),
+      schema: {
+        body: roleAssignmentBodySchema,
+        response: { 200: userResponseSchema },
+      },
     },
     async (request, reply) => {
       const { userId, roleId } = request.body;

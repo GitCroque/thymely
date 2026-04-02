@@ -123,6 +123,105 @@ const ticketCreateSchema = {
   additionalProperties: false,
 };
 
+const paginationQuerySchema = {
+  type: "object",
+  properties: {
+    page: { type: "string", pattern: "^[0-9]+$" },
+    limit: { type: "string", pattern: "^[0-9]+$" },
+  },
+  additionalProperties: false,
+} as const;
+
+const uuidParamSchema = {
+  type: "object",
+  properties: {
+    id: { type: "string", format: "uuid" },
+  },
+  required: ["id"],
+  additionalProperties: false,
+} as const;
+
+const successResponseSchema = {
+  type: "object",
+  properties: {
+    success: { type: "boolean" },
+  },
+  required: ["success"],
+  additionalProperties: true,
+} as const;
+
+const ticketResponseSchema = {
+  type: "object",
+  properties: {
+    success: { type: "boolean" },
+    ticket: { type: "object", additionalProperties: true },
+  },
+  required: ["success", "ticket"],
+  additionalProperties: true,
+} as const;
+
+const ticketListResponseSchema = {
+  type: "object",
+  properties: {
+    success: { type: "boolean" },
+    tickets: {
+      type: "array",
+      items: { type: "object", additionalProperties: true },
+    },
+    pagination: {
+      type: "object",
+      properties: {
+        page: { type: "integer" },
+        limit: { type: "integer" },
+        total: { type: "integer" },
+      },
+      required: ["page", "limit", "total"],
+      additionalProperties: false,
+    },
+  },
+  required: ["success", "tickets", "pagination"],
+  additionalProperties: true,
+} as const;
+
+const templateListResponseSchema = {
+  type: "object",
+  properties: {
+    success: { type: "boolean" },
+    templates: {
+      type: "array",
+      items: { type: "object", additionalProperties: true },
+    },
+  },
+  required: ["success", "templates"],
+  additionalProperties: true,
+} as const;
+
+const templateResponseSchema = {
+  type: "object",
+  properties: {
+    success: { type: "boolean" },
+    template: {
+      type: "array",
+      items: { type: "object", additionalProperties: true },
+    },
+  },
+  required: ["success", "template"],
+  additionalProperties: true,
+} as const;
+
+const sluglessTemplatesResponseSchema = {
+  type: "object",
+  properties: {
+    success: { type: "boolean" },
+    tickets: {
+      type: "array",
+      items: { type: "object", additionalProperties: true },
+    },
+  },
+  required: ["success", "tickets"],
+  additionalProperties: true,
+} as const;
+
 async function createTicketCore(request: FastifyRequest<{ Body: TicketCreateBody }>, reply: FastifyReply, options: { authenticated: boolean }) {
   const { name, company, detail, title, priority, email, engineer, type, createdBy } = request.body;
 
@@ -201,6 +300,10 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/ticket/:id",
     {
       preHandler: requirePermission(["issue::read"]),
+      schema: {
+        params: uuidParamSchema,
+        response: { 200: ticketResponseSchema },
+      },
     },
     async (request, reply) => {
       const { id } = request.params;
@@ -287,6 +390,10 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/tickets/open",
     {
       preHandler: requirePermission(["issue::read"]),
+      schema: {
+        querystring: paginationQuerySchema,
+        response: { 200: ticketListResponseSchema },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { skip, take, page, limit } = parsePagination(request.query as { page?: string; limit?: string });
@@ -365,6 +472,10 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/tickets/all",
     {
       preHandler: requirePermission(["issue::read"]),
+      schema: {
+        querystring: paginationQuerySchema,
+        response: { 200: ticketListResponseSchema },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { skip, take, page, limit } = parsePagination(request.query as { page?: string; limit?: string });
@@ -405,6 +516,10 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/tickets/user/open",
     {
       preHandler: requirePermission(["issue::read"]),
+      schema: {
+        querystring: paginationQuerySchema,
+        response: { 200: ticketListResponseSchema },
+      },
     },
 
     async (request: FastifyRequest, reply: FastifyReply) => {
@@ -446,6 +561,10 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/tickets/completed",
     {
       preHandler: requirePermission(["issue::read"]),
+      schema: {
+        querystring: paginationQuerySchema,
+        response: { 200: ticketListResponseSchema },
+      },
     },
 
     async (request: FastifyRequest, reply: FastifyReply) => {
@@ -486,6 +605,10 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/tickets/unassigned",
     {
       preHandler: requirePermission(["issue::read"]),
+      schema: {
+        querystring: paginationQuerySchema,
+        response: { 200: ticketListResponseSchema },
+      },
     },
 
     async (request: FastifyRequest, reply: FastifyReply) => {
@@ -1029,8 +1152,17 @@ export function ticketRoutes(fastify: FastifyInstance) {
   // Get all tickets that created via imap
   fastify.get(
     "/api/v1/tickets/imap/all",
-
-    async (_request: FastifyRequest, _reply: FastifyReply) => {}
+    {
+      schema: {
+        response: { 200: sluglessTemplatesResponseSchema },
+      },
+    },
+    async (_request: FastifyRequest, reply: FastifyReply) => {
+      reply.send({
+        success: true,
+        tickets: [],
+      });
+    }
   );
 
   // GET all ticket templates
@@ -1038,6 +1170,9 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/ticket/templates",
     {
       preHandler: requirePermission(["email_template::manage"]),
+      schema: {
+        response: { 200: templateListResponseSchema },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const templates = await prisma.emailTemplate.findMany({
@@ -1061,6 +1196,10 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/ticket/template/:id",
     {
       preHandler: requirePermission(["email_template::manage"]),
+      schema: {
+        params: uuidParamSchema,
+        response: { 200: templateResponseSchema },
+      },
     },
     async (request, reply) => {
       const { id } = request.params;
@@ -1142,6 +1281,10 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/tickets/user/open/external",
     {
       preHandler: requirePermission(["issue::read"]),
+      schema: {
+        querystring: paginationQuerySchema,
+        response: { 200: ticketListResponseSchema },
+      },
     },
 
     async (request: FastifyRequest, reply: FastifyReply) => {
@@ -1183,6 +1326,10 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/tickets/user/closed/external",
     {
       preHandler: requirePermission(["issue::read"]),
+      schema: {
+        querystring: paginationQuerySchema,
+        response: { 200: ticketListResponseSchema },
+      },
     },
 
     async (request: FastifyRequest, reply: FastifyReply) => {
@@ -1224,6 +1371,10 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/tickets/user/external",
     {
       preHandler: requirePermission(["issue::read"]),
+      schema: {
+        querystring: paginationQuerySchema,
+        response: { 200: ticketListResponseSchema },
+      },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const user = await checkSession(request);
@@ -1264,6 +1415,10 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/ticket/subscribe/:id",
     {
       preHandler: requirePermission(["issue::read"]),
+      schema: {
+        params: uuidParamSchema,
+        response: { 200: successResponseSchema },
+      },
     },
     async (request, reply) => {
       const { id } = request.params;
@@ -1310,6 +1465,10 @@ export function ticketRoutes(fastify: FastifyInstance) {
     "/api/v1/ticket/unsubscribe/:id",
     {
       preHandler: requirePermission(["issue::read"]),
+      schema: {
+        params: uuidParamSchema,
+        response: { 200: successResponseSchema },
+      },
     },
     async (request, reply) => {
       const { id } = request.params;
