@@ -10,7 +10,8 @@ module.exports = {
       watch: false,
       env: {
         NODE_ENV: "production",
-        PORT: 3000, // Change this to your desired port
+        PORT: 3000,
+        HOSTNAME: "0.0.0.0",
       },
     },
     {
@@ -48,6 +49,7 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         PORT: 3002,
+        HOSTNAME: "0.0.0.0",
         KNOWLEDGE_BASE_API_URL:
           process.env.KNOWLEDGE_BASE_API_URL || "http://127.0.0.1:5003",
       },
