@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-0.8.2-blue.svg" />
+  <img alt="Version" src="https://img.shields.io/badge/version-0.9.0-blue.svg" />
   <img alt="License" src="https://img.shields.io/badge/license-AGPL--3.0-green.svg" />
   <a href="https://ghcr.io/gitcroque/thymely">
     <img alt="Docker" src="https://img.shields.io/badge/docker-ghcr.io%2Fgitcroque%2Fthymely-blue?logo=docker" />
@@ -71,6 +71,10 @@ Open `http://localhost:3000` and log in with:
 - **Email:** `admin@admin.com`
 - **Password:** the value you set in `THYMELY_BOOTSTRAP_PASSWORD`
 
+## API Documentation
+
+Interactive API documentation (OpenAPI/Swagger) is available at `/documentation` on your Thymely instance (e.g., `http://localhost:5003/documentation`). All endpoints are documented with their JSON schemas, grouped by domain (auth, tickets, users, config, etc.).
+
 ## Configuration
 
 All configuration is done through environment variables. See [`.env.example`](.env.example) for the full list.
@@ -129,6 +133,25 @@ packages/
   config/     Shared ESLint config
   tsconfig/   Shared TypeScript config
 ```
+
+## Deploying behind a reverse proxy
+
+When running Thymely behind nginx, Caddy, or similar:
+
+1. Set `TRUST_PROXY=true` so Fastify trusts `X-Forwarded-*` headers
+2. Set `COOKIE_SECURE=true` to enforce HTTPS-only session cookies
+3. Set `CORS_ORIGIN=https://your-domain.com` to restrict cross-origin requests
+4. Proxy traffic to the client on port 3000 (the client rewrites `/api/v1/*` to the backend on port 5003 internally)
+
+## Upgrading
+
+```bash
+# Pull the latest image and recreate containers
+docker compose pull
+docker compose up -d
+```
+
+The init container runs migrations automatically on startup. Check the logs with `docker compose logs thymely_init` to confirm migrations completed successfully.
 
 ## Documentation
 
