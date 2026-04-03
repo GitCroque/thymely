@@ -1,3 +1,4 @@
+import "../sentry.client.config";
 import "@radix-ui/themes/styles.css";
 import "../styles/globals.css";
 

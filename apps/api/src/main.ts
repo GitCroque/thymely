@@ -10,6 +10,7 @@ import multipart from "@fastify/multipart";
 
 import { track } from "./lib/hog";
 import { getEmails } from "./lib/imap";
+import { Sentry, sentryEnabled } from "./lib/sentry";
 import { checkSession } from "./lib/session";
 import { prisma } from "./prisma";
 import { registerRoutes } from "./routes";
@@ -116,6 +117,11 @@ server.setErrorHandler((error: Error & { statusCode?: number }, request, reply) 
   const statusCode = error.statusCode ?? 500;
   if (statusCode === 403 || statusCode === 429) {
     request.log.warn({ security: true, event: statusCode === 429 ? "rate_limit_hit" : "forbidden", ip: request.ip, url: request.url }, "Security event");
+  }
+  if (sentryEnabled && statusCode >= 500) {
+    Sentry.captureException(error, {
+      extra: { url: request.url, method: request.method },
+    });
   }
   reply.status(statusCode).send({
     success: false,

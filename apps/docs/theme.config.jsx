@@ -6,9 +6,15 @@ const config = {
     defaultMenuCollapseLevel: 2,
     toggleButton: false,
   },
-  // No chat link — Discord inactive
   footer: {
-    content: "",
+    content: (
+      <span>
+        MIT {new Date().getFullYear()} ©{" "}
+        <a href="https://github.com/GitCroque/thymely" target="_blank">
+          Thymely
+        </a>
+      </span>
+    ),
   },
   banner: {
     key: "release",
