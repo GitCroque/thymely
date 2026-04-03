@@ -9,6 +9,12 @@ import {
   Loader2,
   Eye,
   EyeOff,
+  CircleCheck,
+  CircleX,
+  Plug,
+  Settings,
+  Users,
+  BookOpen,
 } from "lucide-react";
 
 import { useUser } from "../store/session";
@@ -180,6 +186,8 @@ function PasswordStep({
   );
 }
 
+type SmtpTestStatus = "idle" | "testing" | "success" | "error";
+
 function EmailStep({
   onNext,
   onSkip,
@@ -194,13 +202,43 @@ function EmailStep({
   const [reply, setReply] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [testStatus, setTestStatus] = useState<SmtpTestStatus>("idle");
+  const [testMessage, setTestMessage] = useState("");
 
-  const isValid =
+  const hasSmtpFields =
     host.length > 0 &&
     port.length > 0 &&
     username.length > 0 &&
-    password.length > 0 &&
-    reply.length > 0;
+    password.length > 0;
+
+  const isValid = hasSmtpFields && reply.length > 0;
+
+  async function handleTest() {
+    if (!hasSmtpFields) return;
+
+    setTestStatus("testing");
+    setTestMessage("");
+
+    try {
+      const res = await fetch("/api/v1/config/email/test", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ host, port, username, password }),
+      }).then((r) => r.json());
+
+      if (res.success) {
+        setTestStatus("success");
+        setTestMessage("Connection successful");
+      } else {
+        setTestStatus("error");
+        setTestMessage(res.message || "Connection failed");
+      }
+    } catch {
+      setTestStatus("error");
+      setTestMessage("Could not reach the server");
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -253,7 +291,10 @@ function EmailStep({
               <Input
                 id="smtp-host"
                 value={host}
-                onChange={(e) => setHost(e.target.value)}
+                onChange={(e) => {
+                  setHost(e.target.value);
+                  setTestStatus("idle");
+                }}
                 placeholder="smtp.gmail.com"
                 autoFocus
               />
@@ -263,7 +304,10 @@ function EmailStep({
               <Input
                 id="smtp-port"
                 value={port}
-                onChange={(e) => setPort(e.target.value)}
+                onChange={(e) => {
+                  setPort(e.target.value);
+                  setTestStatus("idle");
+                }}
                 placeholder="465"
               />
             </div>
@@ -273,7 +317,10 @@ function EmailStep({
             <Input
               id="smtp-user"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                setTestStatus("idle");
+              }}
               placeholder="you@example.com"
             />
           </div>
@@ -283,10 +330,44 @@ function EmailStep({
               id="smtp-pass"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setTestStatus("idle");
+              }}
               placeholder="SMTP password or app password"
             />
           </div>
+
+          {/* Test connection button */}
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={!hasSmtpFields || testStatus === "testing"}
+              onClick={handleTest}
+            >
+              {testStatus === "testing" ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Plug className="h-4 w-4 mr-2" />
+              )}
+              Test connection
+            </Button>
+            {testStatus === "success" && (
+              <span className="flex items-center gap-1 text-sm text-green-600 dark:text-green-400">
+                <CircleCheck className="h-4 w-4" />
+                {testMessage}
+              </span>
+            )}
+            {testStatus === "error" && (
+              <span className="flex items-center gap-1 text-sm text-destructive">
+                <CircleX className="h-4 w-4" />
+                {testMessage}
+              </span>
+            )}
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="smtp-reply">Reply-to address</Label>
             <Input
@@ -318,7 +399,13 @@ function EmailStep({
   );
 }
 
-function DoneStep({ onFinish }: { onFinish: () => void }) {
+function DoneStep({
+  onFinish,
+  emailConfigured,
+}: {
+  onFinish: () => void;
+  emailConfigured: boolean;
+}) {
   const [loading, setLoading] = useState(false);
 
   return (
@@ -329,11 +416,55 @@ function DoneStep({ onFinish }: { onFinish: () => void }) {
         </div>
         <CardTitle className="text-2xl">You&apos;re all set!</CardTitle>
         <CardDescription>
-          Thymely is ready to use. You can adjust all settings anytime from
-          the admin panel.
+          Thymely is ready to use. Here&apos;s what you can do next.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        <div className="rounded-lg border p-4 space-y-3">
+          <p className="text-sm font-medium text-foreground">Recommended next steps</p>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li className="flex items-start gap-2">
+              <Users className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>
+                <strong className="text-foreground">Create user accounts</strong> &mdash;
+                Add your team members in Settings &gt; Users
+              </span>
+            </li>
+            {!emailConfigured && (
+              <li className="flex items-start gap-2">
+                <Mail className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>
+                  <strong className="text-foreground">Set up email</strong> &mdash;
+                  Configure SMTP in Settings to enable notifications
+                </span>
+              </li>
+            )}
+            <li className="flex items-start gap-2">
+              <Settings className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>
+                <strong className="text-foreground">Customize your instance</strong> &mdash;
+                Adjust branding, roles, and integrations in Settings
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <BookOpen className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>
+                <strong className="text-foreground">Read the docs</strong> &mdash;
+                Visit{" "}
+                <a
+                  href="https://github.com/GitCroque/thymely"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline underline-offset-2"
+                >
+                  the documentation
+                </a>{" "}
+                for guides and API reference
+              </span>
+            </li>
+          </ul>
+        </div>
+
         <div className="flex justify-center">
           <Button
             size="lg"
@@ -359,6 +490,7 @@ export default function Onboarding() {
   const router = useRouter();
   const { user } = useUser();
   const [step, setStep] = useState(0);
+  const [emailConfigured, setEmailConfigured] = useState(false);
 
   if (!user) {
     return null;
@@ -400,13 +532,19 @@ export default function Onboarding() {
 
         {step === 1 && (
           <EmailStep
-            onNext={() => setStep(2)}
+            onNext={() => {
+              setEmailConfigured(true);
+              setStep(2);
+            }}
             onSkip={() => setStep(2)}
           />
         )}
 
         {step === 2 && (
-          <DoneStep onFinish={finishOnboarding} />
+          <DoneStep
+            onFinish={finishOnboarding}
+            emailConfigured={emailConfigured}
+          />
         )}
 
         {step > 0 && step < TOTAL_STEPS - 1 && (

@@ -2,6 +2,8 @@ import compress from "@fastify/compress";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
+import swagger from "@fastify/swagger";
+import swaggerUi from "@fastify/swagger-ui";
 import "dotenv/config";
 import Fastify, { FastifyInstance } from "fastify";
 import multipart from "@fastify/multipart";
@@ -40,6 +42,54 @@ if (isProduction && (!process.env.SECRET || process.env.SECRET.length < 32)) {
     "SECRET environment variable must be set and at least 32 characters in production"
   );
 }
+
+server.register(swagger, {
+  openapi: {
+    openapi: "3.0.3",
+    info: {
+      title: "Thymely API",
+      description: "API du helpdesk open-source Thymely",
+      version: process.env.APP_VERSION || "0.8.2",
+      license: { name: "MIT" },
+    },
+    servers: [{ url: "/", description: "Current server" }],
+    tags: [
+      { name: "health", description: "Health check" },
+      { name: "auth", description: "Authentification et sessions" },
+      { name: "tickets", description: "Gestion des tickets" },
+      { name: "users", description: "Gestion des utilisateurs" },
+      { name: "clients", description: "Gestion des clients" },
+      { name: "config", description: "Configuration système" },
+      { name: "roles", description: "Rôles et permissions" },
+      { name: "webhooks", description: "Intégrations webhooks" },
+      { name: "email", description: "File d'attente email" },
+      { name: "knowledge-base", description: "Base de connaissances" },
+      { name: "notebooks", description: "Carnets de notes" },
+      { name: "storage", description: "Stockage de fichiers" },
+      { name: "time-tracking", description: "Suivi du temps" },
+      { name: "data", description: "Export et import de données" },
+    ],
+    components: {
+      securitySchemes: {
+        cookieAuth: {
+          type: "apiKey",
+          in: "cookie",
+          name: "session",
+        },
+      },
+    },
+    security: [{ cookieAuth: [] }],
+  },
+});
+
+server.register(swaggerUi, {
+  routePrefix: "/documentation",
+  uiConfig: {
+    docExpansion: "list",
+    deepLinking: true,
+    defaultModelsExpandDepth: 1,
+  },
+});
 
 server.register(compress, { threshold: 1024 });
 server.register(cookie);
@@ -104,6 +154,10 @@ const publicRoutePrefixes = [
     method: "GET",
     prefix: "/api/v1/kb/public/",
   },
+  {
+    method: "GET",
+    prefix: "/documentation",
+  },
 ];
 
 server.addHook("preHandler", async (request, reply) => {
@@ -127,6 +181,35 @@ server.addHook("preHandler", async (request, reply) => {
       message: "Unauthorized",
       success: false,
     });
+  }
+});
+
+// Auto-tag routes for OpenAPI based on URL prefix
+const routeTagMap: Record<string, string> = {
+  "/api/v1/auth": "auth",
+  "/api/v1/ticket": "tickets",
+  "/api/v1/users": "users",
+  "/api/v1/clients": "clients",
+  "/api/v1/config": "config",
+  "/api/v1/roles": "roles",
+  "/api/v1/webhooks": "webhooks",
+  "/api/v1/email": "email",
+  "/api/v1/kb": "knowledge-base",
+  "/api/v1/notebooks": "notebooks",
+  "/api/v1/storage": "storage",
+  "/api/v1/time": "time-tracking",
+  "/api/v1/data": "data",
+};
+
+server.addHook("onRoute", (routeOptions) => {
+  if (routeOptions.schema?.tags?.length) return; // already tagged
+  const url = routeOptions.url;
+  for (const [prefix, tag] of Object.entries(routeTagMap)) {
+    if (url.startsWith(prefix)) {
+      routeOptions.schema = routeOptions.schema || {};
+      routeOptions.schema.tags = [tag];
+      break;
+    }
   }
 });
 

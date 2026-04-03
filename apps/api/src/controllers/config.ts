@@ -581,6 +581,68 @@ export function configRoutes(fastify: FastifyInstance) {
     }
   );
 
+  // Test SMTP connection (does not save anything)
+  fastify.post<{
+    Body: {
+      host: string;
+      port: string;
+      username: string;
+      password: string;
+    };
+  }>(
+    "/api/v1/config/email/test",
+    {
+      preHandler: requirePermission(["settings::manage"]),
+      schema: {
+        body: {
+          type: "object",
+          properties: {
+            host: { type: "string", minLength: 1, maxLength: 253 },
+            port: { type: "string", pattern: "^[0-9]+$" },
+            username: { type: "string", minLength: 1, maxLength: 254 },
+            password: { type: "string", minLength: 1, maxLength: 500 },
+          },
+          required: ["host", "port", "username", "password"],
+          additionalProperties: false,
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              message: { type: "string" },
+            },
+            required: ["success", "message"],
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { host, port, username, password } = request.body;
+      const nodemailer = require("nodemailer");
+
+      const transport = nodemailer.createTransport({
+        host,
+        port: parseInt(port, 10),
+        secure: port === "465",
+        auth: { user: username, pass: password },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+      });
+
+      try {
+        await transport.verify();
+        reply.send({ success: true, message: "SMTP connection successful" });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Connection failed";
+        logger.warn({ err, host, port }, "SMTP test failed");
+        reply.send({ success: false, message });
+      } finally {
+        transport.close();
+      }
+    }
+  );
+
   // Disable/Enable Email
   fastify.delete(
     "/api/v1/config/email",
