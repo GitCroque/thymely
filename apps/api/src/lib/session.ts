@@ -56,16 +56,22 @@ export async function checkSession(
     }
 
     const currentUserAgent = request.headers["user-agent"] || "";
-    const currentIp = request.ip;
 
-    if (
-      (session.userAgent && session.userAgent !== currentUserAgent) ||
-      (session.ipAddress && session.ipAddress !== currentIp)
-    ) {
+    // User-agent binding is always checked (catches session theft across browsers)
+    if (session.userAgent && session.userAgent !== currentUserAgent) {
       await prisma.session.delete({
         where: { id: session.id },
       });
+      cachedRequest[REQUEST_SESSION_CACHE_KEY] = null;
+      return null;
+    }
 
+    // IP binding is opt-in (SESSION_BIND_IP=true) — mobile users change IPs frequently
+    const bindIp = process.env.SESSION_BIND_IP === "true";
+    if (bindIp && session.ipAddress && session.ipAddress !== request.ip) {
+      await prisma.session.delete({
+        where: { id: session.id },
+      });
       cachedRequest[REQUEST_SESSION_CACHE_KEY] = null;
       return null;
     }

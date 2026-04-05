@@ -37,12 +37,30 @@ async function main() {
       },
     });
 
-    const encryptionKey = crypto.randomBytes(32); // Generates a random key
+    // Use DATA_ENCRYPTION_KEY from env if provided, otherwise generate a random one
+    const envKey = process.env.DATA_ENCRYPTION_KEY;
+    let encryptionKey;
+    if (envKey) {
+      const keyBuffer = Buffer.from(envKey, "hex");
+      if (keyBuffer.length !== 32) {
+        throw new Error(
+          `DATA_ENCRYPTION_KEY must be a 64-character hex string (32 bytes). Got ${envKey.length} characters.`
+        );
+      }
+      encryptionKey = keyBuffer;
+      console.log("Using DATA_ENCRYPTION_KEY from environment variable.");
+    } else {
+      encryptionKey = crypto.randomBytes(32);
+      console.warn(
+        "[WARN] DATA_ENCRYPTION_KEY not set — generated a random key. " +
+          "Set DATA_ENCRYPTION_KEY in .env for reproducible deployments."
+      );
+    }
 
     const conf = await prisma.config.create({
       data: {
-        gh_version: "0.8.1",
-        client_version: "0.8.1",
+        gh_version: "1.0.0",
+        client_version: "1.0.0",
         encryption_key: encryptionKey,
       },
     });
@@ -56,15 +74,18 @@ async function main() {
       },
     });
 
-    const displayPassword = process.env.THYMELY_BOOTSTRAP_PASSWORD
-      ? "(provided by THYMELY_BOOTSTRAP_PASSWORD)"
-      : bootstrapPassword;
-
     console.log("");
     console.log("┌────────────────────────────────────────────┐");
     console.log("│  Admin credentials (first login only)      │");
     console.log("│  Email: admin@admin.com                    │");
-    console.log(`│  Password: ${displayPassword.padEnd(31)}│`);
+    if (process.env.THYMELY_BOOTSTRAP_PASSWORD) {
+      console.log("│  Password: (set by THYMELY_BOOTSTRAP_PASSWORD) │");
+    } else {
+      // Write password to stderr only — avoids capture by log aggregators
+      // that typically only collect stdout
+      console.log("│  Password: (printed to stderr below)      │");
+      console.error(`[BOOTSTRAP] Admin password: ${bootstrapPassword}`);
+    }
     console.log("│  ⚠ Change this password immediately!       │");
     console.log("└────────────────────────────────────────────┘");
     console.log("");

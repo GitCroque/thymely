@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "Email" ALTER COLUMN "expiresIn" SET DATA TYPE BIGINT;

@@ -360,6 +360,13 @@ export function authRoutes(fastify: FastifyInstance) {
       },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
+      if (process.env.ALLOW_EXTERNAL_REGISTRATION === "false") {
+        return reply.code(403).send({
+          success: false,
+          message: "External registration is disabled",
+        });
+      }
+
       const { email, password, name, language } = request.body as {
         email: string;
         password: string;

@@ -33,8 +33,8 @@ const rawCorsOrigins = (process.env.CORS_ORIGIN || "")
 const isProduction = process.env.NODE_ENV === "production";
 if (isProduction && rawCorsOrigins.length === 0) {
   console.warn(
-    "[SECURITY] CORS_ORIGIN is not configured. Defaulting to permissive mode. " +
-      "Set CORS_ORIGIN to a comma-separated allowlist for production hardening."
+    "[SECURITY] CORS_ORIGIN is not configured. Cross-origin requests will be blocked by default. " +
+      "Set CORS_ORIGIN to a comma-separated allowlist if you need cross-origin access."
   );
 }
 
@@ -50,8 +50,8 @@ server.register(swagger, {
     info: {
       title: "Thymely API",
       description: "API du helpdesk open-source Thymely",
-      version: process.env.APP_VERSION || "0.8.2",
-      license: { name: "MIT" },
+      version: process.env.APP_VERSION || "1.0.0",
+      license: { name: "AGPL-3.0", url: "https://www.gnu.org/licenses/agpl-3.0.html" },
     },
     servers: [{ url: "/", description: "Current server" }],
     tags: [
@@ -112,7 +112,19 @@ server.register(multipart, {
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-server.setErrorHandler((error: Error & { statusCode?: number }, request, reply) => {
+// Safe error messages for known HTTP status codes — avoids leaking internals
+const safeErrorMessages: Record<number, string> = {
+  400: "Bad request",
+  401: "Unauthorized",
+  403: "Forbidden",
+  404: "Not found",
+  409: "Conflict",
+  413: "Payload too large",
+  415: "Unsupported media type",
+  429: "Too many requests",
+};
+
+server.setErrorHandler((error: Error & { statusCode?: number; validation?: unknown }, request, reply) => {
   request.log.error(error);
   const statusCode = error.statusCode ?? 500;
   if (statusCode === 403 || statusCode === 429) {
@@ -123,9 +135,21 @@ server.setErrorHandler((error: Error & { statusCode?: number }, request, reply) 
       extra: { url: request.url, method: request.method },
     });
   }
+
+  // Validation errors from Fastify JSON schemas are safe to expose (they describe input shape)
+  // Other 4xx errors use a generic message to avoid leaking internal details
+  let message: string;
+  if (statusCode >= 500) {
+    message = "Internal server error";
+  } else if (error.validation) {
+    message = error.message;
+  } else {
+    message = safeErrorMessages[statusCode] || "Request error";
+  }
+
   reply.status(statusCode).send({
     success: false,
-    message: statusCode === 500 ? "Internal server error" : error.message,
+    message,
   });
 });
 
@@ -141,17 +165,43 @@ server.addHook("onSend", async (request, reply, payload) => {
   return payload;
 });
 
+// Minimal access log in production (method, url, status, duration)
+if (isProduction) {
+  server.addHook("onResponse", (request, reply, done) => {
+    request.log.info(
+      {
+        method: request.method,
+        url: request.url,
+        statusCode: reply.statusCode,
+        durationMs: Math.round(reply.elapsedTime),
+      },
+      "request completed"
+    );
+    done();
+  });
+}
+
+const allowExternalRegistration = process.env.ALLOW_EXTERNAL_REGISTRATION !== "false";
+const allowPublicTickets = process.env.ALLOW_PUBLIC_TICKETS === "true";
+
+if (!allowExternalRegistration) {
+  server.log.info("External registration is disabled (ALLOW_EXTERNAL_REGISTRATION=false)");
+}
+if (!allowPublicTickets) {
+  server.log.info("Public ticket creation is disabled (ALLOW_PUBLIC_TICKETS != true)");
+}
+
 const publicRoutes = new Set([
   "GET /",
   "POST /api/v1/auth/login",
-  "POST /api/v1/auth/user/register/external",
+  ...(allowExternalRegistration ? ["POST /api/v1/auth/user/register/external"] : []),
   "POST /api/v1/auth/password-reset",
   "POST /api/v1/auth/password-reset/code",
   "POST /api/v1/auth/password-reset/password",
   "GET /api/v1/auth/check",
   "GET /api/v1/auth/oidc/callback",
   "GET /api/v1/auth/oauth/callback",
-  "POST /api/v1/ticket/public/create",
+  ...(allowPublicTickets ? ["POST /api/v1/ticket/public/create"] : []),
   "GET /api/v1/config/authentication/check",
 ]);
 
@@ -236,15 +286,32 @@ server.get(
             uptime: { type: "integer" },
           },
         },
+        503: {
+          type: "object",
+          properties: {
+            healthy: { type: "boolean" },
+            version: { type: "string" },
+            error: { type: "string" },
+          },
+        },
       },
     },
   },
   async function (_request, response) {
-    response.send({
-      healthy: true,
-      version: process.env.APP_VERSION || "dev",
-      uptime: Math.floor(process.uptime()),
-    });
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      response.send({
+        healthy: true,
+        version: process.env.APP_VERSION || "dev",
+        uptime: Math.floor(process.uptime()),
+      });
+    } catch {
+      response.status(503).send({
+        healthy: false,
+        version: process.env.APP_VERSION || "dev",
+        error: "database unreachable",
+      });
+    }
   }
 );
 
@@ -295,6 +362,38 @@ const start = async () => {
     }
 
     scheduleImapSync();
+
+    // Purge expired sessions every hour
+    const SESSION_CLEANUP_INTERVAL = 3600000;
+    setInterval(async () => {
+      try {
+        const result = await prisma.session.deleteMany({
+          where: { expires: { lt: new Date() } },
+        });
+        if (result.count > 0) {
+          server.log.info({ purged: result.count }, "Expired sessions purged");
+        }
+      } catch (error) {
+        server.log.error(error, "Session cleanup failed");
+      }
+    }, SESSION_CLEANUP_INTERVAL);
+
+    // Graceful shutdown
+    const shutdown = async (signal: string) => {
+      server.log.info({ signal }, "Shutdown signal received, closing gracefully...");
+      try {
+        await server.close();
+        await prisma.$disconnect();
+        server.log.info("Shutdown complete");
+        process.exit(0);
+      } catch (err) {
+        server.log.error(err, "Error during shutdown");
+        process.exit(1);
+      }
+    };
+
+    process.on("SIGTERM", () => shutdown("SIGTERM"));
+    process.on("SIGINT", () => shutdown("SIGINT"));
   } catch (err) {
     server.log.error(err);
     await prisma.$disconnect();

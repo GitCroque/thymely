@@ -292,7 +292,15 @@ export function ticketRoutes(fastify: FastifyInstance) {
       config: { rateLimit: { max: 20, timeWindow: "15 minutes" } },
       schema: { body: ticketCreateSchema },
     },
-    (request, reply) => createTicketCore(request, reply, { authenticated: false })
+    (request, reply) => {
+      if (process.env.ALLOW_PUBLIC_TICKETS !== "true") {
+        return reply.code(403).send({
+          success: false,
+          message: "Public ticket creation is disabled",
+        });
+      }
+      return createTicketCore(request, reply, { authenticated: false });
+    }
   );
 
   // Get a ticket by id - requires auth

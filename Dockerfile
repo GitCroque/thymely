@@ -69,6 +69,11 @@ EXPOSE 3000 3002 5003
 USER app
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
-  CMD node -e "fetch('http://localhost:5003/').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
+  CMD node -e "\
+    Promise.all([\
+      fetch('http://localhost:5003/').then(r => { if (!r.ok) throw new Error('api') }),\
+      fetch('http://localhost:3000/').then(r => { if (!r.ok) throw new Error('client') }),\
+      fetch('http://localhost:3002/').then(r => { if (!r.ok) throw new Error('kb') })\
+    ]).then(() => process.exit(0)).catch(() => process.exit(1))"
 
 CMD ["sh", "start.sh"]

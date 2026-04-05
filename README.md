@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-0.9.0-blue.svg" />
+  <img alt="Version" src="https://img.shields.io/badge/version-1.0.0-blue.svg" />
   <img alt="License" src="https://img.shields.io/badge/license-AGPL--3.0-green.svg" />
   <a href="https://ghcr.io/gitcroque/thymely">
     <img alt="Docker" src="https://img.shields.io/badge/docker-ghcr.io%2Fgitcroque%2Fthymely-blue?logo=docker" />
@@ -77,9 +77,10 @@ DATA_ENCRYPTION_KEY=<openssl rand -hex 32>
 THYMELY_BOOTSTRAP_PASSWORD=<admin-password>
 ```
 
-### 2. Start
+### 2. Validate and start
 
 ```bash
+sh preflight.sh     # Check .env is complete
 docker compose up -d
 ```
 

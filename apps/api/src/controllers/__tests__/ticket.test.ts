@@ -252,6 +252,27 @@ describe("Ticket controller business logic", () => {
   // ─── POST /api/v1/ticket/public/create (no auth) ───
 
   describe("POST /api/v1/ticket/public/create", () => {
+    beforeEach(() => {
+      process.env.ALLOW_PUBLIC_TICKETS = "true";
+    });
+
+    afterEach(() => {
+      delete process.env.ALLOW_PUBLIC_TICKETS;
+    });
+
+    it("returns 403 when public tickets are disabled", async () => {
+      process.env.ALLOW_PUBLIC_TICKETS = "false";
+
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/v1/ticket/public/create",
+        payload: { title: "Blocked ticket" },
+      });
+
+      expect(res.statusCode).toBe(403);
+      expect(res.json().message).toBe("Public ticket creation is disabled");
+    });
+
     it("creates a ticket without authentication", async () => {
       vi.mocked(prisma.ticket.create).mockResolvedValueOnce({ id: UUID, email: null } as any);
 

@@ -464,6 +464,20 @@ describe("Auth controller", () => {
       name: "External User",
     };
 
+    it("returns 403 when external registration is disabled", async () => {
+      process.env.ALLOW_EXTERNAL_REGISTRATION = "false";
+
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/user/register/external",
+        payload: validPayload,
+      });
+
+      expect(res.statusCode).toBe(403);
+      expect(res.json().message).toBe("External registration is disabled");
+      delete process.env.ALLOW_EXTERNAL_REGISTRATION;
+    });
+
     it("returns 400 when email already exists", async () => {
       mockPrismaUser.findUnique.mockResolvedValueOnce(fakeUser());
 
@@ -751,7 +765,7 @@ describe("Auth controller", () => {
     it("returns user profile with notifications", async () => {
       mockPrismaConfig.findFirst.mockResolvedValueOnce({
         sso_active: false,
-        client_version: "0.8.1",
+        client_version: "1.0.0",
       });
       mockPrismaNotifications.findMany.mockResolvedValueOnce([
         { id: "notif-1", text: "Hello" },
@@ -767,7 +781,7 @@ describe("Auth controller", () => {
       expect(body.user.email).toBe("test@test.com");
       expect(body.user.notifications).toHaveLength(1);
       expect(body.user.sso_status).toBe(false);
-      expect(body.user.version).toBe("0.8.1");
+      expect(body.user.version).toBe("1.0.0");
     });
   });
 

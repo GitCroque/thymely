@@ -32,6 +32,14 @@ Thymely is configured through environment variables defined in your `.env` file.
 | `TRUST_PROXY` | `false` | Set to `true` if Thymely runs behind a reverse proxy. |
 | `COOKIE_SECURE` | `false` | Set to `true` when serving over HTTPS. |
 
+### Public access
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `ALLOW_EXTERNAL_REGISTRATION` | `true` | Allow unauthenticated users to create accounts via the client portal. Set to `false` to restrict signups. |
+| `ALLOW_PUBLIC_TICKETS` | `false` | Allow unauthenticated users to submit tickets via the public form. |
+| `SESSION_BIND_IP` | `false` | Bind sessions to the client IP address. Prevents session reuse from a different network, but may disconnect mobile users. |
+
 ### Email
 
 | Variable | Default | Description |
