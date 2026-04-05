@@ -59,6 +59,8 @@ jobs:
           TRUST_PROXY=false
           COOKIE_SECURE=false
           LOG_LEVEL=info
+          ALLOW_EXTERNAL_REGISTRATION=true
+          ALLOW_PUBLIC_TICKETS=true
           EOF
       - name: Start local stack
         run: docker compose -f docker-compose.local.yml up -d --build

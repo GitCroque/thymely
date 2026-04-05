@@ -64,6 +64,8 @@ services:
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:-}
+      ALLOW_EXTERNAL_REGISTRATION: ${ALLOW_EXTERNAL_REGISTRATION:-true}
+      ALLOW_PUBLIC_TICKETS: ${ALLOW_PUBLIC_TICKETS:-true}
       HOSTNAME: "0.0.0.0"
     networks:
       - frontend
