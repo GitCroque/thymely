@@ -5,6 +5,7 @@ import {
   Settings,
   SquareKanban
 } from "lucide-react";
+import Link from "next/link";
 import * as React from "react";
 
 import { NavMain } from "@/shadcn/components/nav-main";
@@ -44,12 +45,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   const data = {
-    teams: [
-      {
-        name: "Thymely",
-        plan: `version: ${process.env.NEXT_PUBLIC_CLIENT_VERSION}`,
-      },
-    ],
     navMain: [
       {
         title: "New Issue",
@@ -162,17 +157,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="icon" {...props} >
       <SidebarHeader>
         {/* <TeamSwitcher teams={data.teams} /> */}
-        <div className="flex items-center gap-2 ">
+        <Link href="/" className="flex items-center gap-2 no-underline">
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground">
             <img src="/favicon/favicon-32x32.png" className="size-4" />
           </div>
           <div className="grid flex-1 text-left text-sm leading-tight">
             <span className="truncate font-semibold text-xl">Thymely</span>
-            <span className="truncate text-xs">
-              version: {process.env.NEXT_PUBLIC_CLIENT_VERSION}
-            </span>
           </div>
-        </div>
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <CreateTicketModal
