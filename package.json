@@ -1,6 +1,7 @@
 {
   "private": true,
   "name": "thymely",
+  "version": "1.0.1",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",

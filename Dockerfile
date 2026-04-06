@@ -33,9 +33,8 @@ COPY ecosystem.config.js ./
 # Rebuild native modules + generate Prisma client + compile API
 RUN yarn rebuild && cd apps/api && npx prisma generate && npx tsc
 
-# Build client — version is inlined by Next.js at build time
-ARG APP_VERSION=dev
-RUN cd apps/client && NEXT_PUBLIC_CLIENT_VERSION=${APP_VERSION} npx next build --webpack
+# Build client — version is read from package.json and inlined by Next.js at build time
+RUN cd apps/client && NEXT_PUBLIC_CLIENT_VERSION=$(node -e "console.log(require('/app/package.json').version)") npx next build --webpack
 RUN cd apps/knowledge-base && npx next build
 
 FROM node:22-bookworm-slim AS runner
