@@ -163,9 +163,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     {/* Sidebar component, swap this element with another sidebar if you like */}
                     <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-background px-6 pb-4">
                       <div className="flex align-middle flex-row h-14 items-center border-b-[1px]">
-                        {/* <img className="h-8 w-auto" src="/logo.svg" alt="Workflow" /> */}
-                        <Link href="https://github.com/GitCroque/thymely">
-                          <span className="text-3xl ml-2  hover:text-green-600 font-bold ">
+                        <Link href="/" className="flex items-center gap-2 no-underline">
+                          <img src="/favicon/favicon-32x32.png" className="size-4" />
+                          <span className="text-3xl ml-2 hover:text-green-600 font-bold">
                             Thymely
                           </span>
                         </Link>
@@ -214,9 +214,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* Sidebar component, swap this element with another sidebar if you like */}
             <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-background pb-4">
               <div className="flex align-middle flex-row h-14 items-center border-b px-6">
-                {/* <img className="h-8 w-auto" src="/logo.svg" alt="Workflow" /> */}
-                <Link href="https://github.com/GitCroque/thymely">
-                  <span className="text-3xl ml-2  hover:text-green-600 font-bold ">
+                <Link href="/" className="flex items-center gap-2 no-underline">
+                  <img src="/favicon/favicon-32x32.png" className="size-4" />
+                  <span className="text-3xl ml-2 hover:text-green-600 font-bold">
                     Thymely
                   </span>
                 </Link>
