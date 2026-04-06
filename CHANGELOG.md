@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-04-06
+
+### Fixed
+
+- **Sidebar logo links to home** — Clicking "Thymely" in the main sidebar now navigates to the dashboard instead of being a static text.
+- **Removed duplicate version display** — Version number below "Thymely" in the sidebar removed (already shown in the top bar).
+- **Admin layout consistency** — Rewrote the admin layout to use the same shadcn sidebar as the dashboard. Identical look, feel, and behavior (collapsible sidebar, same header, same spacing).
+- **Admin sidebar linked to GitHub** — "Thymely" in the admin sidebar no longer links to GitHub; it navigates to the dashboard like the main sidebar.
+- **Admin logo missing** — Added the Thymely favicon to the admin sidebar header for consistency.
+- **Removed redundant admin card** — Removed the green "Administration / Settings & Users" card from the dashboard (already accessible via the sidebar).
+
 ## [1.0.0] - 2026-04-05
 
 ### Added
